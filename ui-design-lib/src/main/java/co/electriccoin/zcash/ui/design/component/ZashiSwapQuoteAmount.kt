@@ -6,34 +6,39 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.electriccoin.zcash.ui.design.R
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
+import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
 import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.ImageResource
 import co.electriccoin.zcash.ui.design.util.StringResource
-import co.electriccoin.zcash.ui.design.util.TickerLocation
 import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.imageRes
 import co.electriccoin.zcash.ui.design.util.orHiddenString
 import co.electriccoin.zcash.ui.design.util.stringRes
-import co.electriccoin.zcash.ui.design.util.stringResByDynamicCurrencyNumber
 import co.electriccoin.zcash.ui.design.util.stringResByNumber
 import com.valentinilk.shimmer.shimmer
 import java.math.BigDecimal
@@ -41,29 +46,146 @@ import java.math.BigDecimal
 @Composable
 internal fun ZashiSwapQuoteAmount(
     state: SwapTokenAmountState?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isMirrored: Boolean = false,
 ) {
-    Surface(
-        modifier = modifier,
-        color = ZashiColors.Surfaces.bgSecondary,
-        shape = RoundedCornerShape(16.dp)
+    Box(
+        modifier = modifier.padding(ZashiDimensions.Spacing.spacingXl),
     ) {
-        if (state == null) Loading() else Data(state = state)
+        Layout(
+            state = state,
+            isMirrored = isMirrored,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
 @Composable
-private fun Loading() {
+private fun Layout(
+    state: SwapTokenAmountState?,
+    isMirrored: Boolean,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier =
-            Modifier
-                .padding(12.dp)
-                .shimmer(rememberZashiShimmer()),
-        horizontalAlignment = Alignment.CenterHorizontally
+            modifier.then(
+                if (state == null) {
+                    Modifier.shimmer(rememberZashiShimmer())
+                } else {
+                    Modifier
+                }
+            ),
+        horizontalAlignment = if (isMirrored) Alignment.End else Alignment.Start
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (isMirrored) {
+                TopBottom(state, false)
+                Spacer(16.dp)
+                ShimmerableIcon(state)
+            } else {
+                ShimmerableIcon(state)
+                Spacer(16.dp)
+                TopBottom(state, true)
+            }
+        }
+        ZashiHorizontalDivider(
+            thickness = 1.dp,
+            modifier = Modifier.padding(vertical = ZashiDimensions.Spacing.spacingXl),
+            color = ZashiColors.Surfaces.bgTertiary,
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = if (isMirrored) Alignment.End else Alignment.Start
+        ) {
+            ShimmerableText(
+                text = state?.let { it.amount orHiddenString stringRes(R.string.hide_balance_placeholder) },
+                shimmerText = stringResByNumber(BigDecimal(".123456")).getValue(),
+                style = ZashiTypography.textSm,
+                fontWeight = FontWeight.Medium,
+                color = ZashiColors.Text.textPrimary,
+            )
+            ShimmerableText(
+                text = state?.let { it.fiatAmount orHiddenString stringRes(R.string.hide_balance_placeholder) },
+                shimmerText = stringResByNumber(BigDecimal(".123")).getValue(),
+                style = ZashiTypography.textXxs,
+                fontWeight = FontWeight.Medium,
+                color = ZashiColors.Text.textTertiary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.TopBottom(state: SwapTokenAmountState?, end: Boolean) {
+    Column(
+        horizontalAlignment = if (end) Alignment.Start else Alignment.End,
+        modifier = Modifier.weight(1f)
+    ) {
+        ShimmerableText(
+            text = state?.token?.getValue(),
+            shimmerText = stringResByNumber(BigDecimal(".123456")).getValue(),
+            style = ZashiTypography.textSm,
+            fontWeight = FontWeight.SemiBold,
+            color = ZashiColors.Text.textPrimary,
+        )
+        ShimmerableText(
+            text = state?.chain?.getValue(),
+            shimmerText = stringResByNumber(BigDecimal(".123456")).getValue(),
+            style = ZashiTypography.textXxs.copy(lineHeight = 10.sp),
+            fontWeight = FontWeight.Medium,
+            color = ZashiColors.Text.textTertiary,
+            maxLines = 2,
+            textAlign = if (end) TextAlign.Start else TextAlign.End
+        )
+    }
+}
+
+@Composable
+private fun ShimmerableText(
+    text: String?,
+    shimmerText: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    fontWeight: FontWeight? = null,
+    color: Color = Color.Unspecified,
+    maxLines: Int = 1,
+    textAlign: TextAlign = TextAlign.Start,
+) {
+    if (text == null) {
+        with(
+            measureTextStyle(
+                text = shimmerText,
+                style = style.copy(fontWeight = fontWeight ?: style.fontWeight),
+            )
+        ) {
+            ShimmerRectangle(
+                modifier =
+                    Modifier
+                        .width(size.widthDp)
+                        .height(size.heightDp)
+                        .padding(1.dp),
+                color = ZashiColors.Surfaces.bgTertiary,
+            )
+        }
+    } else {
+        ZashiAutoSizeText(
+            modifier = modifier,
+            text = text,
+            style = style,
+            fontWeight = fontWeight,
+            color = color,
+            maxLines = maxLines,
+            textAlign = textAlign
+        )
+    }
+}
+
+@Composable
+private fun ShimmerableIcon(state: SwapTokenAmountState?) {
+    if (state == null) {
         Box {
             ShimmerCircle(
-                size = 20.dp,
+                size = 28.dp,
                 color = ZashiColors.Surfaces.bgTertiary
             )
             Box(
@@ -76,116 +198,64 @@ private fun Loading() {
                         .background(ZashiColors.Surfaces.bgTertiary, CircleShape)
             )
         }
-        Spacer(4.dp)
-        val titleTextSize =
-            measureTextStyle(
-                text = stringResByNumber(BigDecimal(".123456")).getValue(),
-                style =
-                    ZashiTypography.textXl.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-            )
-        ShimmerRectangle(
-            width = titleTextSize.size.widthDp,
-            height = titleTextSize.size.heightDp,
-            color = ZashiColors.Surfaces.bgTertiary
-        )
-        Spacer(4.dp)
-        val subtitleTextSize =
-            measureTextStyle(
-                text = stringResByNumber(BigDecimal(".123")).getValue(),
-                style =
-                    ZashiTypography.textSm.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-            )
-        ShimmerRectangle(
-            width = subtitleTextSize.size.widthDp,
-            height = subtitleTextSize.size.heightDp,
-            color = ZashiColors.Surfaces.bgTertiary
-        )
+    } else {
+        Icon(state)
     }
 }
 
 @Composable
-private fun Data(state: SwapTokenAmountState) {
-    Column(
-        modifier = Modifier.padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (state.bigIcon is ImageResource.ByDrawable) {
-            Box {
-                Image(
-                    modifier = Modifier.size(20.dp),
-                    painter = painterResource(state.bigIcon.resource),
-                    contentDescription = null
-                )
+private fun Icon(state: SwapTokenAmountState) {
+    if (state.bigIcon is ImageResource.ByDrawable) {
+        Box {
+            Image(
+                modifier = Modifier.size(28.dp),
+                painter = painterResource(state.bigIcon.resource),
+                contentDescription = null
+            )
 
-                if (state.smallIcon is ImageResource.ByDrawable) {
-                    if (state.smallIcon.resource in
-                        listOf(R.drawable.ic_zec_shielded, R.drawable.ic_zec_unshielded)
+            if (state.smallIcon is ImageResource.ByDrawable) {
+                if (state.smallIcon.resource in
+                    listOf(R.drawable.ic_zec_shielded, R.drawable.ic_zec_unshielded)
+                ) {
+                    Image(
+                        modifier =
+                            Modifier
+                                .size(12.dp)
+                                .align(Alignment.BottomEnd)
+                                .offset(4.dp, 4.dp),
+                        painter = painterResource(state.smallIcon.resource),
+                        contentDescription = null,
+                    )
+                } else {
+                    Surface(
+                        modifier =
+                            Modifier
+                                .size(14.dp)
+                                .align(Alignment.BottomEnd)
+                                .offset(4.dp, 4.dp),
+                        shape = CircleShape,
+                        border = BorderStroke(1.dp, ZashiColors.Surfaces.bgPrimary)
                     ) {
                         Image(
-                            modifier =
-                                Modifier
-                                    .size(12.dp)
-                                    .align(Alignment.BottomEnd)
-                                    .offset(4.dp, 4.dp),
+                            modifier = Modifier.size(14.dp),
                             painter = painterResource(state.smallIcon.resource),
                             contentDescription = null,
                         )
-                    } else {
-                        Surface(
-                            modifier =
-                                Modifier
-                                    .size(14.dp)
-                                    .align(Alignment.BottomEnd)
-                                    .offset(4.dp, 4.dp),
-                            shape = CircleShape,
-                            border = BorderStroke(1.dp, ZashiColors.Surfaces.bgPrimary)
-                        ) {
-                            Image(
-                                modifier = Modifier.size(14.dp),
-                                painter = painterResource(state.smallIcon.resource),
-                                contentDescription = null,
-                            )
-                        }
                     }
                 }
             }
-            Spacer(4.dp)
-        }
-        SelectionContainer {
-            ZashiAutoSizeText(
-                modifier = Modifier.weight(1f, false),
-                textAlign = TextAlign.Center,
-                text = state.title orHiddenString stringRes(R.string.hide_balance_placeholder),
-                style = ZashiTypography.textXl,
-                fontWeight = FontWeight.SemiBold,
-                color = ZashiColors.Text.textPrimary,
-                maxLines = 1,
-            )
-        }
-        Spacer(4.dp)
-        SelectionContainer {
-            ZashiAutoSizeText(
-                textAlign = TextAlign.Center,
-                text = state.subtitle orHiddenString stringRes(R.string.hide_balance_placeholder),
-                style = ZashiTypography.textSm,
-                fontWeight = FontWeight.Medium,
-                color = ZashiColors.Text.textTertiary,
-                maxLines = 1,
-            )
         }
     }
 }
 
 @Immutable
 data class SwapTokenAmountState(
-    val bigIcon: ImageResource?,
-    val smallIcon: ImageResource?,
-    val title: StringResource,
-    val subtitle: StringResource
+    val amount: StringResource,
+    val fiatAmount: StringResource,
+    val token: StringResource,
+    val chain: StringResource,
+    val bigIcon: ImageResource,
+    val smallIcon: ImageResource,
 )
 
 @PreviewScreens
@@ -193,15 +263,33 @@ data class SwapTokenAmountState(
 private fun Preview() =
     ZcashTheme {
         BlankSurface {
-            ZashiSwapQuoteAmount(
-                state =
-                    SwapTokenAmountState(
-                        bigIcon = imageRes(R.drawable.ic_chain_placeholder),
-                        smallIcon = imageRes(R.drawable.ic_zec_shielded),
-                        title = stringResByDynamicCurrencyNumber(0.000000421423154, "", TickerLocation.HIDDEN),
-                        subtitle = stringResByDynamicCurrencyNumber(0.0000000000000021312, "$")
-                    )
-            )
+            Column {
+                ZashiSwapQuoteAmount(
+                    modifier = Modifier.fillMaxWidth(.75f),
+                    state =
+                        SwapTokenAmountState(
+                            token = stringRes("ZEC"),
+                            chain = stringRes("Chain"),
+                            bigIcon = imageRes(R.drawable.ic_chain_placeholder),
+                            smallIcon = imageRes(R.drawable.ic_zec_shielded),
+                            amount = stringRes("0.1231231"),
+                            fiatAmount = stringRes("$123.45")
+                        )
+                )
+                ZashiSwapQuoteAmount(
+                    modifier = Modifier.fillMaxWidth(.75f),
+                    isMirrored = true,
+                    state =
+                        SwapTokenAmountState(
+                            token = stringRes("ZEC"),
+                            chain = stringRes("Chain"),
+                            bigIcon = imageRes(R.drawable.ic_chain_placeholder),
+                            smallIcon = imageRes(R.drawable.ic_zec_shielded),
+                            amount = stringRes("0.1231231"),
+                            fiatAmount = stringRes("$123.45")
+                        )
+                )
+            }
         }
     }
 
@@ -210,8 +298,14 @@ private fun Preview() =
 private fun LoadingPreview() =
     ZcashTheme {
         BlankSurface {
-            ZashiSwapQuoteAmount(
-                state = null
-            )
+            Column {
+                ZashiSwapQuoteAmount(
+                    state = null
+                )
+                ZashiSwapQuoteAmount(
+                    state = null,
+                    isMirrored = true
+                )
+            }
         }
     }

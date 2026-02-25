@@ -18,7 +18,7 @@ import co.electriccoin.zcash.ui.design.R
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
-import co.electriccoin.zcash.ui.screen.accountlist.AccountList
+import co.electriccoin.zcash.ui.screen.accountlist.AccountListArgs
 import co.electriccoin.zcash.ui.screen.integrations.IntegrationsArgs
 import co.electriccoin.zcash.ui.screen.more.MoreArgs
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,12 +72,7 @@ class ZashiTopAppBarVM(
                             is ZashiAccount -> ZashiMainTopAppBarState.AccountType.ZASHI
                             else -> ZashiMainTopAppBarState.AccountType.ZASHI
                         },
-                    onAccountTypeClick =
-                        if (accounts.orEmpty().size <= 1) {
-                            null
-                        } else {
-                            ::onAccountTypeClicked
-                        },
+                    onAccountTypeClick = ::onAccountTypeClicked,
                 ),
             balanceVisibilityButton =
                 IconButtonState(
@@ -100,12 +95,13 @@ class ZashiTopAppBarVM(
                 IconButtonState(
                     icon = co.electriccoin.zcash.ui.R.drawable.ic_home_more,
                     onClick = { onInfoClick(accounts) },
+                    onDoubleClick = { navigationRouter.forward(MoreArgs) },
                     contentDescription = stringRes(R.string.general_more)
                 )
         )
     }
 
-    private fun onAccountTypeClicked() = navigationRouter.forward(AccountList)
+    private fun onAccountTypeClicked() = navigationRouter.forward(AccountListArgs)
 
     private fun onInfoClick(accounts: List<WalletAccount>?) =
         viewModelScope.launch {

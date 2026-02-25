@@ -26,6 +26,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
+import co.electriccoin.zcash.ui.design.util.StyledStringResource
+import co.electriccoin.zcash.ui.design.util.getValue
 
 @Composable
 fun ZashiAutoSizeText(
@@ -51,6 +53,51 @@ fun ZashiAutoSizeText(
 ) {
     ZashiAutoSizeText(
         text = AnnotatedString(text),
+        modifier = modifier,
+        color = color,
+        fontSize = fontSize,
+        fontStyle = fontStyle,
+        fontWeight = fontWeight,
+        fontFamily = fontFamily,
+        letterSpacing = letterSpacing,
+        textDecoration = textDecoration,
+        textAlign = textAlign,
+        contentAlignment = contentAlignment,
+        lineHeight = lineHeight,
+        overflow = overflow,
+        softWrap = softWrap,
+        maxLines = maxLines,
+        minLines = minLines,
+        inlineContent = inlineContent,
+        onTextLayout = onTextLayout,
+        style = style,
+    )
+}
+
+@Composable
+fun ZashiAutoSizeText(
+    text: StyledStringResource,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    fontStyle: FontStyle? = null,
+    fontWeight: FontWeight? = null,
+    fontFamily: FontFamily? = null,
+    letterSpacing: TextUnit = TextUnit.Unspecified,
+    textDecoration: TextDecoration? = null,
+    textAlign: TextAlign? = null,
+    contentAlignment: Alignment = Alignment.CenterStart,
+    lineHeight: TextUnit = TextUnit.Unspecified,
+    overflow: TextOverflow = TextOverflow.Clip,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    minLines: Int = 1,
+    inlineContent: Map<String, InlineTextContent> = mapOf(),
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+    style: TextStyle = LocalTextStyle.current,
+) {
+    ZashiAutoSizeText(
+        text = text.getValue(),
         modifier = modifier,
         color = color,
         fontSize = fontSize,
@@ -103,12 +150,14 @@ fun ZashiAutoSizeText(
         }
     val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
 
+    val actualTextAlign = textAlign ?: contentAlignment.toTextAlign()
+
     val normalizedStyle =
         style.merge(
             color = textColor,
             fontSize = fontSize,
             fontWeight = fontWeight,
-            textAlign = textAlign ?: TextAlign.Unspecified,
+            textAlign = actualTextAlign,
             lineHeight = lineHeight,
             fontFamily = fontFamily,
             textDecoration = textDecoration,
@@ -128,6 +177,7 @@ fun ZashiAutoSizeText(
     ) {
         BasicText(
             text = text,
+            modifier = Modifier.align(contentAlignment),
             style = normalizedStyle,
             onTextLayout = onTextLayout,
             overflow = overflow,
@@ -139,3 +189,11 @@ fun ZashiAutoSizeText(
         )
     }
 }
+
+private fun Alignment.toTextAlign(): TextAlign =
+    when (this) {
+        Alignment.TopStart, Alignment.CenterStart, Alignment.BottomStart -> TextAlign.Start
+        Alignment.TopCenter, Alignment.Center, Alignment.BottomCenter -> TextAlign.Center
+        Alignment.TopEnd, Alignment.CenterEnd, Alignment.BottomEnd -> TextAlign.End
+        else -> TextAlign.Start
+    }
