@@ -1,1 +1,1 @@
-Zashi: Una billetera de Zcash que mantiene tus transacciones y mensajes privados
+La billetera crypto más privada. Construida para la soberanía financiera.
