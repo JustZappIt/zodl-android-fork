@@ -14,6 +14,11 @@ media:
     - ./media/slide3.2.png
     - ./media/slide4.2.png
     - ./media/slide5.2.png
+    - ./media/slide6.2.png
+    - ./media/slide7.2.png
+    - ./media/slide8.2.png
+    - ./media/slide9.2.png
+    - ./media/slide10.2.png
 
 # Release notes for the current/next release
 # These will be extracted from GitHub Release notes

@@ -17,7 +17,7 @@ This directory contains media assets for the Solana dApp Store listing.
 - **Purpose:** Featured banner image
 
 ### Screenshots
-- **Files:** `slide1.2.png`, `slide2.2.png`, `slide3.2.png`, `slide4.2.png`, `slide5.2.png`
+- **Files:** `slide1.2.png`, `slide2.2.png`, `slide3.2.png`, `slide4.2.png`, `slide5.2.png`, `slide6.2.png`, `slide7.2.png`, `slide8.2.png`, `slide9.2.png`, `slide10.2.png`
 - **Size:** Phone screen resolution (e.g., 1080x2400 px)
 - **Format:** PNG
 - **Purpose:** App screenshots showing features
@@ -55,6 +55,16 @@ release:
       uri: ./media/slide4.2.png
     - purpose: screenshot
       uri: ./media/slide5.2.png
+    - purpose: screenshot
+      uri: ./media/slide6.2.png
+    - purpose: screenshot
+      uri: ./media/slide7.2.png
+    - purpose: screenshot
+      uri: ./media/slide8.2.png
+    - purpose: screenshot
+      uri: ./media/slide9.2.png
+    - purpose: screenshot
+      uri: ./media/slide10.2.png
 ```
 
 ## Notes
