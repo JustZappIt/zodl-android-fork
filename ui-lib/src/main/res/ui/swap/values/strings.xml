@@ -79,4 +79,6 @@
         parameters. You can try to adjust the slippage or try again later.</string>
     <string name="swap_quote_cancel_swap">Cancel swap</string>
     <string name="swap_quote_edit_swap">Edit swap</string>
+    <string name="swap_confirmation_dialog_title">Are you sure you want to exit?</string>
+    <string name="swap_confirmation_dialog_message">If you\'ve sent or intend to send the funds, tap \'I\'ve sent the funds.\' Or cancel the swap to return to the previous screen.</string>
 </resources>
