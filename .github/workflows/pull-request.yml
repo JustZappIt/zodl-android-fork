@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Gradle Wrapper Validation
@@ -70,7 +70,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
       - name: Set up Java
@@ -92,7 +92,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -117,7 +117,7 @@ jobs:
           zip -r ${REPORTS_ZIP_PATH} . -i build/reports/detekt/*
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Detekt static analysis results
@@ -131,7 +131,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -156,7 +156,7 @@ jobs:
           zip -r ${REPORTS_ZIP_PATH} . -i build/reports/ktlint/\*
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Ktlint static analysis results
@@ -170,7 +170,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -198,7 +198,7 @@ jobs:
           zip -r ${LINT_ZIP_PATH} . -i \*build/reports/\*
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Android Lint static analysis results
@@ -212,7 +212,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -238,7 +238,7 @@ jobs:
           zip -r ${RESULTS_ZIP_PATH} . -i \*build/reports/\* \*/build/kover/html/\* \*/build/kover/xml/report.xml
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Test Kotlin modules results
@@ -255,7 +255,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -303,7 +303,7 @@ jobs:
           zip -r ${TEST_RESULTS_ZIP_PATH} . -i build/fladle/\* \*/build/outputs/androidTest-results/\*
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Test Android modules with FTL results
@@ -318,7 +318,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -350,7 +350,7 @@ jobs:
           zip -r ${TEST_RESULTS_ZIP_PATH} . -i \*/build/test-results/\*
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Test Android libs with WTF results
@@ -365,7 +365,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -397,7 +397,7 @@ jobs:
           zip -r ${TEST_RESULTS_ZIP_PATH} . -i \*/build/test-results/\*
       - name: Upload Artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 1
         with:
           name: Test Android app with WTF results
@@ -415,7 +415,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -469,7 +469,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -564,7 +564,7 @@ jobs:
           done
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         timeout-minutes: 2
         with:
           name: Binaries
@@ -582,7 +582,7 @@ jobs:
     steps:
       - name: Checkout
         timeout-minutes: 1
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0 # to fetch all commits
       - name: Set up Java
@@ -601,7 +601,7 @@ jobs:
           workload_identity_provider: ${{ secrets.FIREBASE_TEST_LAB_WORKLOAD_IDENTITY_PROVIDER }}
           access_token_lifetime: '900s'
       - name: Download a single artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
         with:
           name: Binaries
       - name: Robo test
