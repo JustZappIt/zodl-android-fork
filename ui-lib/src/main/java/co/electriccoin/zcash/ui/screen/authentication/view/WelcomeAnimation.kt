@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -132,11 +131,8 @@ fun WelcomeScreenView(
                                 .height(screenHeight.overallScreenHeight()),
                         contentDescription = null
                     )
-                    Image(
-                        painter = painterResource(id = co.electriccoin.zcash.ui.design.R.drawable.chart_line),
-                        contentScale = ContentScale.FillBounds,
-                        colorFilter = ColorFilter.tint(color = ZcashTheme.colors.welcomeAnimationColor),
-                        contentDescription = null,
+                    DynamicChartLine(
+                        color = ZcashTheme.colors.welcomeAnimationColor,
                     )
                 }
 
