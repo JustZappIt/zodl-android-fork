@@ -128,19 +128,17 @@ fun SendShielded(
             }
         }
         Spacer(Modifier.height(20.dp))
-        state.memo?.let {
-            TransactionDetailTitleHeader(
-                state =
-                    TransactionDetailInfoHeaderState(
-                        title = stringRes(R.string.transaction_detail_info_message)
-                    )
-            )
-            Spacer(Modifier.height(8.dp))
-            TransactionDetailMemo(
-                modifier = Modifier.fillMaxWidth(),
-                state = it
-            )
-        }
+        TransactionDetailTitleHeader(
+            state =
+                TransactionDetailInfoHeaderState(
+                    title = stringRes(R.string.transaction_detail_info_message)
+                )
+        )
+        Spacer(Modifier.height(8.dp))
+        TransactionDetailMemo(
+            modifier = Modifier.fillMaxWidth(),
+            state = state.memo
+        )
     }
 }
 
