@@ -220,17 +220,21 @@ internal class SwapVM(
             val currentAsset = swapRepository.selectedAsset.value
             val currentChainTicker = currentAsset?.chainTicker
 
+            // Only proceed if chain ticker changed
             if (selectedChainTicker != null &&
-                currentChainTicker != null &&
                 !selectedChainTicker.equals(currentChainTicker, ignoreCase = true)
             ) {
                 val swapAssets = swapRepository.assets.value.data
-                val matchingAsset =
-                    swapAssets?.find { asset ->
-                        asset.chainTicker.equals(selectedChainTicker, ignoreCase = true)
-                    }
-                if (matchingAsset != null) {
-                    swapRepository.select(matchingAsset)
+                val matchingAssets =
+                    swapAssets
+                        ?.filter { asset ->
+                            asset.chainTicker.equals(selectedChainTicker, ignoreCase = true)
+                        }.orEmpty()
+
+                if (matchingAssets.size == 1) {
+                    swapRepository.select(matchingAssets.first())
+                } else {
+                    swapRepository.select(null)
                 }
             }
         }
