@@ -12,11 +12,13 @@ import co.electriccoin.zcash.ui.common.usecase.CreateFlexaTransactionUseCase
 import co.electriccoin.zcash.ui.common.usecase.CreateIncreaseEphemeralGapLimitProposalUseCase
 import co.electriccoin.zcash.ui.common.usecase.CreateKeystoneAccountUseCase
 import co.electriccoin.zcash.ui.common.usecase.CreateKeystoneProposalPCZTEncoderUseCase
+import co.electriccoin.zcash.ui.common.usecase.CreateLceErrorConfirmationStateUseCase
 import co.electriccoin.zcash.ui.common.usecase.CreateOrUpdateTransactionNoteUseCase
 import co.electriccoin.zcash.ui.common.usecase.CreateProposalUseCase
 import co.electriccoin.zcash.ui.common.usecase.DeleteABContactUseCase
 import co.electriccoin.zcash.ui.common.usecase.DeleteTransactionNoteUseCase
 import co.electriccoin.zcash.ui.common.usecase.DeriveKeystoneAccountUnifiedAddressUseCase
+import co.electriccoin.zcash.ui.common.usecase.DisconnectUseCase
 import co.electriccoin.zcash.ui.common.usecase.EnsureSwapAssetsLoadedUseCase
 import co.electriccoin.zcash.ui.common.usecase.ExportTaxUseCase
 import co.electriccoin.zcash.ui.common.usecase.FilterSwapAssetsUseCase
@@ -164,6 +166,7 @@ val useCaseModule =
         factoryOf(::Zip321ParseUriValidationUseCase)
         factoryOf(::GetPersistableWalletUseCase)
         factoryOf(::GetSupportUseCase)
+        factoryOf(::CreateLceErrorConfirmationStateUseCase)
         factoryOf(::SendEmailUseCase)
         factoryOf(::SendSupportEmailUseCase)
         factoryOf(::ShowErrorUseCase)
@@ -211,6 +214,7 @@ val useCaseModule =
         factoryOf(::GetTransactionMetadataUseCase)
         factoryOf(::FlipTransactionBookmarkUseCase)
         factoryOf(::DeleteTransactionNoteUseCase)
+        factoryOf(::DisconnectUseCase)
         factoryOf(::CreateOrUpdateTransactionNoteUseCase)
         factoryOf(::MarkTxMemoAsReadUseCase)
         factoryOf(::ExportTaxUseCase)

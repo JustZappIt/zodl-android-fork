@@ -1,4 +1,4 @@
-package co.electriccoin.zcash.ui.screen.deletewallet
+package co.electriccoin.zcash.ui.design.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -13,37 +13,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import co.electriccoin.zcash.ui.R
-import co.electriccoin.zcash.ui.design.component.ButtonState
-import co.electriccoin.zcash.ui.design.component.Spacer
-import co.electriccoin.zcash.ui.design.component.ZashiButton
-import co.electriccoin.zcash.ui.design.component.ZashiButtonDefaults
-import co.electriccoin.zcash.ui.design.component.ZashiScreenModalBottomSheet
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
 import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
+import co.electriccoin.zcash.ui.design.util.StringResource
+import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.stringRes
+
+data class ZashiConfirmationState(
+    val icon: Int,
+    val title: StringResource,
+    val message: StringResource,
+    val primaryAction: ButtonState,
+    val secondaryAction: ButtonState,
+    override val onBack: () -> Unit
+) : ModalBottomSheetState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResetZashiConfirmationView(state: ResetZashiConfirmationState?) {
-    ZashiScreenModalBottomSheet(state = state, content = { state, contentPadding ->
-        Content(
+fun ZashiConfirmationBottomSheet(state: ZashiConfirmationState?) {
+    ZashiScreenModalBottomSheet(state = state) { innerState, contentPadding ->
+        ConfirmationContent(
             modifier = Modifier.weight(1f, false),
-            state = state,
+            state = innerState,
             contentPadding = contentPadding
         )
-    })
+    }
 }
 
 @Composable
-private fun Content(
-    state: ResetZashiConfirmationState,
+private fun ConfirmationContent(
+    state: ZashiConfirmationState,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
@@ -59,56 +63,61 @@ private fun Content(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_reset_zashi_warning),
+            painter = painterResource(state.icon),
             contentDescription = null
         )
-        Spacer(8.dp)
+        Spacer(12.dp)
         Text(
-            text = stringResource(R.string.delete_wallet_confirmation_title),
-            style = ZashiTypography.header6,
+            text = state.title.getValue(),
+            style = ZashiTypography.textXl,
             color = ZashiColors.Text.textPrimary,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
-        Spacer(8.dp)
+        Spacer(12.dp)
         Text(
-            text = stringResource(R.string.delete_wallet_confirmation_subtitle),
-            style = ZashiTypography.textSm,
+            text = state.message.getValue(),
+            style = ZashiTypography.textMd,
             color = ZashiColors.Text.textTertiary,
             textAlign = TextAlign.Center
         )
-        Spacer(28.dp)
+        Spacer(32.dp)
         ZashiButton(
             modifier = Modifier.fillMaxWidth(),
-            state =
-                ButtonState(
-                    text = stringRes(R.string.delete_wallet_confirmation_button),
-                    onClick = state.onConfirm
-                ),
-            defaultPrimaryColors = ZashiButtonDefaults.destructive1Colors()
+            state = state.primaryAction
         )
+        Spacer(8.dp)
         ZashiButton(
             modifier = Modifier.fillMaxWidth(),
-            state =
-                ButtonState(
-                    text = stringRes(R.string.delete_wallet_confirmation_cancel),
-                    onClick = state.onCancel
-                ),
-            defaultPrimaryColors = ZashiButtonDefaults.primaryColors()
+            state = state.secondaryAction,
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @PreviewScreens
 @Composable
-private fun ResetZashiConfirmationPreview() =
+private fun ZashiConfirmationBottomSheetPreview() =
     ZcashTheme {
-        ResetZashiConfirmationView(
+        ZashiConfirmationBottomSheet(
             state =
-                ResetZashiConfirmationState(
-                    onBack = {},
-                    onConfirm = {},
-                    onCancel = {}
+                ZashiConfirmationState(
+                    icon = android.R.drawable.ic_dialog_alert,
+                    title = stringRes("Are you sure?"),
+                    message = stringRes("This action cannot be undone."),
+                    primaryAction =
+                        ButtonState(
+                            text = stringRes("Confirm"),
+                            style = ButtonStyle.DESTRUCTIVE2,
+                            onClick = {}
+                        ),
+                    secondaryAction =
+                        ButtonState(
+                            text = stringRes("Cancel"),
+                            style = ButtonStyle.PRIMARY,
+                            onClick = {}
+                        ),
+                    onBack = {}
                 )
         )
     }

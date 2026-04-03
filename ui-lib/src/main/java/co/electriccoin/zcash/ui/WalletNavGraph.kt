@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import androidx.navigation.toRoute
+import co.electriccoin.zcash.ui.dialogComposable
 import co.electriccoin.zcash.ui.screen.about.AboutArgs
 import co.electriccoin.zcash.ui.screen.about.AboutScreen
 import co.electriccoin.zcash.ui.screen.accountlist.AccountListArgs
@@ -38,9 +39,9 @@ import co.electriccoin.zcash.ui.screen.contact.UpdateGenericABContactArgs
 import co.electriccoin.zcash.ui.screen.contact.UpdateGenericABContactScreen
 import co.electriccoin.zcash.ui.screen.crashreporting.AndroidCrashReportingOptIn
 import co.electriccoin.zcash.ui.screen.deletewallet.ResetZashiArgs
-import co.electriccoin.zcash.ui.screen.deletewallet.ResetZashiConfirmationArgs
-import co.electriccoin.zcash.ui.screen.deletewallet.ResetZashiConfirmationScreen
 import co.electriccoin.zcash.ui.screen.deletewallet.ResetZashiScreen
+import co.electriccoin.zcash.ui.screen.disconnect.DisconnectArgs
+import co.electriccoin.zcash.ui.screen.disconnect.DisconnectScreen
 import co.electriccoin.zcash.ui.screen.error.AndroidErrorBottomSheet
 import co.electriccoin.zcash.ui.screen.error.AndroidErrorDialog
 import co.electriccoin.zcash.ui.screen.error.ErrorBottomSheet
@@ -194,7 +195,6 @@ fun NavGraphBuilder.walletNavGraph(
         composable<WalletBackup> { AndroidWalletBackup(it.toRoute()) }
         composable<FeedbackArgs> { FeedbackScreen() }
         composable<ResetZashiArgs> { ResetZashiScreen() }
-        dialogComposable<ResetZashiConfirmationArgs> { ResetZashiConfirmationScreen(it.toRoute()) }
         composable<AboutArgs> { AboutScreen() }
         composable(NavigationTargets.WHATS_NEW) { WrapWhatsNew() }
         dialogComposable<IntegrationsArgs> { IntegrationsScreen() }
@@ -290,6 +290,7 @@ fun NavGraphBuilder.walletNavGraph(
         composable<ConfirmResyncArgs> { ConfirmResyncScreen() }
         composable<ResyncBDDateArgs> { ResyncBDDateScreen(it.toRoute()) }
         composable<ResyncBDEstimationArgs> { ResyncBDEstimationScreen(it.toRoute()) }
+        composable<DisconnectArgs> { DisconnectScreen() }
         composable<WrapRestoreSuccessArgs> { WrapRestoreSuccess() }
     }
 }
