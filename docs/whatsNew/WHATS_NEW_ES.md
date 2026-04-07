@@ -18,7 +18,7 @@ directly impact users rather than highlighting other key architectural updates.*
 - Añadimos una función para desconectar una billetera de hardware Keystone.
 
 ### Cambiado:
-- Actualizamos todas las dependencias. (Solo para Android)
+- Actualizamos todas las dependencias.
 
 ### Corregido:
 - Solucionamos algunos problemas de interfaz de usuario.
@@ -29,7 +29,7 @@ directly impact users rather than highlighting other key architectural updates.*
 - Añadimos una función para desconectar una billetera de hardware Keystone.
 
 ### Cambiado:
-- Actualizamos todas las dependencias. (Solo para Android)
+- Actualizamos todas las dependencias.
 
 ### Corregido:
 - Solucionamos algunos problemas de interfaz de usuario.
@@ -40,7 +40,7 @@ directly impact users rather than highlighting other key architectural updates.*
 - Añadimos una función para desconectar una billetera de hardware Keystone.
 
 ### Cambiado:
-- Actualizamos todas las dependencias. (Solo para Android)
+- Actualizamos todas las dependencias.
 
 ### Corregido:
 - Solucionamos algunos problemas de interfaz de usuario.
