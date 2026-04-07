@@ -18,7 +18,7 @@ directly impact users rather than highlighting other key architectural updates.*
 - We added a feature for disconnecting a Keystone hardware wallet.
 
 ### Changed:
-- We updated all dependencies. (Android only)
+- We updated all dependencies.
 
 ### Fixed:
 - We fixed a few UX/UI issues.
@@ -29,7 +29,7 @@ directly impact users rather than highlighting other key architectural updates.*
 - We added a feature for disconnecting a Keystone hardware wallet.
 
 ### Changed:
-- We updated all dependencies. (Android only)
+- We updated all dependencies.
 
 ### Fixed:
 - We fixed a few UX/UI issues.
@@ -40,7 +40,7 @@ directly impact users rather than highlighting other key architectural updates.*
 - We added a feature for disconnecting a Keystone hardware wallet.
 
 ### Changed:
-- We updated all dependencies. (Android only)
+- We updated all dependencies.
 
 ### Fixed:
 - We fixed a few UX/UI issues.
