@@ -210,6 +210,9 @@ dependencies {
 
     api(libs.keystone)
 
+    // ZappMessaging P2P SDK
+    implementation(project(":zappmessaging"))
+
     androidTestImplementation(projects.testLib)
     androidTestImplementation(libs.bundles.androidx.test)
     androidTestImplementation(libs.androidx.compose.test.junit)

@@ -377,6 +377,12 @@ include("ui-integration-test")
 include("ui-lib")
 include("ui-screenshot-test")
 
+// ZappMessaging P2P modules (external references)
+include(":zappmessaging")
+project(":zappmessaging").projectDir = file("../zappMessaging/android")
+include(":bare-kit")
+project(":bare-kit").projectDir = file("../bare-kit/android")
+
 val zcashSdkIncludedBuildPath = extra["SDK_INCLUDED_BUILD_PATH"].toString()
 
 if (zcashSdkIncludedBuildPath.isNotEmpty()) {

@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Allow zappMessaging (minSdk 29) on minSdk 27 host app -->
+    <uses-sdk tools:overrideLibrary="xyz.justzappit.zappmessaging, to.holepunch.bare.kit" />
+
     <application
         android:name="co.electriccoin.zcash.app.ZcashApplication"
         android:allowBackup="true"

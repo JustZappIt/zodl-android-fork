@@ -194,6 +194,15 @@ private fun NavButtons(
                     .weight(1f),
             state = state.fourthButton,
         )
+        if (state.fifthButton != null) {
+            ZashiBigIconButton(
+                modifier =
+                    Modifier
+                        .minHeight106Percent()
+                        .weight(1f),
+                state = state.fifthButton,
+            )
+        }
     }
 }
 
