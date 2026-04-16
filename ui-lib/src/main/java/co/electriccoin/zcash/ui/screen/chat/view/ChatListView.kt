@@ -22,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
@@ -57,6 +59,8 @@ fun ChatListView(
     onConversationClick: (ChatConversation) -> Unit,
     onNewMessage: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToContacts: () -> Unit = {},
+    onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel
 ) {
@@ -88,7 +92,15 @@ fun ChatListView(
                         )
                     }
                 },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
                 actions = {
+                    IconButton(onClick = onNavigateToContacts) {
+                        Icon(Icons.Default.Contacts, contentDescription = "Contacts", tint = MaterialTheme.colorScheme.onSurface)
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
                     }

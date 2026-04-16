@@ -81,6 +81,8 @@ fun AndroidChatHome(
                 },
                 onNewMessage = onNavigateToNewConversation,
                 onNavigateToSettings = onNavigateToSettings,
+                onNavigateToContacts = onNavigateToContacts,
+                onNavigateBack = onNavigateBack,
                 viewModel = viewModel
             )
         }
