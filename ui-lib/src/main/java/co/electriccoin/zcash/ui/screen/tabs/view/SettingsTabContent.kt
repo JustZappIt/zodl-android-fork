@@ -25,11 +25,13 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -64,13 +66,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.electriccoin.zcash.ui.NavigationRouter
+import co.electriccoin.zcash.ui.common.viewmodel.SecretState
+import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
 import co.electriccoin.zcash.ui.design.theme.colors.ZappPalette
 import co.electriccoin.zcash.ui.screen.about.AboutArgs
+import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
+import co.electriccoin.zcash.ui.screen.chooseserver.ChooseServerArgs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * Port of Zapp's SettingsScreen layout — a stack of rounded "settings card"
@@ -84,11 +92,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsTabContent(
     navigationRouter: NavigationRouter,
-    chatViewModel: ChatViewModel
+    chatViewModel: ChatViewModel,
+    walletViewModel: WalletViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val identity by chatViewModel.identity.collectAsState()
+    val secretState by walletViewModel.secretState.collectAsStateWithLifecycle()
+    val hasWallet = secretState == SecretState.READY
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showEditNameDialog by remember { mutableStateOf(false) }
@@ -238,16 +249,30 @@ fun SettingsTabContent(
                 )
             }
 
-            SettingsCard {
-                SettingsSectionTitle("Wallet")
-                SettingsRow(
-                    title = "Link wallet",
-                    subtitle = "Connect a Zodl wallet for payments",
-                    icon = Icons.Default.AccountBalanceWallet,
-                    onClick = {
-                        scope.launch { snackbarHostState.showSnackbar("Wallet linking coming soon.") }
-                    }
-                )
+            if (hasWallet) {
+                SettingsCard {
+                    SettingsSectionTitle("Wallet")
+                    SettingsRow(
+                        title = "Backup seed phrase",
+                        subtitle = "View and save your 24-word recovery phrase",
+                        icon = Icons.Default.AccountBalanceWallet,
+                        onClick = { navigationRouter.forward(AdvancedSettingsArgs) }
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        title = "Server",
+                        subtitle = "Choose a lightwalletd server",
+                        icon = Icons.Default.Cloud,
+                        onClick = { navigationRouter.forward(ChooseServerArgs) }
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        title = "Advanced wallet settings",
+                        subtitle = "Export, privacy, resync, and more",
+                        icon = Icons.Default.Tune,
+                        onClick = { navigationRouter.forward(AdvancedSettingsArgs) }
+                    )
+                }
             }
 
             SettingsCard {
@@ -265,7 +290,7 @@ fun SettingsTabContent(
             SettingsCard {
                 SettingsSectionTitle("About")
                 SettingsRow(
-                    title = "About zodl",
+                    title = "About Zapp",
                     icon = Icons.Default.Info,
                     onClick = { navigationRouter.forward(AboutArgs) }
                 )

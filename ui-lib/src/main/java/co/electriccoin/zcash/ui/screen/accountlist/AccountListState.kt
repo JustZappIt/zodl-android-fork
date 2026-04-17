@@ -3,7 +3,6 @@ package co.electriccoin.zcash.ui.screen.accountlist
 import androidx.annotation.DrawableRes
 import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.ModalBottomSheetState
-import co.electriccoin.zcash.ui.design.component.listitem.ListItemState
 import co.electriccoin.zcash.ui.design.util.StringResource
 import co.electriccoin.zcash.ui.design.util.StyledStringResource
 
@@ -25,9 +24,5 @@ data class ZashiAccountListItemState(
 sealed interface AccountListItem {
     data class Account(
         val state: ZashiAccountListItemState
-    ) : AccountListItem
-
-    data class Other(
-        val state: ListItemState
     ) : AccountListItem
 }
