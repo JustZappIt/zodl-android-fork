@@ -61,6 +61,7 @@ fun ChatListView(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToContacts: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
+    showBackButton: Boolean = true,
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel
 ) {
@@ -93,8 +94,10 @@ fun ChatListView(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (showBackButton) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 actions = {

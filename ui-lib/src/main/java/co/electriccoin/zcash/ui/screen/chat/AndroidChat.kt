@@ -120,7 +120,8 @@ fun AndroidNewConversation(
 @Composable
 fun AndroidChatContacts(
     onStartChat: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onScanQr: ((String) -> Unit) -> Unit = {}
 ) {
     val viewModel: ChatViewModel = koinViewModel()
 
@@ -131,6 +132,7 @@ fun AndroidChatContacts(
             }
         },
         onNavigateBack = onNavigateBack,
+        onScanQr = onScanQr,
         viewModel = viewModel
     )
 }

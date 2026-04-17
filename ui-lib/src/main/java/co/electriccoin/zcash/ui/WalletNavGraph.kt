@@ -96,8 +96,18 @@ import co.electriccoin.zcash.ui.screen.receive.info.ShieldedAddressInfoScreen
 import co.electriccoin.zcash.ui.screen.receive.info.TransparentAddressInfoArgs
 import co.electriccoin.zcash.ui.screen.receive.info.TransparentAddressInfoScreen
 import co.electriccoin.zcash.ui.screen.request.RequestScreen
+import co.electriccoin.zcash.ui.screen.restore.date.RestoreBDDateArgs
+import co.electriccoin.zcash.ui.screen.restore.date.RestoreBDDateScreen
+import co.electriccoin.zcash.ui.screen.restore.estimation.RestoreBDEstimationArgs
+import co.electriccoin.zcash.ui.screen.restore.estimation.RestoreBDEstimationScreen
+import co.electriccoin.zcash.ui.screen.restore.height.AndroidRestoreBDHeight
+import co.electriccoin.zcash.ui.screen.restore.height.RestoreBDHeight
 import co.electriccoin.zcash.ui.screen.restore.info.AndroidSeedInfo
 import co.electriccoin.zcash.ui.screen.restore.info.SeedInfo
+import co.electriccoin.zcash.ui.screen.restore.seed.RestoreSeedArgs
+import co.electriccoin.zcash.ui.screen.restore.seed.RestoreSeedScreen
+import co.electriccoin.zcash.ui.screen.restore.tor.RestoreTorArgs
+import co.electriccoin.zcash.ui.screen.restore.tor.RestoreTorScreen
 import co.electriccoin.zcash.ui.screen.restoresuccess.WrapRestoreSuccess
 import co.electriccoin.zcash.ui.screen.restoresuccess.WrapRestoreSuccessArgs
 import co.electriccoin.zcash.ui.screen.resync.confirm.ConfirmResyncArgs
@@ -186,6 +196,8 @@ import co.electriccoin.zcash.ui.screen.chat.ChatRoomArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatSettingsArgs
 import co.electriccoin.zcash.ui.screen.chat.ContactEditArgs
 import co.electriccoin.zcash.ui.screen.chat.NewConversationArgs
+import co.electriccoin.zcash.ui.screen.tabs.AndroidTabs
+import co.electriccoin.zcash.ui.screen.tabs.TabsArgs
 import co.electriccoin.zcash.ui.screen.warning.WrapNotEnoughSpace
 import co.electriccoin.zcash.ui.screen.warning.viewmodel.StorageCheckViewModel
 import co.electriccoin.zcash.ui.screen.whatsnew.WrapWhatsNew
@@ -194,15 +206,19 @@ fun NavGraphBuilder.walletNavGraph(
     storageCheckViewModel: StorageCheckViewModel,
     navigationRouter: NavigationRouter,
 ) {
-    navigation<MainAppGraph>(startDestination = HomeArgs) {
-        composable<HomeArgs> {
-            AndroidHome()
+    navigation<MainAppGraph>(startDestination = TabsArgs) {
+        // Zapp-style bottom-tab shell — Pay, Chats, Contacts, Settings.
+        composable<TabsArgs> {
+            AndroidTabs()
 
             val isEnoughSpace by storageCheckViewModel.isEnoughSpace.collectAsStateWithLifecycle()
             if (isEnoughSpace == false) {
                 navigationRouter.forward(NavigationTargets.NOT_ENOUGH_SPACE)
             }
         }
+        // Legacy Zashi home — hidden from the default flow but still registered
+        // so send/receive/swap paths that navigate "back to home" keep working.
+        composable<HomeArgs> { AndroidHome() }
         composable<MoreArgs> { MoreScreen() }
         composable<AdvancedSettingsArgs> { AdvancedSettingsScreen() }
         composable<ChooseServerArgs> { ChooseServerScreen() }
@@ -306,6 +322,11 @@ fun NavGraphBuilder.walletNavGraph(
         composable<ResyncBDEstimationArgs> { ResyncBDEstimationScreen(it.toRoute()) }
         composable<DisconnectArgs> { DisconnectScreen() }
         composable<WrapRestoreSuccessArgs> { WrapRestoreSuccess() }
+        composable<RestoreSeedArgs> { RestoreSeedScreen() }
+        composable<RestoreBDHeight> { AndroidRestoreBDHeight(it.toRoute()) }
+        composable<RestoreBDDateArgs> { RestoreBDDateScreen(it.toRoute()) }
+        composable<RestoreBDEstimationArgs> { RestoreBDEstimationScreen(it.toRoute()) }
+        dialogComposable<RestoreTorArgs> { RestoreTorScreen(it.toRoute()) }
 
         // ── P2P Chat screens ────────────────────────────────────────────
         composable<ChatHomeArgs> {

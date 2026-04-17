@@ -320,17 +320,8 @@ class ChatViewModel(
     fun updateDisplayName(name: String) {
         val trimmed = name.trim()
         if (trimmed.isBlank()) return
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                sdk.updateDisplayName(trimmed)
-                _identity.value = _identity.value?.copy(displayName = trimmed)
-            } catch (e: Exception) {
-                _errorMessage.value = "Failed to update display name: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
+        // SDK no longer exposes updateDisplayName; update locally only.
+        _identity.value = _identity.value?.copy(displayName = trimmed)
     }
 
     fun deleteIdentity(onDeleted: () -> Unit) {

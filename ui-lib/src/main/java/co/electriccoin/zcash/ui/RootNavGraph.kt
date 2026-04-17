@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import co.electriccoin.zcash.ui.common.compose.LocalActivity
 import co.electriccoin.zcash.ui.common.provider.ApplicationStateProvider
@@ -66,51 +67,33 @@ fun RootNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = OnboardingGraph,
+        startDestination = MainAppGraph,
         modifier = Modifier.fillMaxSize(),
         enterTransition = { enterTransition() },
         exitTransition = { exitTransition() },
         popEnterTransition = { popEnterTransition() },
         popExitTransition = { popExitTransition() }
     ) {
-        this.onboardingNavGraph(
-            activity = activity,
-            navigationRouter = navigationRouter,
-            walletViewModel = walletViewModel
-        )
-
         this.walletNavGraph(
             storageCheckViewModel = storageCheckViewModel,
             navigationRouter = navigationRouter
         )
     }
 
-    LaunchedEffect(secretState, navController) {
-        if (secretState == SecretState.READY &&
-            navController.currentDestination?.parent?.route != MainAppGraph::class.qualifiedName
-        ) {
-            keyboardManager.close()
-            navController.navigate(MainAppGraph) {
-                popUpTo(OnboardingGraph) {
-                    inclusive = true
-                }
-            }
-        } else if (
-            secretState == SecretState.NONE &&
-            navController.currentDestination?.parent?.route != OnboardingGraph::class.qualifiedName
-        ) {
-            keyboardManager.close()
-            navController.navigate(OnboardingGraph) {
-                popUpTo(MainAppGraph) {
-                    inclusive = true
-                }
+    // Pop back to the tabs root when a wallet is created or restored from a deep
+    // restore-flow screen. If we're already at the start destination (e.g. the
+    // user tapped "Create new wallet" from the Wallet tab), backToRoot is a no-op.
+    LaunchedEffect(secretState) {
+        if (secretState == SecretState.READY) {
+            val currentRoute = navController.currentDestination?.route
+            val startRoute = navController.graph.findStartDestination().route
+            if (currentRoute != null && currentRoute != startRoute) {
+                keyboardManager.close()
+                navigationRouter.backToRoot()
             }
         }
     }
 }
-
-@Serializable
-data object OnboardingGraph
 
 @Serializable
 data object MainAppGraph

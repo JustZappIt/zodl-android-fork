@@ -26,9 +26,12 @@ import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,6 +66,8 @@ import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 fun ChatContactsView(
     onStartChat: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onScanQr: ((String) -> Unit) -> Unit = {},
+    showBackButton: Boolean = true,
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel
 ) {
@@ -91,8 +96,10 @@ fun ChatContactsView(
             TopAppBar(
                 title = { Text("Contacts", style = MaterialTheme.typography.headlineSmall) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (showBackButton) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -226,7 +233,8 @@ private fun ContactListItem(
 private fun AddContactSheet(
     existingKeys: Set<String>,
     onDismiss: () -> Unit,
-    onAdd: (publicKey: String, name: String) -> Unit
+    onAdd: (publicKey: String, name: String) -> Unit,
+    onScanQr: ((String) -> Unit) -> Unit = {}
 ) {
     var nameInput by remember { mutableStateOf(TextFieldValue("")) }
     var publicKeyInput by remember { mutableStateOf(TextFieldValue("")) }
@@ -264,10 +272,36 @@ private fun AddContactSheet(
                 onValueChange = { publicKeyInput = it; error = null },
                 label = { Text("Public Key (64 hex chars)") },
                 leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = {
+                        onScanQr { scannedKey ->
+                            publicKeyInput = TextFieldValue(scannedKey)
+                            error = null
+                        }
+                    }) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = MaterialTheme.colorScheme.primary)
+                    }
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
+
+            // Scan QR button
+            OutlinedButton(
+                onClick = {
+                    onScanQr { scannedKey ->
+                        publicKeyInput = TextFieldValue(scannedKey)
+                        error = null
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Scan QR Code")
+            }
 
             if (isValidKey) {
                 Spacer(modifier = Modifier.height(8.dp))

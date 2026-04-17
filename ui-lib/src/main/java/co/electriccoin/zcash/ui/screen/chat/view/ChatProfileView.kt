@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +60,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import co.electriccoin.zcash.ui.design.component.QrState
+import co.electriccoin.zcash.ui.design.component.ZashiQr
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -97,6 +101,7 @@ fun ChatProfileView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -125,8 +130,15 @@ fun ChatProfileView(
                 style = MaterialTheme.typography.headlineSmall
             )
 
-            // Public key card
+            // QR code of public key
             identity?.publicKey?.let { pk ->
+                ZashiQr(
+                    state = QrState(qrData = pk),
+                    modifier = Modifier.fillMaxWidth(),
+                    qrSize = 200.dp
+                )
+
+                // Public key with copy button
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)

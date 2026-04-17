@@ -38,7 +38,6 @@ import co.electriccoin.zcash.ui.screen.home.tor.EnableTorMessageState
 import co.electriccoin.zcash.ui.screen.home.updating.WalletUpdatingInfo
 import co.electriccoin.zcash.ui.screen.home.updating.WalletUpdatingMessageState
 import co.electriccoin.zcash.ui.screen.restoresuccess.WrapRestoreSuccessArgs
-import co.electriccoin.zcash.ui.screen.chat.ChatHomeArgs
 import co.electriccoin.zcash.ui.screen.send.Send
 import co.electriccoin.zcash.ui.screen.tor.optin.TorOptInArgs
 import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
@@ -165,12 +164,6 @@ class HomeVM(
                     icon = R.drawable.ic_home_swap,
                     onClick = ::onSwapButtonClick,
                 ),
-            fifthButton =
-                BigIconButtonState(
-                    text = stringRes("Chat"),
-                    icon = R.drawable.ic_home_chat,
-                    onClick = ::onChatButtonClick,
-                ),
             message = messageState
         )
 
@@ -266,8 +259,6 @@ class HomeVM(
         if (onSwapButtonClick?.isActive == true) return
         onSwapButtonClick = viewModelScope.launch { navigateToSwap() }
     }
-
-    private fun onChatButtonClick() = navigationRouter.forward(ChatHomeArgs)
 
     private fun onSendButtonClick() = navigationRouter.forward(Send())
 
