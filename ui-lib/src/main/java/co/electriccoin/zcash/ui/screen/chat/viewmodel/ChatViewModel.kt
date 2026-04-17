@@ -1,6 +1,7 @@
 package co.electriccoin.zcash.ui.screen.chat.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,12 +14,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import co.electriccoin.zcash.ui.common.usecase.GetZashiAccountUseCase
+import co.electriccoin.zcash.ui.common.usecase.NavigateToScanPublicKeyUseCase
+import co.electriccoin.zcash.ui.screen.chat.media.FileUtils
+import co.electriccoin.zcash.ui.screen.chat.media.ImageProcessor
 import co.electriccoin.zcash.ui.screen.chat.model.ChatContact
 import co.electriccoin.zcash.ui.screen.chat.model.ChatConversation
 import co.electriccoin.zcash.ui.screen.chat.model.ChatIdentity
 import co.electriccoin.zcash.ui.screen.chat.model.ChatMessage
 import co.electriccoin.zcash.ui.screen.chat.model.ConversationType
 import co.electriccoin.zcash.ui.screen.chat.model.MessageStatus
+import org.json.JSONObject
 import xyz.justzappit.zappmessaging.ZappMessagingSDK
 
 /**
@@ -27,7 +33,9 @@ import xyz.justzappit.zappmessaging.ZappMessagingSDK
  */
 class ChatViewModel(
     application: Application,
-    private val sdk: ZappMessagingSDK
+    private val sdk: ZappMessagingSDK,
+    private val navigateToScanPublicKey: NavigateToScanPublicKeyUseCase,
+    private val getZashiAccount: GetZashiAccountUseCase
 ) : AndroidViewModel(application) {
 
     // ── Identity State ──────────────────────────────────────────────────
@@ -75,6 +83,15 @@ class ChatViewModel(
 
     private val _conversationPeerOnline = MutableStateFlow<Boolean?>(null)
     val conversationPeerOnline: StateFlow<Boolean?> = _conversationPeerOnline.asStateFlow()
+
+    private val _connectionDetails = MutableStateFlow<ZappMessagingSDK.ConnectionDetails?>(null)
+    val connectionDetails: StateFlow<ZappMessagingSDK.ConnectionDetails?> = _connectionDetails.asStateFlow()
+
+    // Scan-result bridge: holds the last public key scanned via the QR scanner
+    // destination. Lives in viewModelScope so it survives navigation to/from
+    // the scanner screen; the UI consumes it via LaunchedEffect + consumeScannedKey().
+    private val _scannedPublicKey = MutableStateFlow<String?>(null)
+    val scannedPublicKey: StateFlow<String?> = _scannedPublicKey.asStateFlow()
 
     enum class ConnectionStatus {
         CONNECTED, CONNECTING, DISCONNECTED, ERROR
@@ -553,6 +570,194 @@ class ChatViewModel(
         }
     }
 
+    /** Internal: push a local file over the SDK as a media/file message. */
+    private fun sendMediaMessage(
+        conversationId: String,
+        mediaPath: String,
+        contentType: String,
+        caption: String = "",
+        thumbnailData: String? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                val zmMessage = sdk.sendMediaMessage(
+                    conversationId,
+                    mediaPath,
+                    contentType,
+                    caption,
+                    thumbnailData
+                )
+                val message = ChatMessage.from(zmMessage)
+                if (_currentConversation.value?.id == conversationId) {
+                    _messages.value = _messages.value + message
+                }
+                messagesCache.remove(conversationId)
+                val preview = mediaLastMessagePreview(contentType, caption)
+                _conversations.value = _conversations.value.map {
+                    if (it.id == conversationId) it.copy(
+                        lastMessage = preview,
+                        lastMessageTimestamp = message.timestamp
+                    ) else it
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to send media: ${e.message}"
+            }
+        }
+    }
+
+    fun processAndSendMedia(conversationId: String, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val context = getApplication<Application>()
+                val mimeType = FileUtils.getMimeType(context, uri)
+                val thumbnail = if (mimeType.startsWith("image/")) {
+                    ImageProcessor.generateThumbnail(context, uri)
+                } else null
+                if (mimeType.startsWith("image/")) {
+                    val compressed = ImageProcessor.compressImage(context, uri)
+                        ?: throw IllegalStateException("Image compression failed")
+                    sendMediaMessage(
+                        conversationId,
+                        compressed.absolutePath,
+                        "image/jpeg",
+                        thumbnailData = thumbnail
+                    )
+                } else {
+                    val cached = FileUtils.copyUriToCache(context, uri)
+                        ?: throw IllegalStateException("Failed to cache media")
+                    sendMediaMessage(
+                        conversationId,
+                        cached.absolutePath,
+                        mimeType,
+                        thumbnailData = thumbnail
+                    )
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to process media: ${e.message}"
+            }
+        }
+    }
+
+    fun processAndSendFile(conversationId: String, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val context = getApplication<Application>()
+                val cached = FileUtils.copyUriToCache(context, uri)
+                    ?: throw IllegalStateException("Failed to cache file")
+                val mimeType = FileUtils.getMimeType(context, uri)
+                val fileName = FileUtils.getFileName(context, uri) ?: "File"
+                val thumbnail = if (mimeType.startsWith("image/")) {
+                    ImageProcessor.generateThumbnail(context, uri)
+                } else null
+                sendMediaMessage(
+                    conversationId,
+                    cached.absolutePath,
+                    mimeType,
+                    fileName,
+                    thumbnailData = thumbnail
+                )
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to process file: ${e.message}"
+            }
+        }
+    }
+
+    fun processAndSendCameraCapture(conversationId: String, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val context = getApplication<Application>()
+                val thumbnail = ImageProcessor.generateThumbnail(context, uri)
+                val compressed = ImageProcessor.compressImage(context, uri)
+                    ?: throw IllegalStateException("Image compression failed")
+                sendMediaMessage(
+                    conversationId,
+                    compressed.absolutePath,
+                    "image/jpeg",
+                    thumbnailData = thumbnail
+                )
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to process photo: ${e.message}"
+            }
+        }
+    }
+
+    fun sendLocationMessage(
+        conversationId: String,
+        latitude: Double,
+        longitude: Double,
+        accuracy: Float
+    ) {
+        viewModelScope.launch {
+            try {
+                val content = JSONObject().apply {
+                    put("latitude", latitude)
+                    put("longitude", longitude)
+                    put("accuracy", accuracy.toDouble())
+                }.toString()
+                val zmMessage = sdk.sendMessage(conversationId, content, "application/location")
+                val message = ChatMessage.from(zmMessage)
+                if (_currentConversation.value?.id == conversationId) {
+                    _messages.value = _messages.value + message
+                }
+                messagesCache.remove(conversationId)
+                _conversations.value = _conversations.value.map {
+                    if (it.id == conversationId) it.copy(
+                        lastMessage = "\uD83D\uDCCD Location",
+                        lastMessageTimestamp = message.timestamp
+                    ) else it
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to share location: ${e.message}"
+            }
+        }
+    }
+
+    /** Resolve the user's own unified address and share it into the conversation. */
+    fun shareMyAddress(conversationId: String) {
+        viewModelScope.launch {
+            try {
+                val account = getZashiAccount()
+                val address = account.unified.address.address
+                shareWalletAddressInternal(conversationId, address)
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to get wallet address: ${e.message}"
+            }
+        }
+    }
+
+    private suspend fun shareWalletAddressInternal(conversationId: String, address: String) {
+        try {
+            val zmMessage = sdk.sendMessage(conversationId, address, "application/wallet-address")
+            val message = ChatMessage.from(zmMessage)
+            if (_currentConversation.value?.id == conversationId) {
+                _messages.value = _messages.value + message
+            }
+            messagesCache.remove(conversationId)
+            _conversations.value = _conversations.value.map {
+                if (it.id == conversationId) it.copy(
+                    lastMessage = "\uD83D\uDD17 Address",
+                    lastMessageTimestamp = message.timestamp
+                ) else it
+            }
+        } catch (e: Exception) {
+            _errorMessage.value = "Failed to share wallet address: ${e.message}"
+        }
+    }
+
+    fun shareWalletAddress(conversationId: String, address: String) {
+        viewModelScope.launch { shareWalletAddressInternal(conversationId, address) }
+    }
+
+    private fun mediaLastMessagePreview(contentType: String, caption: String): String {
+        if (caption.isNotBlank()) return caption
+        return when {
+            contentType.startsWith("image/") -> "\uD83D\uDCF7 Photo"
+            contentType.startsWith("video/") -> "\uD83C\uDFA5 Video"
+            contentType.startsWith("audio/") -> "\uD83C\uDFB5 Audio"
+            else -> "\uD83D\uDCC4 File"
+        }
+    }
+
     fun sendMessage(conversationId: String, content: String) {
         viewModelScope.launch {
             try {
@@ -633,6 +838,31 @@ class ChatViewModel(
 
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    /** Fetch detailed connection info from the SDK for diagnostics display. */
+    fun fetchConnectionDetails() {
+        viewModelScope.launch {
+            try {
+                _connectionDetails.value = sdk.getConnectionDetails()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to fetch connection details: ${e.message}")
+            }
+        }
+    }
+
+    // ── Scan bridge ─────────────────────────────────────────────────────
+
+    fun scanPublicKey() {
+        viewModelScope.launch {
+            navigateToScanPublicKey()?.let { key ->
+                _scannedPublicKey.value = key
+            }
+        }
+    }
+
+    fun consumeScannedKey() {
+        _scannedPublicKey.value = null
     }
 
     private fun autoAddUnknownSender(senderId: String, senderName: String?) {

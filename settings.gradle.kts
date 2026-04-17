@@ -280,6 +280,8 @@ dependencyResolutionManagement {
             library("ktor-negotiation", "io.ktor" ,"ktor-client-content-negotiation").withoutVersion()
             library("ktor-json", "io.ktor" ,"ktor-serialization-kotlinx-json").withoutVersion()
             library("ktor-logging", "io.ktor" ,"ktor-client-logging").withoutVersion()
+            library("coil-compose", "io.coil-kt:coil-compose:2.6.0")
+            library("play-services-location", "com.google.android.gms:play-services-location:21.3.0")
 
             // Test libraries
             library("androidx-compose-test-junit", "androidx.compose.ui:ui-test-junit4:$androidxComposeVersion")

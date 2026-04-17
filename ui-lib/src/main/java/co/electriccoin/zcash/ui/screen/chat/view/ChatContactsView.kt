@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,16 +67,25 @@ import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 fun ChatContactsView(
     onStartChat: (String) -> Unit,
     onNavigateBack: () -> Unit,
-    onScanQr: ((String) -> Unit) -> Unit = {},
     showBackButton: Boolean = true,
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel
 ) {
     val contacts by viewModel.contacts.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
+    val scannedPublicKey by viewModel.scannedPublicKey.collectAsState()
+    var showAddDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadContacts()
+    }
+
+    // Reopen the sheet automatically after a scan completes — the scanner
+    // screen disposes this composition, so the sheet has to be re-summoned
+    // once we're back.
+    LaunchedEffect(scannedPublicKey) {
+        if (scannedPublicKey != null) {
+            showAddDialog = true
+        }
     }
 
     Scaffold(
@@ -165,9 +175,13 @@ fun ChatContactsView(
     if (showAddDialog) {
         AddContactSheet(
             existingKeys = contacts.map { it.publicKey }.toSet(),
+            scannedPublicKey = scannedPublicKey,
+            onScanQr = { viewModel.scanPublicKey() },
+            onConsumeScannedKey = { viewModel.consumeScannedKey() },
             onDismiss = { showAddDialog = false },
             onAdd = { publicKey, name ->
                 viewModel.addContact(publicKey, name)
+                viewModel.consumeScannedKey()
                 showAddDialog = false
             }
         )
@@ -232,13 +246,25 @@ private fun ContactListItem(
 @Composable
 private fun AddContactSheet(
     existingKeys: Set<String>,
+    scannedPublicKey: String?,
+    onScanQr: () -> Unit,
+    onConsumeScannedKey: () -> Unit,
     onDismiss: () -> Unit,
     onAdd: (publicKey: String, name: String) -> Unit,
-    onScanQr: ((String) -> Unit) -> Unit = {}
 ) {
     var nameInput by remember { mutableStateOf(TextFieldValue("")) }
     var publicKeyInput by remember { mutableStateOf(TextFieldValue("")) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    // When a scan result arrives via the VM, populate the input and consume it
+    // so re-opening the sheet later doesn't pre-fill stale data.
+    LaunchedEffect(scannedPublicKey) {
+        scannedPublicKey?.let { key ->
+            publicKeyInput = TextFieldValue(key)
+            error = null
+            onConsumeScannedKey()
+        }
+    }
 
     val cleanedKey = publicKeyInput.text.trim().removePrefix("0x")
     val isValidKey = cleanedKey.length == 64
@@ -273,12 +299,7 @@ private fun AddContactSheet(
                 label = { Text("Public Key (64 hex chars)") },
                 leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
                 trailingIcon = {
-                    IconButton(onClick = {
-                        onScanQr { scannedKey ->
-                            publicKeyInput = TextFieldValue(scannedKey)
-                            error = null
-                        }
-                    }) {
+                    IconButton(onClick = onScanQr) {
                         Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
@@ -289,12 +310,7 @@ private fun AddContactSheet(
 
             // Scan QR button
             OutlinedButton(
-                onClick = {
-                    onScanQr { scannedKey ->
-                        publicKeyInput = TextFieldValue(scannedKey)
-                        error = null
-                    }
-                },
+                onClick = onScanQr,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

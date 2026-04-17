@@ -40,6 +40,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,31 +70,17 @@ fun ChatListView(
 ) {
     val conversations by viewModel.conversations.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState()
+    val peerCount by viewModel.peerCount.collectAsState()
+    val dhtHealth by viewModel.dhtHealth.collectAsState()
+    val connectionDetails by viewModel.connectionDetails.collectAsState()
+    var showNetworkSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text("Chats", style = MaterialTheme.typography.headlineSmall)
-                        val statusText = when (connectionStatus) {
-                            ChatViewModel.ConnectionStatus.CONNECTED -> "Connected"
-                            ChatViewModel.ConnectionStatus.CONNECTING -> "Connecting..."
-                            ChatViewModel.ConnectionStatus.DISCONNECTED -> "Offline"
-                            ChatViewModel.ConnectionStatus.ERROR -> "Connection error"
-                        }
-                        val statusColor = when (connectionStatus) {
-                            ChatViewModel.ConnectionStatus.CONNECTED -> MaterialTheme.colorScheme.primary
-                            ChatViewModel.ConnectionStatus.CONNECTING -> MaterialTheme.colorScheme.tertiary
-                            else -> MaterialTheme.colorScheme.error
-                        }
-                        Text(
-                            text = statusText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = statusColor
-                        )
-                    }
+                    Text("Chats", style = MaterialTheme.typography.headlineSmall)
                 },
                 navigationIcon = {
                     if (showBackButton) {
@@ -101,6 +90,16 @@ fun ChatListView(
                     }
                 },
                 actions = {
+                    ConnectionPill(
+                        connectionStatus = connectionStatus,
+                        peerCount = peerCount,
+                        dhtHealth = dhtHealth,
+                        onClick = {
+                            viewModel.fetchConnectionDetails()
+                            showNetworkSheet = true
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     IconButton(onClick = onNavigateToContacts) {
                         Icon(Icons.Default.Contacts, contentDescription = "Contacts", tint = MaterialTheme.colorScheme.onSurface)
                     }
@@ -175,6 +174,16 @@ fun ChatListView(
                 }
             }
         }
+    }
+
+    if (showNetworkSheet) {
+        NetworkDetailsSheet(
+            connectionStatus = connectionStatus,
+            peerCount = peerCount,
+            dhtHealth = dhtHealth,
+            connectionDetails = connectionDetails,
+            onDismiss = { showNetworkSheet = false }
+        )
     }
 }
 

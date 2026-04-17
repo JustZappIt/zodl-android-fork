@@ -51,6 +51,7 @@ import co.electriccoin.zcash.ui.screen.resync.confirm.ConfirmResyncVM
 import co.electriccoin.zcash.ui.screen.resync.date.ResyncBDDateVM
 import co.electriccoin.zcash.ui.screen.resync.estimation.ResyncBDEstimationVM
 import co.electriccoin.zcash.ui.screen.reviewtransaction.ReviewTransactionVM
+import co.electriccoin.zcash.ui.screen.chat.scan.ChatScanPublicKeyVM
 import co.electriccoin.zcash.ui.screen.scan.ScanGenericAddressVM
 import co.electriccoin.zcash.ui.screen.scan.ScanZashiAddressVM
 import co.electriccoin.zcash.ui.screen.scan.thirdparty.ThirdPartyScanViewModel
@@ -154,6 +155,7 @@ val viewModelModule =
         viewModelOf(::PayVM)
         viewModelOf(::SwapQuoteVM)
         viewModelOf(::ScanGenericAddressVM)
+        viewModelOf(::ChatScanPublicKeyVM)
         viewModelOf(::SelectSwapABRecipientVM)
         viewModelOf(::SwapBlockchainPickerVM)
         viewModelOf(::AddZashiABContactVM)

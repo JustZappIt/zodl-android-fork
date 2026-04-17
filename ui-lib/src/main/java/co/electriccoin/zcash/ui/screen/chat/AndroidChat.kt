@@ -9,6 +9,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import co.electriccoin.zcash.ui.NavigationRouter
+import co.electriccoin.zcash.ui.common.usecase.PrefillSendUseCase
 import co.electriccoin.zcash.ui.screen.chat.view.ChatContactsView
 import co.electriccoin.zcash.ui.screen.chat.view.ChatIdentitySetupView
 import co.electriccoin.zcash.ui.screen.chat.view.ChatListView
@@ -18,8 +20,10 @@ import co.electriccoin.zcash.ui.screen.chat.view.ChatSettingsView
 import co.electriccoin.zcash.ui.screen.chat.view.ContactEditView
 import co.electriccoin.zcash.ui.screen.chat.view.NewConversationView
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
+import co.electriccoin.zcash.ui.screen.send.Send
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 // ── Navigation route args ───────────────────────────────────────────────
 
@@ -95,10 +99,29 @@ fun AndroidChatRoom(
     onNavigateBack: () -> Unit
 ) {
     val viewModel: ChatViewModel = koinViewModel()
+    val navigationRouter = koinInject<NavigationRouter>()
+    val prefillSend = koinInject<PrefillSendUseCase>()
+    val contacts by viewModel.contacts.collectAsState()
+    val currentConversation by viewModel.currentConversation.collectAsState()
 
     ChatRoomView(
         conversationId = conversationId,
         onNavigateBack = onNavigateBack,
+        onSendZec = {
+            // Prefill the Send screen with the peer's wallet address if we have
+            // it from a prior share; otherwise just open Send blank.
+            val peerKey = currentConversation?.participantIds?.firstOrNull()
+            val peerWalletAddress = peerKey
+                ?.let { key -> contacts.firstOrNull { it.publicKey == key }?.walletAddress }
+            if (peerWalletAddress != null) {
+                prefillSend.request(
+                    co.electriccoin.zcash.ui.common.usecase.PrefillSendData.FromAddressScan(
+                        address = peerWalletAddress
+                    )
+                )
+            }
+            navigationRouter.forward(Send(recipientAddress = peerWalletAddress))
+        },
         viewModel = viewModel
     )
 }
@@ -121,7 +144,6 @@ fun AndroidNewConversation(
 fun AndroidChatContacts(
     onStartChat: (String) -> Unit,
     onNavigateBack: () -> Unit,
-    onScanQr: ((String) -> Unit) -> Unit = {}
 ) {
     val viewModel: ChatViewModel = koinViewModel()
 
@@ -132,7 +154,6 @@ fun AndroidChatContacts(
             }
         },
         onNavigateBack = onNavigateBack,
-        onScanQr = onScanQr,
         viewModel = viewModel
     )
 }

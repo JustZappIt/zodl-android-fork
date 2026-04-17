@@ -190,6 +190,8 @@ import co.electriccoin.zcash.ui.screen.chat.AndroidChatProfile
 import co.electriccoin.zcash.ui.screen.chat.AndroidChatSettings
 import co.electriccoin.zcash.ui.screen.chat.AndroidContactEdit
 import co.electriccoin.zcash.ui.screen.chat.ChatContactsArgs
+import co.electriccoin.zcash.ui.screen.chat.scan.ChatScanPublicKeyArgs
+import co.electriccoin.zcash.ui.screen.chat.scan.ChatScanPublicKeyScreen
 import co.electriccoin.zcash.ui.screen.chat.ChatHomeArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatRoomArgs
@@ -390,6 +392,9 @@ fun NavGraphBuilder.walletNavGraph(
                 publicKey = args.publicKey,
                 onNavigateBack = { navigationRouter.back() }
             )
+        }
+        composable<ChatScanPublicKeyArgs> { backStackEntry ->
+            ChatScanPublicKeyScreen(args = backStackEntry.toRoute())
         }
     }
 }

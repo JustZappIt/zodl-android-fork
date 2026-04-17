@@ -23,7 +23,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +43,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +57,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import android.content.ClipboardManager
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import co.electriccoin.zcash.ui.screen.chat.model.ChatContact
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 
@@ -72,11 +78,24 @@ fun NewConversationView(
 ) {
     val contacts by viewModel.contacts.collectAsState()
     val identity by viewModel.identity.collectAsState()
+    val scannedPublicKey by viewModel.scannedPublicKey.collectAsState()
 
     var searchInput by remember { mutableStateOf(TextFieldValue("")) }
     var groupNameInput by remember { mutableStateOf(TextFieldValue("")) }
     var selectedParticipants by remember { mutableStateOf<List<SelectedParticipant>>(emptyList()) }
     var isCreating by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    // QR scan runs on the ViewModel's scope so it survives this screen being
+    // removed from composition while the scanner is open. When the result
+    // lands, drop it into the search field and clear the VM state.
+    LaunchedEffect(scannedPublicKey) {
+        scannedPublicKey?.let { key ->
+            searchInput = TextFieldValue(key)
+            viewModel.consumeScannedKey()
+        }
+    }
 
     val searchText = searchInput.text.trim()
     val cleanedSearch = searchText.removePrefix("0x")
@@ -169,6 +188,27 @@ fun NewConversationView(
                     unfocusedIndicatorColor = Color.Transparent
                 )
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Quick actions: scan + paste
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QuickActionChip(
+                    icon = Icons.Default.QrCodeScanner,
+                    label = "Scan QR"
+                ) {
+                    viewModel.scanPublicKey()
+                }
+                QuickActionChip(
+                    icon = Icons.Default.ContentPaste,
+                    label = "Paste"
+                ) {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.primaryClip?.getItemAt(0)?.text?.let { text ->
+                        searchInput = TextFieldValue(text.toString().trim())
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -335,6 +375,33 @@ fun NewConversationView(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionChip(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(label, style = MaterialTheme.typography.labelMedium)
         }
     }
 }

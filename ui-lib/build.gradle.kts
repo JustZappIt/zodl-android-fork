@@ -175,6 +175,8 @@ dependencies {
     implementation(libs.androidx.browser)
     implementation(libs.bundles.androidx.camera)
     implementation(libs.bundles.androidx.compose.core)
+    implementation(libs.coil.compose)
+    implementation(libs.play.services.location)
     implementation(libs.bundles.androidx.compose.extended)
     api(libs.bundles.koin)
     implementation(libs.kotlin.stdlib)
