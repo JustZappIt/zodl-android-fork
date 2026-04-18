@@ -30,6 +30,7 @@ import co.electriccoin.zcash.ui.common.usecase.GetABContactByIdUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetABContactsUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetABSwapContactsUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetActivitiesUseCase
+import co.electriccoin.zcash.ui.common.usecase.GetBalanceHistoryUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetConfigurationUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetExchangeRateUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetFilteredActivitiesUseCase
@@ -267,6 +268,7 @@ val useCaseModule =
         factoryOf(::GetORSwapQuoteUseCase)
         factoryOf(::ShareQRUseCase)
         factoryOf(::GetActivitiesUseCase)
+        factoryOf(::GetBalanceHistoryUseCase)
         factoryOf(::GetResyncDataFromHeightUseCase)
         factoryOf(::NavigateToExportPrivateDataUseCase)
         factoryOf(::NavigateToResetWalletUseCase)

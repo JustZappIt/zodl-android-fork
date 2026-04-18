@@ -41,6 +41,9 @@ import co.electriccoin.zcash.ui.fixture.BalanceStateFixture
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidget
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetState
+import co.electriccoin.zcash.ui.screen.home.balancechart.BalanceChartState
+import co.electriccoin.zcash.ui.screen.home.balancechart.BalanceChartWidgetStateFixture
+import co.electriccoin.zcash.ui.screen.home.balancechart.balanceChartWidget
 import co.electriccoin.zcash.ui.screen.home.error.WalletErrorMessageState
 import co.electriccoin.zcash.ui.screen.transactionhistory.widget.ActivityWidgetState
 import co.electriccoin.zcash.ui.screen.transactionhistory.widget.ActivityWidgetStateFixture
@@ -50,6 +53,7 @@ import co.electriccoin.zcash.ui.screen.transactionhistory.widget.createActivityW
 internal fun HomeView(
     appBarState: ZashiMainTopAppBarState?,
     balanceWidgetState: BalanceWidgetState,
+    balanceChartState: BalanceChartState,
     transactionWidgetState: ActivityWidgetState,
     state: HomeState
 ) {
@@ -61,6 +65,7 @@ internal fun HomeView(
             paddingValues = paddingValues,
             activityWidgetState = transactionWidgetState,
             balanceWidgetState = balanceWidgetState,
+            balanceChartState = balanceChartState,
             state = state
         )
     }
@@ -71,6 +76,7 @@ private fun Content(
     activityWidgetState: ActivityWidgetState,
     paddingValues: PaddingValues,
     balanceWidgetState: BalanceWidgetState,
+    balanceChartState: BalanceChartState,
     state: HomeState,
     modifier: Modifier = Modifier,
 ) {
@@ -114,6 +120,10 @@ private fun Content(
                             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
                     contentPadding = PaddingValues(top = 24.dp)
                 ) {
+                    balanceChartWidget(
+                        state = balanceChartState,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                    )
                     createActivityWidgets(
                         state = activityWidgetState
                     )
@@ -227,6 +237,7 @@ private fun Preview() {
         HomeView(
             appBarState = ZashiMainTopAppBarStateFixture.new(),
             balanceWidgetState = BalanceStateFixture.new(),
+            balanceChartState = BalanceChartWidgetStateFixture.data(),
             transactionWidgetState = ActivityWidgetStateFixture.new(),
             state =
                 HomeState(

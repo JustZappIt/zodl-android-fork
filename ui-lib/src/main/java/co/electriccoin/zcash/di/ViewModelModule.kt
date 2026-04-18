@@ -12,6 +12,7 @@ import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsVM
 import co.electriccoin.zcash.ui.screen.advancedsettings.debug.DebugVM
 import co.electriccoin.zcash.ui.screen.advancedsettings.debug.db.DebugDBVM
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetVM
+import co.electriccoin.zcash.ui.screen.home.balancechart.BalanceChartVM
 import co.electriccoin.zcash.ui.screen.balances.spendable.SpendableBalanceVM
 import co.electriccoin.zcash.ui.screen.chooseserver.ChooseServerVM
 import co.electriccoin.zcash.ui.screen.contact.AddGenericABContactVM
@@ -129,6 +130,7 @@ val viewModelModule =
         viewModelOf(::TaxExportViewModel)
         viewModelOf(::CrashReportingViewModel)
         viewModelOf(::BalanceWidgetVM)
+        viewModelOf(::BalanceChartVM)
         viewModelOf(::HomeVM)
         viewModelOf(::RestoreBDHeightVM)
         viewModelOf(::RestoreBDDateVM)

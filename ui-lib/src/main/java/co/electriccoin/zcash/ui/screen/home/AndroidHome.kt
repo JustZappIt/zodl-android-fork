@@ -9,6 +9,7 @@ import co.electriccoin.zcash.di.koinActivityViewModel
 import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarVM
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetArgs
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetVM
+import co.electriccoin.zcash.ui.screen.home.balancechart.BalanceChartVM
 import co.electriccoin.zcash.ui.screen.transactionhistory.widget.ActivityWidgetVM
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
@@ -29,16 +30,19 @@ internal fun AndroidHome() {
         }
     val homeVM = koinViewModel<HomeVM>()
     val activityWidgetVM = koinViewModel<ActivityWidgetVM>()
+    val balanceChartVM = koinViewModel<BalanceChartVM>()
     val appBarState by topAppBarVM.state.collectAsStateWithLifecycle()
     val balanceState by balanceWidgetVM.state.collectAsStateWithLifecycle()
     val state by homeVM.state.collectAsStateWithLifecycle()
     homeVM.uiLifecyclePipeline.collectAsStateWithLifecycle()
     val transactionWidgetState by activityWidgetVM.state.collectAsStateWithLifecycle()
+    val balanceChartState by balanceChartVM.state.collectAsStateWithLifecycle()
 
     state?.let {
         HomeView(
             appBarState = appBarState,
             balanceWidgetState = balanceState,
+            balanceChartState = balanceChartState,
             state = it,
             transactionWidgetState = transactionWidgetState
         )

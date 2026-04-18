@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="home_balance_chart_title">Balance history</string>
+    <string name="home_balance_chart_period_24h">24h</string>
+    <string name="home_balance_chart_period_1w">1w</string>
+    <string name="home_balance_chart_period_1m">1m</string>
+    <string name="home_balance_chart_period_all">All</string>
+    <string name="home_balance_chart_footer" formatted="true">Balance: <xliff:g example="1.2345" id="amount">%1$s</xliff:g> ZEC</string>
+    <string name="home_balance_chart_empty">Not enough activity yet for this range.</string>
+
     <string name="home_button_receive">Receive</string>
     <string name="home_button_send">Send</string>
     <string name="home_button_scan">Scan</string>
