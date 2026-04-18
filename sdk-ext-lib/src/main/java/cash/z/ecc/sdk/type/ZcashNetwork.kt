@@ -6,25 +6,12 @@ import android.content.Context
 import cash.z.ecc.android.sdk.model.ZcashNetwork
 import cash.z.ecc.sdk.ext.R
 
-/*
- * Note: If we end up having trouble with this implementation in the future, especially with the rollout
- * of disabling transitive resources, we do have alternative implementations.
- *
- * Probably the most straightforward and high performance would be to implement an interface, have
- * the Application class implement the interface, and allow this to cast the Application object to
- * get the value.  If the Application does not implement the interface, then the Mainnet can be the
- * default.
- *
- * Alternatives include
- *  - Adding build variants to sdk-ext-lib, ui-lib, and app which gets complex.  The current approach
- *    or the approach outlined above only requires build variants on the app module.
- *  - Using a ContentProvider for dynamic injection, where the URI is defined
- *  - Using AndroidManifest metadata for dynamic injection
- */
-
 /**
- * @return Zcash network determined from resources.  A resource overlay of [R.bool.zcash_is_testnet]
- * can be used for different build variants to change the network type.
+ * @return Zcash network determined from [R.bool.zcash_is_testnet]. The `app` module generates
+ * this resource from its `network` product flavor (see `app/build.gradle.kts`), so the
+ * runtime network and `BuildConfig.FLAVOR_network` are always in lockstep. When a library
+ * module is exercised in isolation (e.g. `sdk-ext-lib` androidTest) the default from
+ * `sdk-ext-lib/src/main/res/values/bools.xml` applies and resolves to Mainnet.
  */
 fun ZcashNetwork.Companion.fromResources(context: Context) =
     if (context.resources.getBoolean(R.bool.zcash_is_testnet)) {

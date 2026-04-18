@@ -160,6 +160,31 @@ play:
 
 To confirm any of these on your machine: `./gradlew :ui-lib:dependencies --configuration zcashmainnetStoreDebugRuntimeClasspath`.
 
+## Building for Testnet
+
+The app supports both Zcash Mainnet and Testnet. Network is selected at build time via
+the `network` product flavor (`zcashmainnet` / `zcashtestnet`) and the two apps can be
+installed side-by-side — testnet builds get a `.testnet` application-ID suffix.
+
+Pick a variant directly:
+
+```sh
+./gradlew :app:assembleZcashtestnetStoreDebug
+```
+
+Or use the `ZCASH_NETWORK` switch in `gradle.properties` (or `-P` / env var) so the
+short task names resolve to a single network:
+
+```sh
+# build a testnet debug app — no need to spell out the full variant name
+./gradlew -PZCASH_NETWORK=testnet :app:assembleDebug
+```
+
+Valid values are `mainnet`, `testnet`, or blank (keep both). The selection is the single
+source of truth for both `BuildConfig.FLAVOR_network` and the runtime `R.bool.zcash_is_testnet`
+resource — they can't drift. Testnet builds connect to `testnet.zec.rocks:443` by default
+(see `ui-lib/.../LightWalletEndpointProvider.kt`).
+
 ## One-shot sanity-check build
 
 A clean build from a fresh checkout should succeed with:

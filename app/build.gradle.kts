@@ -259,6 +259,28 @@ dependencies {
 }
 
 androidComponents {
+    // Optional single-network build switch. When `ZCASH_NETWORK` is set to `mainnet`
+    // or `testnet` (via gradle.properties, `-P`, or `ORG_GRADLE_PROJECT_ZCASH_NETWORK`
+    // env var), variants for the other network are disabled — so `./gradlew
+    // :app:assembleDebug` resolves to a single buildable variant. When blank (the
+    // default), both networks remain enabled for CI and side-by-side installs.
+    beforeVariants { variantBuilder ->
+        val requested = project.findProperty("ZCASH_NETWORK")?.toString()?.trim()?.lowercase()
+        if (!requested.isNullOrEmpty()) {
+            val expected = when (requested) {
+                "mainnet" -> NetworkDimension.MAINNET.value
+                "testnet" -> NetworkDimension.TESTNET.value
+                else -> error("ZCASH_NETWORK must be 'mainnet', 'testnet', or empty (got '$requested')")
+            }
+            val flavor = variantBuilder.productFlavors
+                .firstOrNull { (dim, _) -> dim == NetworkDimension.DIMENSION_NAME }
+                ?.second
+            if (flavor != null && flavor != expected) {
+                variantBuilder.enable = false
+            }
+        }
+    }
+
     onVariants { variant ->
         for (output in variant.outputs) {
             // Configure strict mode in runtime
@@ -275,6 +297,17 @@ androidComponents {
                 // Key matches the one in crash-android-lib/src/res/values/bools.xml
                 variant.makeResValueKey("bool", "co_electriccoin_zcash_crash_is_firebase_enabled"),
                 ResValue(value = hasFirebaseApiKeys.toString())
+            )
+
+            // Single source of truth for the Zcash network: derived from the network
+            // product flavor and emitted as `R.bool.zcash_is_testnet`, overriding the
+            // default declared in `sdk-ext-lib/src/main/res/values/bools.xml`. Keeps
+            // `BuildConfig.FLAVOR_network` and runtime network resolution in lockstep.
+            val isTestnetFlavor = variant.productFlavors
+                .any { (dim, value) -> dim == NetworkDimension.DIMENSION_NAME && value == NetworkDimension.TESTNET.value }
+            variant.resValues.put(
+                variant.makeResValueKey("bool", "zcash_is_testnet"),
+                ResValue(value = isTestnetFlavor.toString())
             )
 
             val defaultVersionName = project.property("ZCASH_VERSION_NAME").toString()
