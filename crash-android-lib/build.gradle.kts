@@ -62,10 +62,9 @@ dependencies {
 
     api(libs.bundles.koin)
 
-    "storeImplementation"(platform(libs.firebase.bom))
-    "storeImplementation"(libs.firebase.crashlytics)
-    "storeImplementation"(libs.firebase.crashlytics.ndk)
-    "storeImplementation"(libs.firebase.installations)
+    // Zapp fork: Firebase Crashlytics removed; store variants use local-only crash reporting.
+    // To re-enable Crashlytics, restore the storeImplementation firebase deps here
+    // and update ListCrashReportersImpl in each store variant source set.
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.datetime)

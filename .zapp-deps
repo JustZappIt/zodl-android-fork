@@ -1,0 +1,12 @@
+# Zapp sibling repository dependency lockfile.
+# CI verifies that the checked-out zappMessaging SHA matches before building.
+# Update when intentionally bumping a sibling dependency.
+
+# GitHub: https://github.com/JustZappIt/zappMessaging
+zappMessaging=d7f5460c50d8eb5f7f32018760412bf182d94d02
+
+# bare-kit is a direct clone of holepunchto/bare-kit v2.0.0 with no Zapp modifications.
+# GitHub: https://github.com/holepunchto/bare-kit
+# The local ../bare-kit/ directory has no git history; CI checks out the pinned commit.
+# Update both this SHA and the workflow ref when upgrading bare-kit.
+bare-kit=15a3569f3d704de7151761051c8d9cc2e299414f

@@ -1,47 +1,38 @@
-# Zodl Android Wallet
+# Zapp Android Wallet
 
-This is the official home of the Zodl Zcash wallet for Android, a no-frills
-Zcash mobile wallet leveraging the [Zcash Android SDK](https://github.com/zcash/zcash-android-wallet-sdk).
+Zapp is a privacy-focused Android wallet forked from [Zodl](https://github.com/zodl-inc/zodl-android)
+(v3.3.1, tag `upstream/zodl-3.3.1`), itself a fork of Electric Coin Company's
+[Zashi](https://github.com/Electric-Coin-Company/zashi-android). On top of the
+upstream Zcash wallet it adds:
 
-# Download
+- ZappMessaging — end-to-end encrypted P2P chat over Hyperswarm
+- 4-tab navigation shell (Wallet · Chats · Contacts · Settings)
+- Balance history chart on the Wallet home
+- Testnet toggle consolidated into the build flavor
+- Zapp rebrand (`ZappPalette`, app name, version 4.x)
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/co.electriccoin.zcash.foss/)
-[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
-     alt="Get it on Google Play"
-     height="80">](https://play.google.com/store/apps/details?id=co.electriccoin.zcash)
-
-Or download the latest APK from the [Releases Section](https://github.com/zodl-inc/zashi-android/releases/latest).
-
-# Zodl Discord
-
-Join the Zodl community on Discord to report bugs, share ideas, request new
-features, and help shape Zodl's journey!
-
-https://discord.gg/jQPU7aXe7A
+See [`ZAPP_CHANGES.md`](ZAPP_CHANGES.md) for the full patch series and
+[`ZAPP_CHANGES.md#merge-procedure`](ZAPP_CHANGES.md#merge-procedure) for how
+to pull in future Zodl upstream releases.
 
 # Reporting an issue
 
-If you'd like to report a technical issue or feature request for the Android
-Wallet, please file a GitHub issue [here](https://github.com/zodl-inc/zodl-android/issues/new/choose).
+File a GitHub issue in this repository for Zapp-specific bugs.
 
-For feature requests and issues related to the Zodl user interface that are
-not Android-specific, please file a GitHub issue [here](https://github.com/zodl-inc/zodl-project/issues/new/choose).
-
-If you wish to report a security issue, please follow our
-[Responsible Disclosure guidelines](https://github.com/zodl-inc/zodl-project/blob/master/responsible_disclosure.md).
-See the [Wallet App Threat Model](https://github.com/zodl-inc/zodl-project/blob/master/wallet_threat_model.md)
-for more information about the security and privacy limitations of the wallet.
-
-General Zcash questions and/or support requests and are best directed to either:
+For upstream Zcash/Zodl issues, please use:
+ * [Zodl issues](https://github.com/zodl-inc/zodl-android/issues/new/choose)
  * [Zcash Forum](https://forum.zcashcommunity.com/)
- * [Discord Community](https://discord.io/zcash-community)
+
+If you wish to report a security issue, please follow the upstream
+[Responsible Disclosure guidelines](https://github.com/zodl-inc/zodl-project/blob/master/responsible_disclosure.md).
 
 # Contributing
 
 Contributions are very much welcomed!  Please read our 
 [Contributing Guidelines](docs/CONTRIBUTING.md) to learn about our process.
+
+Branch naming: `zapp/feature/<name>`, `zapp/fix/<name>`, `chore/<description>`.
+All PRs target `zapp/develop`; `main` is always-shippable.
 
 # Getting Started
 
@@ -66,7 +57,7 @@ known to build this branch cleanly.
 
 | Tool | Version | How it's selected |
 | --- | --- | --- |
-| JDK | **17.0.16 (Azul Zulu, aarch64)** — any OpenJDK 17 LTS build works (Temurin is a good alternative) | Gradle uses a **toolchain of JDK 17** (`JVM_TOOLCHAIN=17` in `gradle.properties`), so Gradle will auto-provision a matching JDK if one isn't on `PATH`. `JAVA_HOME` on the host should still point at a JDK 17 install for command-line `./gradlew` to work on first launch. |
+| JDK | **17** — any OpenJDK 17 LTS build works (Temurin and Azul Zulu are both verified) | `gradle/daemon-jvm.properties` pins the Gradle daemon to JDK 17 automatically; Gradle will auto-provision one if not present. Point `JAVA_HOME` at a JDK 17 install for first-launch `./gradlew` commands on machines where auto-provisioning hasn't run yet. JDK 18+ causes a Kotlin compiler parse error on startup — if you see `IllegalArgumentException: <number>`, your `JAVA_HOME` is wrong. |
 | Android JVM target | **1.8** (`ANDROID_JVM_TARGET=1.8`) | Android doesn't support bytecode targets beyond Java 8; don't change this. |
 
 If you see `Failed to read key AndroidDebugKey from store ...debug.keystore` or
@@ -121,12 +112,16 @@ If the directory layout differs, Gradle fails with a "project directory does
 not exist" error before any Kotlin compilation happens. Clone both:
 
 ```sh
-git clone https://github.com/JustZappIt/bare-kit.git       ../bare-kit
+# P2P messaging SDK (JustZappIt org)
 git clone https://github.com/JustZappIt/zappMessaging.git  ../zappMessaging
+
+# Native P2P transport — upstream Holepunch library, used unmodified
+# Pin to the same commit recorded in .zapp-deps (currently v2.0.0)
+git clone --branch v2.0.0 https://github.com/holepunchto/bare-kit.git ../bare-kit
 ```
 
-(Repo URLs may differ depending on your fork; confirm with the team before
-cloning public mirrors.)
+Pinned commit SHAs for both siblings are in [`.zapp-deps`](.zapp-deps).
+CI verifies the checked-out SHAs match before building.
 
 ## Key runtime libraries
 
@@ -194,11 +189,14 @@ A clean build from a fresh checkout should succeed with:
 ```
 
 If this fails, verify in order:
-1. `java -version` prints a `17.x` JDK.
-2. `./gradlew --version` prints `Gradle 8.14.4` and `Launcher JVM: 17.x`.
-3. `$ANDROID_HOME/ndk/27.0.12077973` exists.
-4. `../bare-kit` and `../zappMessaging` exist as siblings to `zodl-android`.
-5. `gradle.properties` has not been locally modified.
+1. `./gradlew --version` prints `Gradle 8.14.4` and `Launcher JVM: 17.x`.
+   (`gradle/daemon-jvm.properties` should select JDK 17 automatically; if it
+   shows a higher JDK, set `JAVA_HOME` to a JDK 17 install and stop the daemon
+   with `./gradlew --stop` before retrying.)
+2. `$ANDROID_HOME/ndk/27.0.12077973` exists.
+3. `../bare-kit` (holepunchto/bare-kit v2.0.0) and `../zappMessaging` exist as
+   siblings. Check `.zapp-deps` for the expected commit SHAs.
+4. `gradle.properties` has not been locally modified.
 
 # Forking
 

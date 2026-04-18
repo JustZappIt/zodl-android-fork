@@ -76,6 +76,9 @@ import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 import co.electriccoin.zcash.ui.screen.chooseserver.ChooseServerArgs
+import co.electriccoin.zcash.ui.screen.swap.SwapArgs
+import co.electriccoin.zcash.ui.screen.taxexport.TaxExport
+import co.electriccoin.zcash.ui.screen.tor.optin.TorOptInArgs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -293,6 +296,30 @@ fun SettingsTabContent(
                     title = "About Zapp",
                     icon = Icons.Default.Info,
                     onClick = { navigationRouter.forward(AboutArgs) }
+                )
+            }
+
+            SettingsCard {
+                SettingsSectionTitle("More / Advanced")
+                SettingsRow(
+                    title = "Swap",
+                    subtitle = "Exchange ZEC for other assets via Flexa",
+                    icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    onClick = { navigationRouter.forward(SwapArgs) }
+                )
+                SettingsDivider()
+                SettingsRow(
+                    title = "Tor / Privacy",
+                    subtitle = "Route traffic through the Tor network",
+                    icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    onClick = { navigationRouter.forward(TorOptInArgs) }
+                )
+                SettingsDivider()
+                SettingsRow(
+                    title = "Tax Export",
+                    subtitle = "Export transaction history for tax reporting",
+                    icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    onClick = { navigationRouter.forward(TaxExport) }
                 )
             }
 

@@ -461,6 +461,68 @@ jobs:
         run: |
           ./gradlew :app:runFlankSanityConfigDebug
 
+  verify_composite_build:
+    # Verifies that the composite build (zodl-android-fork + zappMessaging + bare-kit)
+    # compiles cleanly.  Requires sibling repos to be checked out at the paths
+    # referenced in settings.gradle.kts (../zappMessaging/android and ../bare-kit/android).
+    # Fill in the 'repository:' fields below with the actual GitHub org/repo slugs.
+    needs: [validate_gradle_wrapper]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout zodl-android-fork
+        timeout-minutes: 1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          path: zodl-android-fork
+          fetch-depth: 0
+      - name: Checkout zappMessaging
+        timeout-minutes: 1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          repository: JustZappIt/zappMessaging
+          path: zappMessaging
+      - name: Checkout bare-kit
+        # bare-kit is a direct clone of holepunchto/bare-kit v2.0.0 with no Zapp modifications.
+        # Pinned to 15a3569f3d704de7151761051c8d9cc2e299414f (tag: v2.0.0).
+        # Update the ref and .zapp-deps when upgrading bare-kit.
+        timeout-minutes: 1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          repository: holepunchto/bare-kit
+          ref: 15a3569f3d704de7151761051c8d9cc2e299414f
+          path: bare-kit
+      - name: Verify sibling SHAs match .zapp-deps
+        working-directory: zodl-android-fork
+        shell: bash
+        run: |
+          verify_sha() {
+            local name="$1" path="$2"
+            local expected actual
+            expected=$(grep "^${name}=" .zapp-deps | cut -d= -f2)
+            actual=$(git -C "$path" rev-parse HEAD)
+            if [ "$expected" != "$actual" ]; then
+              echo "::error::${name} SHA mismatch: expected ${expected}, got ${actual}"
+              echo "Update .zapp-deps and the 'ref:' in the ${name} checkout step."
+              return 1
+            fi
+            echo "${name} SHA verified: ${actual}"
+          }
+          verify_sha zappMessaging ../zappMessaging
+          verify_sha bare-kit ../bare-kit
+      - name: Set up Java
+        uses: ./zodl-android-fork/.github/actions/setup-java
+        timeout-minutes: 1
+      - name: Set up Gradle
+        uses: ./zodl-android-fork/.github/actions/setup-gradle
+        timeout-minutes: 5
+      - name: Verify composite build compiles
+        timeout-minutes: 20
+        working-directory: zodl-android-fork
+        run: |
+          ./gradlew :app:assembleZcashmainnetStoreDebug --no-daemon
+
   build:
     needs: [validate_gradle_wrapper]
     runs-on: ubuntu-latest
