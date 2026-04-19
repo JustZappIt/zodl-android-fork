@@ -162,7 +162,7 @@ fun NewConversationView(
                     label = { Text("Group name (optional)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(0.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -182,7 +182,7 @@ fun NewConversationView(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(0.dp),
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
@@ -215,7 +215,7 @@ fun NewConversationView(
             // Public key detected
             if (isPublicKey && selectedParticipants.none { it.publicKey == cleanedSearch }) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(0.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -366,7 +366,7 @@ fun NewConversationView(
                         .fillMaxWidth()
                         .height(52.dp),
                     enabled = !isCreating,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(0.dp)
                 ) {
                     Text(
                         if (selectedParticipants.size == 1) "Start Chat"
@@ -387,7 +387,7 @@ private fun QuickActionChip(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(0.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(

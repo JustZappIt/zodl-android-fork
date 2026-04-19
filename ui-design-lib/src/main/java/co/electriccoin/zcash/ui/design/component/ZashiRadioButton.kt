@@ -59,7 +59,7 @@ fun ZashiRadioButton(
     Row(
         modifier =
             modifier
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .clickable(
                     indication = if (isRippleEnabled) ripple() else null,
                     interactionSource = remember { MutableInteractionSource() },

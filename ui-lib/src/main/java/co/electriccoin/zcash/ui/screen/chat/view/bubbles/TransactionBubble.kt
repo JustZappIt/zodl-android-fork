@@ -32,7 +32,7 @@ fun TransactionBubble(message: ChatMessage, isFromMe: Boolean) {
     val signature = parsed?.optString("signature", "")?.takeIf { it.isNotEmpty() }
 
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
         modifier = Modifier.widthIn(max = 280.dp)
     ) {

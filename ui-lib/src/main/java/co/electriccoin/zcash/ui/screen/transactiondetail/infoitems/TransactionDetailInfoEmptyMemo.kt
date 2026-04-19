@@ -28,7 +28,7 @@ import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 fun TransactionDetailInfoEmptyMemo(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(0.dp),
         color = ZashiColors.Surfaces.bgPrimary,
         border = BorderStroke(1.dp, ZashiColors.Surfaces.strokeSecondary)
     ) {

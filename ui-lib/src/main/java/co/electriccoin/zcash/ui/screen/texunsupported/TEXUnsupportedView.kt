@@ -150,7 +150,7 @@ private fun StepItem(
                 text = badge,
                 colors = ZashiBadgeDefaults.infoColors(),
                 contentPadding = PaddingValues(6.dp, 2.dp),
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(0.dp)
             )
             Spacer(8.dp)
             Text(

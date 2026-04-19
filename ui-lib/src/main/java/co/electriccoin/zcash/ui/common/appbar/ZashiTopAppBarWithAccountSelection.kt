@@ -76,7 +76,7 @@ private fun AccountSwitch(state: AccountSwitchState) {
             Modifier
                 .defaultMinSize(40.dp, 40.dp)
                 .padding(start = 16.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(0.dp))
                 then clickModifier then Modifier.padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

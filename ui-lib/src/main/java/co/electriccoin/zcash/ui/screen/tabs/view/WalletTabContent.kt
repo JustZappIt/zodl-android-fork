@@ -153,7 +153,7 @@ private fun WalletSetupView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ZappPalette.Primary,
                     contentColor = ZappPalette.OnPrimary
@@ -171,7 +171,7 @@ private fun WalletSetupView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(0.dp)
             ) {
                 Text(
                     text = "Restore existing wallet",
@@ -204,7 +204,7 @@ private fun WalletInfoRow(
             .fillMaxWidth()
             .background(
                 MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(16.dp)
+                RoundedCornerShape(0.dp)
             )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,

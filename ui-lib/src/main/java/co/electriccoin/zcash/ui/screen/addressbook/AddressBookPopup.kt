@@ -53,7 +53,7 @@ private fun Tooltip(
 ) {
     Surface(
         modifier = Modifier.width(200.dp),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(0.dp),
         color = ZashiColors.Surfaces.bgPrimary,
         border = BorderStroke(1.dp, ZashiColors.Surfaces.strokeSecondary)
     ) {

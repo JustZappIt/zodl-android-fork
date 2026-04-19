@@ -41,7 +41,7 @@ fun ZashiSeedWordTextField(
     ZashiTextField(
         modifier = modifier,
         innerModifier = innerModifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(0.dp),
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         singleLine = true,

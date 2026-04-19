@@ -227,7 +227,7 @@ private fun SecretContent(state: SeedSecretState) {
         modifier =
             Modifier
                 .fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(0.dp),
         color = ZashiColors.Inputs.Filled.bg
     ) {
         Box(

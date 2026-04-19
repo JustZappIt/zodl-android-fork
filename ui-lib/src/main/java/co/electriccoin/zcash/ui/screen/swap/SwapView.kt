@@ -345,7 +345,7 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                             state.addressContact,
                             contentPadding = PaddingValues(start = 10.dp, top = 4.5.dp, end = 4.5.dp, bottom = 4.5.dp),
                             useTint = false,
-                            shape = RoundedCornerShape(6.dp),
+                            shape = RoundedCornerShape(0.dp),
                             color = ZashiColors.Tags.surfacePrimary,
                             border = BorderStroke(1.dp, ZashiColors.Tags.surfaceStroke),
                             textStyle =

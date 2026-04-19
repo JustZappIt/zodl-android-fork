@@ -117,7 +117,7 @@ private fun Content(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                            .clip(RoundedCornerShape(0.dp)),
                     contentPadding = PaddingValues(top = 24.dp)
                 ) {
                     balanceChartWidget(

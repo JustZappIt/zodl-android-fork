@@ -85,7 +85,7 @@ fun DebugDBView(state: DebugDBState) {
             Surface(
                 Modifier.fillMaxWidth(),
                 color = ZashiColors.Surfaces.bgTertiary,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(0.dp)
             ) {
                 Row(
                     modifier =

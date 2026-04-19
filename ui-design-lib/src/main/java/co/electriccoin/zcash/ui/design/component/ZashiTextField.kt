@@ -519,7 +519,7 @@ data class ZashiTextFieldColors(
 
 object ZashiTextFieldDefaults {
     val shape: Shape
-        get() = RoundedCornerShape(8.dp)
+        get() = RoundedCornerShape(0.dp)
 
     val innerModifier: Modifier
         get() =

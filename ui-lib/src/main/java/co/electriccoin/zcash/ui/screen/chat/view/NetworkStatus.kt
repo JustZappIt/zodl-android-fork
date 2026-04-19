@@ -70,7 +70,7 @@ fun ConnectionPill(
     }
 
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(0.dp),
         color = statusColor.copy(alpha = 0.12f),
         modifier = Modifier
             .height(26.dp)

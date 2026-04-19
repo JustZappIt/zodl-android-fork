@@ -104,7 +104,7 @@ private fun MediaOption(
     Surface(
         onClick = onClick,
         modifier = modifier.height(80.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column(

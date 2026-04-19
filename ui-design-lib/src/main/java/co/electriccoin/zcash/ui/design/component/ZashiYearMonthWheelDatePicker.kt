@@ -89,7 +89,7 @@ fun ZashiYearMonthWheelDatePicker(
                         .weight(1f)
                         .height(34.dp)
                         .padding(top = 1.dp)
-                        .background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(6.dp))
+                        .background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(0.dp))
             )
             Spacer(36.dp)
             Box(
@@ -98,7 +98,7 @@ fun ZashiYearMonthWheelDatePicker(
                         .weight(1f)
                         .height(34.dp)
                         .padding(top = 1.dp)
-                        .background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(6.dp))
+                        .background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(0.dp))
             )
         }
         Row(

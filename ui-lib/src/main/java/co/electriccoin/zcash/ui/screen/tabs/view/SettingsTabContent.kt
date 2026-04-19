@@ -196,7 +196,7 @@ fun SettingsTabContent(
 
                         Row(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(0.dp))
                                 .clickable {
                                     val clipboard =
                                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -398,7 +398,7 @@ private fun SettingsCard(content: @Composable () -> Unit) {
             .fillMaxWidth()
             .background(
                 MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(16.dp)
+                RoundedCornerShape(0.dp)
             )
     ) {
         content()

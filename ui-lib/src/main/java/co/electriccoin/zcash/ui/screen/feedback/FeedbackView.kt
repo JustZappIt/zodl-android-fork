@@ -222,8 +222,8 @@ private fun Emoji(
                 ).padding(4.5.dp)
                 .background(
                     color = ZashiColors.Surfaces.bgSecondary,
-                    shape = RoundedCornerShape(8.dp)
-                ).clip(RoundedCornerShape(8.dp))
+                    shape = RoundedCornerShape(0.dp)
+                ).clip(RoundedCornerShape(0.dp))
                 .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

@@ -28,7 +28,7 @@ import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 fun SendAddressBookHint(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(0.dp),
         colors =
             CardDefaults.cardColors(
                 containerColor = ZashiColors.HintTooltips.surfacePrimary,

@@ -66,7 +66,7 @@ fun ZashiBigIconButton(
         modifier = modifier,
         onClick = state.onClick,
         color = ZashiColors.Surfaces.bgPrimary,
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(0.dp),
         border =
             BorderStroke(.5.dp, ZashiColors.Utility.Gray.utilityGray100) orDark
                 BorderStroke(.5.dp, darkBorderGradient),

@@ -17,7 +17,7 @@ internal fun SecondaryCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(0.dp),
         elevation = CardDefaults.elevatedCardElevation(0.dp),
         border = BorderStroke(1.dp, ZashiColors.Surfaces.strokeSecondary),
         colors =

@@ -19,6 +19,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -37,6 +41,22 @@ import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
 import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
 import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
+
+// ───────────────────────────────────────────────
+// Onboarding step enum
+// ───────────────────────────────────────────────
+
+enum class OnboardingStep {
+    WELCOME,
+    MSG_INTRO,
+    MSG_USERNAME,
+    MSG_SEED,
+    WALLET_INTRO,
+}
+
+// ───────────────────────────────────────────────
+// Entry composable — wires all steps together
+// ───────────────────────────────────────────────
 
 // TODO [#1001]: Screens in landscape mode
 // TODO [#1001]: https://github.com/Electric-Coin-Company/zashi-android/issues/1001
@@ -58,21 +78,69 @@ private fun OnboardingComposablePreview() {
 @Composable
 fun Onboarding(
     onImportWallet: () -> Unit,
-    onCreateWallet: () -> Unit
+    onCreateWallet: () -> Unit,
+) {
+    var step by rememberSaveable { mutableStateOf(OnboardingStep.WELCOME) }
+    var pendingUsername by rememberSaveable { mutableStateOf("") }
+
+    when (step) {
+        OnboardingStep.WELCOME ->
+            OnboardingWelcome(
+                onCreateNew = { step = OnboardingStep.MSG_INTRO },
+                onRestoreExisting = onImportWallet,
+            )
+
+        OnboardingStep.MSG_INTRO ->
+            MessagingPhaseIntro(
+                onBack = { step = OnboardingStep.WELCOME },
+                onContinue = { step = OnboardingStep.MSG_USERNAME },
+            )
+
+        OnboardingStep.MSG_USERNAME ->
+            UsernameEntryScreen(
+                onBack = { step = OnboardingStep.MSG_INTRO },
+                onContinue = { username ->
+                    pendingUsername = username
+                    step = OnboardingStep.MSG_SEED
+                },
+            )
+
+        OnboardingStep.MSG_SEED ->
+            MessagingSeedPhraseScreen(
+                onBack = { step = OnboardingStep.MSG_USERNAME },
+                onContinue = { step = OnboardingStep.WALLET_INTRO },
+            )
+
+        OnboardingStep.WALLET_INTRO ->
+            WalletPhaseIntro(
+                onBack = { step = OnboardingStep.MSG_SEED },
+                onContinue = onCreateWallet,
+            )
+    }
+}
+
+// ───────────────────────────────────────────────
+// Welcome screen
+// ───────────────────────────────────────────────
+
+@Composable
+private fun OnboardingWelcome(
+    onCreateNew: () -> Unit,
+    onRestoreExisting: () -> Unit,
 ) {
     Scaffold { paddingValues ->
         Box(
             modifier =
                 Modifier.background(
                     if (isSystemInDarkTheme()) {
-                        @Suppress("MagicNumber") // does not make sense to suppress this
+                        @Suppress("MagicNumber")
                         Brush.verticalGradient(
                             .0f to ZashiColors.Surfaces.bgSecondary,
                             .5f to ZashiColors.Surfaces.bgTertiary,
                             0.75f to ZashiColors.Surfaces.bgPrimary,
                         )
                     } else {
-                        @Suppress("MagicNumber") // does not make sense to suppress this
+                        @Suppress("MagicNumber")
                         Brush.verticalGradient(
                             .0f to ZashiColors.Surfaces.bgSecondary,
                             .5f to ZashiColors.Surfaces.bgTertiary,
@@ -82,15 +150,15 @@ fun Onboarding(
                 )
         ) {
             OnboardingMainContent(
-                onImportWallet = onImportWallet,
-                onCreateWallet = onCreateWallet,
+                onCreateNew = onCreateNew,
+                onRestoreExisting = onRestoreExisting,
                 modifier =
                     Modifier
                         .padding(
                             top = paddingValues.calculateTopPadding() + ZashiDimensions.Spacing.spacing2xl,
                             bottom = paddingValues.calculateBottomPadding() + ZashiDimensions.Spacing.spacing4xl,
                             start = ZashiDimensions.Spacing.spacing3xl,
-                            end = ZashiDimensions.Spacing.spacing3xl
+                            end = ZashiDimensions.Spacing.spacing3xl,
                         )
             )
         }
@@ -99,8 +167,8 @@ fun Onboarding(
 
 @Composable
 private fun OnboardingMainContent(
-    onImportWallet: () -> Unit,
-    onCreateWallet: () -> Unit,
+    onCreateNew: () -> Unit,
+    onRestoreExisting: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -109,7 +177,7 @@ private fun OnboardingMainContent(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .then(modifier),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.weight(1f))
 
@@ -126,10 +194,10 @@ private fun OnboardingMainContent(
             text = stringResource(R.string.onboarding_header),
             style = ZashiTypography.textXl,
             textAlign = TextAlign.Center,
-            color = ZashiColors.Text.textSecondary
+            color = ZashiColors.Text.textSecondary,
         )
 
-        @Suppress("MagicNumber") // does not make sense to suppress this
+        @Suppress("MagicNumber")
         Spacer(Modifier.weight(.75f))
 
         Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingDefault))
@@ -141,20 +209,22 @@ private fun OnboardingMainContent(
                     .weight(MINIMAL_WEIGHT)
         )
 
+        // Restore CTA — ghost/outline style
         ZashiButton(
             modifier = Modifier.fillMaxWidth(),
             text = stringResource(R.string.onboarding_import_existing_wallet),
-            onClick = onImportWallet,
-            colors = ZashiButtonDefaults.tertiaryColors()
+            onClick = onRestoreExisting,
+            colors = ZashiButtonDefaults.tertiaryColors(),
         )
 
         Spacer(modifier = Modifier.height(ZashiDimensions.Spacing.spacingLg))
 
+        // Primary create CTA
         ZashiButton(
-            onClick = onCreateWallet,
+            onClick = onCreateNew,
             text = stringResource(R.string.onboarding_create_new_wallet),
             modifier = Modifier.fillMaxWidth(),
-            hapticFeedbackType = HapticFeedbackType.Confirm
+            hapticFeedbackType = HapticFeedbackType.Confirm,
         )
     }
 }

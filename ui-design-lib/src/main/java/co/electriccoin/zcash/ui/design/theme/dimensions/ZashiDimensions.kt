@@ -4,16 +4,16 @@ import androidx.compose.ui.unit.dp
 
 object ZashiDimensions {
     object Radius {
-        val radiusXxs = 2.dp
-        val radiusXs = 4.dp
-        val radiusSm = 6.dp
-        val radiusMd = 8.dp
-        val radiusLg = 10.dp
-        val radiusXl = 12.dp
-        val radius2xl = 16.dp
-        val radius3xl = 20.dp
-        val radius4xl = 24.dp
-        val radius5xl = 32.dp
+        val radiusXxs = 0.dp
+        val radiusXs = 0.dp
+        val radiusSm = 0.dp
+        val radiusMd = 0.dp
+        val radiusLg = 0.dp
+        val radiusXl = 0.dp
+        val radius2xl = 0.dp
+        val radius3xl = 0.dp
+        val radius4xl = 0.dp
+        val radius5xl = 0.dp
     }
 
     object Spacing {

@@ -58,7 +58,7 @@ fun Activity(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
         color = Color.Transparent,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,

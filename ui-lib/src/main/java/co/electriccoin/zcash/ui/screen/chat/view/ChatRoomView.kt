@@ -279,7 +279,7 @@ fun ChatRoomView(
                         .defaultMinSize(minHeight = 36.dp),
                     placeholder = { Text("Message") },
                     maxLines = 4,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(0.dp),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -468,10 +468,10 @@ private fun MessageBubble(message: ChatMessage) {
 private fun TextMessageBubble(message: ChatMessage, isFromMe: Boolean) {
     Surface(
         shape = RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-            bottomStart = if (isFromMe) 16.dp else 4.dp,
-            bottomEnd = if (isFromMe) 4.dp else 16.dp
+            topStart = 0.dp,
+            topEnd = 0.dp,
+            bottomStart = if (isFromMe) 0.dp else 4.dp,
+            bottomEnd = if (isFromMe) 4.dp else 0.dp
         ),
         color = if (isFromMe) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.surfaceVariant,

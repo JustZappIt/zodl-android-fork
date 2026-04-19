@@ -118,7 +118,7 @@ fun ZashiExpandedCheckboxListItem(
                     state.onClick()
                 }
             },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
     )
 }
 

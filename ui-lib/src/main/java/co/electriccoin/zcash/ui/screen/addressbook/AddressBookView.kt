@@ -185,10 +185,10 @@ private fun EmptyItem(modifier: Modifier = Modifier) {
             modifier.dashedBorder(
                 strokeWidth = 2.5.dp,
                 color = ZashiColors.Surfaces.strokeSecondary,
-                cornerRadiusDp = 16.dp,
+                cornerRadiusDp = 0.dp,
                 density = LocalDensity.current
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 64.dp),

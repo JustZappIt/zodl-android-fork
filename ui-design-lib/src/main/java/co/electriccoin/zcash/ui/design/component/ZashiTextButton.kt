@@ -22,7 +22,7 @@ fun ZashiTextButton(
     TextButton(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(0.dp),
         enabled = enabled,
         colors = colors,
         content = content

@@ -61,13 +61,13 @@ fun FloatingPillNavBar(
             modifier = Modifier
                 .shadow(
                     elevation = 8.dp,
-                    shape = RoundedCornerShape(28.dp),
+                    shape = RoundedCornerShape(0.dp),
                     ambientColor = ZappPalette.CardShadow,
                     spotColor = ZappPalette.CardShadow
                 )
                 .background(
                     color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(28.dp)
+                    shape = RoundedCornerShape(0.dp)
                 )
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -89,7 +89,7 @@ fun FloatingPillNavBar(
                         Box(
                             modifier = Modifier
                                 .matchParentSize()
-                                .clip(CircleShape)
+                                .clip(RoundedCornerShape(0.dp))
                                 .then(
                                     if (selected) {
                                         Modifier.background(ZappPalette.Primary.copy(alpha = 0.12f))

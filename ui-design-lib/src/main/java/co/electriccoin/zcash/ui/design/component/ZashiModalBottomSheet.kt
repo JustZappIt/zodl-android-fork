@@ -125,7 +125,7 @@ fun rememberSheetState(
 
 object ZashiModalBottomSheetDefaults {
     val SheetShape: RoundedCornerShape
-        get() = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        get() = RoundedCornerShape(0.dp)
     val ContainerColor: Color
         @Composable
         get() = ZashiColors.Surfaces.bgPrimary

@@ -25,7 +25,7 @@ fun OldZashiBottomBar(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        shape = RoundedCornerShape(0.dp),
         shadowElevation = 4.dp,
         color = ZashiColors.Surfaces.bgPrimary,
         modifier = modifier,

@@ -148,7 +148,7 @@ private fun PeriodChip(
         fontWeight = FontWeight.Medium,
         modifier =
             modifier
-                .clip(RoundedCornerShape(999.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .background(bg)
                 .clickable(onClick = onClick)
                 .padding(horizontal = 10.dp, vertical = 4.dp),
@@ -192,7 +192,7 @@ private fun LoadingChart() {
             Modifier
                 .fillMaxWidth()
                 .height(140.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .background(ZashiColors.Surfaces.bgTertiary),
     )
 }

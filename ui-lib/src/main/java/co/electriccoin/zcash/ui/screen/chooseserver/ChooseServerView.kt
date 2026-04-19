@@ -249,7 +249,7 @@ private fun LazyListScope.serverListItems(state: ServerListState) {
                             .padding(start = 4.dp, end = 4.dp)
                             .then(
                                 if (item.radioButtonState.isChecked) {
-                                    Modifier.background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(12.dp))
+                                    Modifier.background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(0.dp))
                                 } else {
                                     Modifier
                                 }
@@ -267,7 +267,7 @@ private fun LazyListScope.serverListItems(state: ServerListState) {
                             .padding(horizontal = 4.dp)
                             .then(
                                 if (item.radioButtonState.isChecked && item.badge == null) {
-                                    Modifier.background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(12.dp))
+                                    Modifier.background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(0.dp))
                                 } else {
                                     Modifier
                                 }

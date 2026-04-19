@@ -72,7 +72,7 @@ fun ZashiCheckbox(
     Row(
         modifier =
             modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .clickable(onClick = state.onClick)
                 .padding(contentPadding)
     ) {

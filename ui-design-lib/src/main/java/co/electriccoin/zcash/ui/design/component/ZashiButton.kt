@@ -213,7 +213,7 @@ object ZashiButtonDefaults {
         get() = PaddingValues(horizontal = 10.dp)
 
     val shape: Shape
-        get() = RoundedCornerShape(12.dp)
+        get() = RoundedCornerShape(0.dp)
 
     const val IS_LIGHT_THRESHOLD = 0.5f
 
