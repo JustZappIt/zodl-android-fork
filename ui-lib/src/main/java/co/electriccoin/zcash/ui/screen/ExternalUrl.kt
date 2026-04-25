@@ -4,5 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExternalUrl(
-    val url: String
+    val url: String,
+    val branded: Boolean = false,
 )

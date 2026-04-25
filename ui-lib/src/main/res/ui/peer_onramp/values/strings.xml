@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="peer_onramp_add_zec_button">Add ZEC</string>
+    <string name="peer_onramp_add_zec_cta">Add ZEC with Venmo</string>
+    <string name="peer_onramp_attribution">Powered by peer.xyz</string>
+    <string name="peer_onramp_subtitle">Get ZEC with Venmo, Cash App, or Revolut. No exchange account needed.</string>
+    <string name="peer_onramp_region_unavailable">peer.xyz is not yet available in your region.</string>
+    <string name="peer_onramp_region_fallback_button">Open justzappit.xyz</string>
+    <string name="peer_onramp_checking_banner">Checking for incoming ZEC\u2026</string>
+</resources>

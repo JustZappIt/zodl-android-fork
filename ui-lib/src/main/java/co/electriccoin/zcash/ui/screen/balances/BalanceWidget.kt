@@ -11,8 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
+import co.electriccoin.zcash.ui.design.component.ZashiButton
 import cash.z.ecc.android.sdk.model.Zatoshi
 import cash.z.ecc.sdk.extension.toZecStringFull
 import co.electriccoin.zcash.ui.R
@@ -58,6 +62,22 @@ fun BalanceWidget(state: BalanceWidgetState, modifier: Modifier = Modifier) {
                 Spacer(12.dp)
             }
             StyledExchangeBalance(state = it, zatoshi = state.totalBalance)
+        }
+
+        state.onAddZec?.let { onAddZec ->
+            Spacer(16.dp)
+            ZashiButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onAddZec,
+                text = stringResource(R.string.peer_onramp_add_zec_button),
+            )
+            Spacer(6.dp)
+            Text(
+                text = stringResource(R.string.peer_onramp_subtitle),
+                style = ZashiTypography.textSm,
+                color = ZashiColors.Text.textTertiary,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
