@@ -1,14 +1,20 @@
 @file:Suppress("TooManyFunctions")
 
-// TODO(Zapp-design): migrate from ZcashTheme to ZappTheme — replace RequestTopAppBar (ZashiColors)
-//  with ZappScreenHeader + ZappBottomActionBar. Move back button to bottom-left.
 package co.electriccoin.zcash.ui.screen.request.view
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -17,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -27,15 +35,14 @@ import androidx.compose.ui.unit.sp
 import cash.z.ecc.sdk.type.ZcashCurrency
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
 import co.electriccoin.zcash.ui.design.component.CircularScreenProgressIndicator
-import co.electriccoin.zcash.ui.design.component.OldZashiBottomBar
 import co.electriccoin.zcash.ui.design.component.QrCodeDefaults
 import co.electriccoin.zcash.ui.design.component.ZashiButton
 import co.electriccoin.zcash.ui.design.component.ZashiButtonDefaults
-import co.electriccoin.zcash.ui.design.component.ZashiSmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.screen.request.model.AmountState
 import co.electriccoin.zcash.ui.screen.request.model.MemoState
@@ -94,11 +101,9 @@ internal fun RequestView(
         }
 
         is RequestState.Prepared -> {
-            BlankBgScaffold(
+            Scaffold(
                 topBar = {
-                    RequestTopAppBar(
-                        onBack = state.onBack,
-                    )
+                    ZappScreenHeader(title = stringResource(id = R.string.request_title))
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 bottomBar = {
@@ -119,23 +124,22 @@ internal fun RequestView(
 }
 
 @Composable
-private fun RequestTopAppBar(
-    onBack: () -> Unit,
-) {
-    ZashiSmallTopAppBar(
-        title = stringResource(id = R.string.request_title),
-        navigationAction = {
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-        },
-    )
-}
-
-@Composable
 private fun RequestBottomBar(
     state: RequestState.Prepared,
     modifier: Modifier = Modifier,
 ) {
-    OldZashiBottomBar(modifier = modifier.fillMaxWidth()) {
+    val c = ZappTheme.colors
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(c.surface)
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ZappBackButton(onClick = state.onBack)
+
         when (state) {
             is RequestState.Amount -> {
                 ZashiButton(
@@ -144,8 +148,8 @@ private fun RequestBottomBar(
                     enabled = state.request.amountState.isValid == true,
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
+                            .weight(1f)
+                            .padding(start = 12.dp)
                 )
             }
 
@@ -156,8 +160,8 @@ private fun RequestBottomBar(
                     text = stringResource(id = R.string.request_memo_btn),
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
+                            .weight(1f)
+                            .padding(start = 12.dp)
                 )
             }
 
@@ -165,27 +169,23 @@ private fun RequestBottomBar(
                 val sizePixels = with(LocalDensity.current) { DEFAULT_QR_CODE_SIZE.toPx() }.roundToInt()
                 val colors = QrCodeDefaults.colors()
 
-                ZashiButton(
-                    text = stringResource(id = R.string.request_qr_share_btn),
-                    icon = R.drawable.ic_share,
-                    onClick = { state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri) },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                )
+                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                    ZashiButton(
+                        text = stringResource(id = R.string.request_qr_share_btn),
+                        icon = R.drawable.ic_share,
+                        onClick = { state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingTiny))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                ZashiButton(
-                    colors = ZashiButtonDefaults.secondaryColors(),
-                    onClick = state.onClose,
-                    text = stringResource(id = R.string.request_qr_close_btn),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                )
+                    ZashiButton(
+                        colors = ZashiButtonDefaults.secondaryColors(),
+                        onClick = state.onClose,
+                        text = stringResource(id = R.string.request_qr_close_btn),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

@@ -1,5 +1,3 @@
-// TODO(Zapp-design): migrate from Zashi to ZappTheme — replace ZashiColors, ZashiTypography,
-//  and back navigation with ZappScreenHeader + ZappBottomActionBar.
 package co.electriccoin.zcash.ui.screen.transactiondetail
 
 import androidx.compose.foundation.Image
@@ -18,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +26,7 @@ import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
 import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.ButtonStyle
-import co.electriccoin.zcash.ui.design.component.GradientBgScaffold
+import androidx.compose.material3.Scaffold
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiBottomBar
@@ -37,18 +34,16 @@ import co.electriccoin.zcash.ui.design.component.ZashiButton
 import co.electriccoin.zcash.ui.design.component.ZashiButtonDefaults
 import co.electriccoin.zcash.ui.design.component.ZashiIconButton
 import co.electriccoin.zcash.ui.design.component.ZashiInfoText
-import co.electriccoin.zcash.ui.design.component.ZashiSmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.TickerLocation.HIDDEN
 import co.electriccoin.zcash.ui.design.util.asScaffoldPaddingValues
 import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.imageRes
 import co.electriccoin.zcash.ui.design.util.loadingImageRes
-import co.electriccoin.zcash.ui.design.util.orDark
 import co.electriccoin.zcash.ui.design.util.scaffoldPadding
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
@@ -70,12 +65,9 @@ fun TransactionDetailView(
     state: TransactionDetailState,
     mainAppBarState: ZashiMainTopAppBarState?,
 ) {
-    GradientBgScaffold(
-        startColor = ZashiColors.Surfaces.bgPrimary orDark ZashiColors.Surfaces.bgAdjust,
-        endColor = ZashiColors.Surfaces.bgPrimary,
+    Scaffold(
         topBar = {
             TransactionDetailTopAppBar(
-                onBack = state.onBack,
                 bookmarkButton = state.bookmarkButton,
                 appBarState = mainAppBarState,
             )
@@ -179,14 +171,17 @@ private fun BottomBar(
             ZashiInfoText(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 text = it.getValue(),
-                style = ZashiTypography.textXs,
-                color = ZashiColors.Text.textTertiary
+                style = ZappTheme.typography.caption,
+                color = ZappTheme.colors.textMuted
             )
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            ZappBackButton(onClick = state.onBack)
+            Spacer(Modifier.width(12.dp))
             state.secondaryButton?.let {
                 ZashiButton(
                     modifier = Modifier.weight(1f),
@@ -219,23 +214,23 @@ fun TransactionErrorFooter(errorFooter: ErrorFooter) {
                     .align(Alignment.CenterHorizontally),
             painter = painterResource(co.electriccoin.zcash.ui.design.R.drawable.ic_info),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(ZashiColors.Text.textError)
+            colorFilter = ColorFilter.tint(ZappTheme.colors.danger)
         )
         Spacer(8.dp)
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = errorFooter.title.getValue(),
-            style = ZashiTypography.textSm,
+            style = ZappTheme.typography.caption,
             fontWeight = FontWeight.Medium,
-            color = ZashiColors.Text.textError,
+            color = ZappTheme.colors.danger,
             textAlign = TextAlign.Center
         )
         Spacer(4.dp)
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = errorFooter.subtitle.getValue(),
-            style = ZashiTypography.textSm,
-            color = ZashiColors.Text.textError,
+            style = ZappTheme.typography.caption,
+            color = ZappTheme.colors.danger,
             textAlign = TextAlign.Center
         )
         Spacer(32.dp)
@@ -244,15 +239,12 @@ fun TransactionErrorFooter(errorFooter: ErrorFooter) {
 
 @Composable
 private fun TransactionDetailTopAppBar(
-    onBack: () -> Unit,
     bookmarkButton: IconButtonState?,
     appBarState: ZashiMainTopAppBarState?,
 ) {
-    ZashiSmallTopAppBar(
-        navigationAction = {
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-        },
-        regularActions = {
+    ZappScreenHeader(
+        title = "",
+        right = {
             appBarState?.balanceVisibilityButton?.let {
                 ZashiIconButton(it, modifier = Modifier.size(40.dp))
                 Spacer(Modifier.width(4.dp))
@@ -260,13 +252,7 @@ private fun TransactionDetailTopAppBar(
             bookmarkButton?.let {
                 ZashiIconButton(it, modifier = Modifier.size(40.dp))
             }
-            Spacer(Modifier.width(20.dp))
-        },
-        colors =
-            ZcashTheme.colors.topAppBarColors orDark
-                ZcashTheme.colors.topAppBarColors.copyColors(
-                    containerColor = Color.Transparent
-                ),
+        }
     )
 }
 

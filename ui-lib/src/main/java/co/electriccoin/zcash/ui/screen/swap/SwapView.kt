@@ -1,5 +1,3 @@
-// TODO(Zapp-design): migrate from Zashi to ZappTheme — replace ZashiColors, ZashiTypography,
-//  and back navigation with ZappScreenHeader + ZappBottomActionBar.
 package co.electriccoin.zcash.ui.screen.swap
 
 import androidx.compose.foundation.BorderStroke
@@ -19,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -42,14 +41,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
-import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarTags
 import co.electriccoin.zcash.ui.design.component.AssetCardState
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
+import androidx.compose.material3.Scaffold
 import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.ButtonStyle
 import co.electriccoin.zcash.ui.design.component.ChipButtonState
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.component.NumberTextFieldState
+import co.electriccoin.zcash.ui.design.component.HorizontalSpacer
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.TextFieldState
 import co.electriccoin.zcash.ui.design.component.ZashiAddressTextField
@@ -60,14 +59,13 @@ import co.electriccoin.zcash.ui.design.component.ZashiHorizontalDivider
 import co.electriccoin.zcash.ui.design.component.ZashiIconButton
 import co.electriccoin.zcash.ui.design.component.ZashiImageButton
 import co.electriccoin.zcash.ui.design.component.ZashiInfoText
-import co.electriccoin.zcash.ui.design.component.ZashiSmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
 import co.electriccoin.zcash.ui.design.component.listitem.SimpleListItemState
 import co.electriccoin.zcash.ui.design.component.listitem.ZashiSimpleListItem
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.imageRes
 import co.electriccoin.zcash.ui.design.util.scaffoldPadding
@@ -89,8 +87,9 @@ internal fun SwapView(
 ) {
     val amountFocusRequester = remember { FocusRequester() }
 
-    BlankBgScaffold(
-        topBar = { TopAppBar(state, appBarState) }
+    Scaffold(
+        topBar = { TopAppBar(state, appBarState) },
+        bottomBar = { ZappBottomActionBar(onBack = state.onBack) }
     ) {
         Column(
             modifier =
@@ -170,23 +169,23 @@ fun SwapErrorFooter(errorFooter: SwapErrorFooterState) {
                     .align(Alignment.CenterHorizontally),
             painter = painterResource(co.electriccoin.zcash.ui.design.R.drawable.ic_info),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(ZashiColors.Text.textError)
+            colorFilter = ColorFilter.tint(ZappTheme.colors.danger)
         )
         Spacer(8.dp)
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = errorFooter.title.getValue(),
-            style = ZashiTypography.textSm,
+            style = ZappTheme.typography.caption,
             fontWeight = FontWeight.Medium,
-            color = ZashiColors.Text.textError,
+            color = ZappTheme.colors.danger,
             textAlign = TextAlign.Center
         )
         Spacer(4.dp)
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = errorFooter.subtitle.getValue(),
-            style = ZashiTypography.textSm,
-            color = ZashiColors.Text.textError,
+            style = ZappTheme.typography.caption,
+            color = ZappTheme.colors.danger,
             textAlign = TextAlign.Center
         )
     }
@@ -200,9 +199,9 @@ fun SlippageButton(state: ButtonState, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = stringResource(R.string.swap_slippage_tolerance),
-            style = ZashiTypography.textSm,
+            style = ZappTheme.typography.caption,
             fontWeight = FontWeight.Medium,
-            color = ZashiColors.Text.textTertiary
+            color = ZappTheme.colors.textMuted
         )
         Spacer(1f)
         ZashiButton(
@@ -224,50 +223,30 @@ private fun SlippageSeparator(
     ) {
         ZashiHorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = ZashiColors.Utility.Gray.utilityGray100
+            color = ZappTheme.colors.border
         )
 
         ZashiImageButton(state.changeModeButton)
 
         ZashiHorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = ZashiColors.Utility.Gray.utilityGray100
+            color = ZappTheme.colors.border
         )
     }
 }
 
 @Composable
 private fun TopAppBar(state: SwapState, appBarState: ZashiMainTopAppBarState) {
-    ZashiSmallTopAppBar(
-        content = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.swap_title).uppercase(),
-                    style = ZashiTypography.textMd,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ZashiColors.Text.textPrimary
-                )
-            }
-        },
-        navigationAction = {
-            ZashiTopAppBarBackNavigation(
-                onBack = state.onBack,
-                modifier = Modifier.testTag(ZashiTopAppBarTags.BACK)
-            )
-        },
-        regularActions = {
+    ZappScreenHeader(
+        title = stringResource(R.string.swap_title),
+        right = {
             ZashiIconButton(
                 state = appBarState.balanceVisibilityButton,
                 modifier = Modifier.size(40.dp)
             )
-            Spacer(4.dp)
+            HorizontalSpacer(4.dp)
             ZashiIconButton(state.swapInfoButton)
-            Spacer(20.dp)
-        },
+        }
     )
 }
 
@@ -293,7 +272,7 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                     TOP -> stringResource(R.string.swap_refund_address)
                     BOTTOM -> stringResource(co.electriccoin.zcash.ui.design.R.string.general_address)
                 },
-            style = ZashiTypography.textSm,
+            style = ZappTheme.typography.caption,
             fontWeight = FontWeight.Medium
         )
         if (state.onAddressClick != null) {
@@ -324,8 +303,8 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                 {
                     Text(
                         text = state.addressPlaceholder.getValue(),
-                        style = ZashiTypography.textMd,
-                        color = ZashiColors.Inputs.Default.text
+                        style = ZappTheme.typography.body,
+                        color = ZappTheme.colors.textSubtle
                     )
                 }
             } else {
@@ -348,11 +327,11 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                             contentPadding = PaddingValues(start = 10.dp, top = 4.5.dp, end = 4.5.dp, bottom = 4.5.dp),
                             useTint = false,
                             shape = RoundedCornerShape(0.dp),
-                            color = ZashiColors.Tags.surfacePrimary,
-                            border = BorderStroke(1.dp, ZashiColors.Tags.surfaceStroke),
+                            color = ZappTheme.colors.surfaceAlt,
+                            border = BorderStroke(1.dp, ZappTheme.colors.border),
                             textStyle =
-                                ZashiTypography.textSm.copy(
-                                    color = ZashiColors.Text.textPrimary,
+                                ZappTheme.typography.caption.copy(
+                                    color = ZappTheme.colors.text,
                                     fontWeight = FontWeight.Medium
                                 )
                         )

@@ -1,5 +1,3 @@
-// TODO(Zapp-design): migrate from Zashi to ZappTheme — replace ZashiColors, ZashiTopAppbar,
-//  and back navigation with ZappScreenHeader + ZappBottomActionBar.
 package co.electriccoin.zcash.ui.screen.receive
 
 import androidx.compose.animation.AnimatedVisibility
@@ -20,15 +18,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,25 +35,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
-import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppbar
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
 import co.electriccoin.zcash.ui.design.component.CircularScreenProgressIndicator
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiImageButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.scaffoldScrollPadding
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.design.util.styledStringResource
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
-import co.electriccoin.zcash.ui.screen.receive.ReceiveAddressState.ColorMode.DEFAULT
-import co.electriccoin.zcash.ui.screen.receive.ReceiveAddressState.ColorMode.KEYSTONE
-import co.electriccoin.zcash.ui.screen.receive.ReceiveAddressState.ColorMode.ZASHI
 import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
 
 @Composable
@@ -69,14 +62,12 @@ internal fun ReceiveView(
         }
 
         else -> {
-            BlankBgScaffold(
+            Scaffold(
                 topBar = {
-                    ZashiTopAppbar(
-                        title = stringRes(R.string.receive_title, CURRENCY_TICKER),
-                        state = appBarState,
-                        showHideBalances = false,
-                        onBack = state.onBack
-                    )
+                    ZappScreenHeader(title = stringResource(R.string.receive_title, CURRENCY_TICKER))
+                },
+                bottomBar = {
+                    ZappBottomActionBar(onBack = state.onBack)
                 },
             ) { paddingValues ->
                 ReceiveContents(
@@ -103,7 +94,7 @@ private fun ReceiveContents(
             modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(all = ZcashTheme.dimens.spacingSmall),
+                .padding(all = 8.dp),
     ) {
         items.forEachIndexed { index, state ->
             if (index != 0) {
@@ -125,8 +116,8 @@ private fun ReceiveContents(
         Spacer(8.dp)
         Text(
             text = stringResource(id = R.string.receive_prioritize_shielded),
-            color = ZashiColors.Text.textTertiary,
-            style = ZashiTypography.textSm,
+            color = ZappTheme.colors.textMuted,
+            style = ZappTheme.typography.caption,
             modifier =
                 Modifier
                     .padding(horizontal = 16.dp)
@@ -142,34 +133,15 @@ private fun AddressPanel(
     state: ReceiveAddressState,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor =
-        when (state.colorMode) {
-            ZASHI -> ZashiColors.Utility.Purple.utilityPurple50
-            KEYSTONE -> ZashiColors.Utility.Indigo.utilityIndigo50
-            DEFAULT -> ZashiColors.Surfaces.bgSecondary
-        }
-
-    val buttonColor =
-        when (state.colorMode) {
-            ZASHI -> ZashiColors.Utility.Purple.utilityPurple100
-            KEYSTONE -> ZashiColors.Utility.Indigo.utilityIndigo100
-            DEFAULT -> ZashiColors.Surfaces.bgTertiary
-        }
-
-    val buttonTextColor =
-        when (state.colorMode) {
-            ZASHI -> ZashiColors.Utility.Purple.utilityPurple800
-            KEYSTONE -> ZashiColors.Utility.Indigo.utilityIndigo800
-            DEFAULT -> ZashiColors.Text.textPrimary
-        }
+    val c = ZappTheme.colors
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
             modifier
                 .wrapContentHeight()
-                .background(containerColor, RoundedCornerShape(ZashiDimensions.Radius.radius3xl))
-                .clip(RoundedCornerShape(ZashiDimensions.Radius.radius3xl))
+                .background(c.surface, RectangleShape)
+                .clip(RectangleShape)
                 .clickable(onClick = state.onClick)
                 .padding(16.dp)
     ) {
@@ -193,24 +165,24 @@ private fun AddressPanel(
                 }
             }
 
-            Spacer(Modifier.width(ZcashTheme.dimens.spacingDefault))
+            Spacer(Modifier.width(16.dp))
 
             Column {
                 Text(
                     text = state.title.getValue(),
-                    color = ZashiColors.Text.textPrimary,
-                    style = ZashiTypography.textMd,
+                    color = c.text,
+                    style = ZappTheme.typography.body,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(4.dp)
                 Text(
                     text = state.subtitle.getValue(),
-                    color = ZashiColors.Text.textTertiary,
-                    style = ZashiTypography.textSm
+                    color = c.textMuted,
+                    style = ZappTheme.typography.caption
                 )
             }
 
-            Spacer(Modifier.width(ZcashTheme.dimens.spacingSmall))
+            Spacer(Modifier.width(8.dp))
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -226,35 +198,35 @@ private fun AddressPanel(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = ZcashTheme.dimens.spacingDefault)
+                        .padding(top = 16.dp)
             ) {
                 if (state.isShielded) {
                     ReceiveIconButton(
-                        containerColor = buttonColor,
-                        contentColor = buttonTextColor,
+                        containerColor = c.surfaceAlt,
+                        contentColor = c.text,
                         iconPainter = painterResource(id = R.drawable.ic_copy_shielded),
                         onClick = state.onCopyClicked,
                         text = stringResource(id = R.string.receive_copy),
                         modifier = Modifier.weight(1f)
                     )
 
-                    Spacer(modifier = Modifier.width(ZcashTheme.dimens.spacingSmall))
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
 
                 ReceiveIconButton(
-                    containerColor = buttonColor,
-                    contentColor = buttonTextColor,
+                    containerColor = c.surfaceAlt,
+                    contentColor = c.text,
                     iconPainter = painterResource(id = R.drawable.ic_qr_code_shielded),
                     onClick = state.onQrClicked,
                     text = stringResource(id = R.string.receive_qr_code),
                     modifier = Modifier.weight(1f)
                 )
 
-                Spacer(modifier = Modifier.width(ZcashTheme.dimens.spacingSmall))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 ReceiveIconButton(
-                    containerColor = buttonColor,
-                    contentColor = buttonTextColor,
+                    containerColor = c.surfaceAlt,
+                    contentColor = c.text,
                     iconPainter = painterResource(id = R.drawable.ic_request_shielded),
                     onClick = state.onRequestClicked,
                     text = stringResource(id = R.string.receive_request),
@@ -268,8 +240,8 @@ private fun AddressPanel(
 @Composable
 @Suppress("LongParameterList")
 private fun ReceiveIconButton(
-    containerColor: Color,
-    contentColor: Color,
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
     iconPainter: Painter,
     text: String,
     onClick: () -> Unit,
@@ -279,8 +251,8 @@ private fun ReceiveIconButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
             modifier
-                .background(containerColor, RoundedCornerShape(ZashiDimensions.Radius.radiusXl))
-                .clip(RoundedCornerShape(ZashiDimensions.Radius.radiusXl))
+                .background(containerColor, RectangleShape)
+                .clip(RectangleShape)
                 .clickable { onClick() }
                 .padding(12.dp)
     ) {
@@ -293,7 +265,7 @@ private fun ReceiveIconButton(
         Text(
             text = text,
             color = contentColor,
-            style = ZashiTypography.textSm,
+            style = ZappTheme.typography.caption,
             fontWeight = FontWeight.Medium
         )
     }
@@ -333,7 +305,7 @@ private fun ZashiPreview() =
                                 onRequestClicked = {},
                                 isExpanded = true,
                                 onClick = {},
-                                colorMode = ZASHI,
+                                colorMode = ReceiveAddressState.ColorMode.ZASHI,
                                 infoIconButton =
                                     IconButtonState(
                                         R.drawable.ic_receive_zashi_shielded_info,
@@ -350,7 +322,7 @@ private fun ZashiPreview() =
                                 onRequestClicked = { },
                                 isExpanded = true,
                                 onClick = {},
-                                colorMode = DEFAULT,
+                                colorMode = ReceiveAddressState.ColorMode.DEFAULT,
                                 infoIconButton =
                                     IconButtonState(
                                         R.drawable.ic_receive_zashi_shielded_info,
@@ -384,7 +356,7 @@ private fun KeystonePreview() =
                                 onRequestClicked = {},
                                 isExpanded = true,
                                 onClick = {},
-                                colorMode = KEYSTONE,
+                                colorMode = ReceiveAddressState.ColorMode.KEYSTONE,
                                 infoIconButton =
                                     IconButtonState(
                                         R.drawable.ic_receive_zashi_shielded_info,
@@ -401,7 +373,7 @@ private fun KeystonePreview() =
                                 onRequestClicked = { },
                                 isExpanded = true,
                                 onClick = {},
-                                colorMode = DEFAULT,
+                                colorMode = ReceiveAddressState.ColorMode.DEFAULT,
                                 infoIconButton =
                                     IconButtonState(
                                         R.drawable.ic_receive_zashi_shielded_info,

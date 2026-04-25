@@ -1,8 +1,5 @@
 @file:Suppress("TooManyFunctions")
 
-// TODO(Zapp-design): migrate from Zashi to ZappTheme — replace ZashiColors, ZashiTypography,
-//  ZashiSmallTopAppBar, and ZashiTopAppBarBackNavigation with Zapp equivalents.
-//  Back button must move from top-left to ZappBottomActionBar (bottom-left).
 package co.electriccoin.zcash.ui.screen.send.view
 
 import androidx.compose.animation.AnimatedVisibility
@@ -60,22 +57,20 @@ import cash.z.ecc.sdk.fixture.ZatoshiFixture
 import cash.z.ecc.sdk.type.ZcashCurrency
 import co.electriccoin.zcash.spackle.Twig
 import co.electriccoin.zcash.ui.R
+import androidx.compose.material3.Scaffold
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
-import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppbar
 import co.electriccoin.zcash.ui.common.model.WalletAccount
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
 import co.electriccoin.zcash.ui.design.component.AppAlertDialog
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
 import co.electriccoin.zcash.ui.design.component.BlankSurface
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiButton
 import co.electriccoin.zcash.ui.design.component.ZashiTextField
 import co.electriccoin.zcash.ui.design.component.ZashiTextFieldDefaults
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
-import co.electriccoin.zcash.ui.design.theme.typography.RobotoMonoFontFamily
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.rememberDesiredFormatLocale
 import co.electriccoin.zcash.ui.design.util.scaffoldPadding
 import co.electriccoin.zcash.ui.fixture.BalanceStateFixture
@@ -193,13 +188,10 @@ fun Send(
         return
     }
 
-    BlankBgScaffold(topBar = {
-        ZashiTopAppbar(
-            title = null,
-            state = zashiMainTopAppBarState,
-            onBack = onBack
-        )
-    }) { paddingValues ->
+    Scaffold(
+        topBar = { ZappScreenHeader(title = "") },
+        bottomBar = { ZappBottomActionBar(onBack = onBack) }
+    ) { paddingValues ->
         SendMainContent(
             balanceWidgetState = balanceWidgetState,
             selectedAccount = selectedAccount,
@@ -327,7 +319,7 @@ private fun SendForm(
             }
         }
 
-        Spacer(Modifier.size(ZcashTheme.dimens.spacingDefault))
+        Spacer(Modifier.size(16.dp))
 
         val isMemoFieldAvailable =
             recipientAddressState.address.isEmpty() ||
@@ -355,7 +347,7 @@ private fun SendForm(
             selectedAccount = selectedAccount
         )
 
-        Spacer(Modifier.size(ZcashTheme.dimens.spacingDefault))
+        Spacer(Modifier.size(16.dp))
 
         SendFormMemoTextField(
             memoState = memoState,
@@ -368,7 +360,7 @@ private fun SendForm(
                 Modifier.weight(1f)
         )
 
-        Spacer(modifier = Modifier.height(ZashiDimensions.Spacing.spacing3xl))
+        Spacer(modifier = Modifier.height(32.dp))
 
         SendButton(
             amountState = amountState,
@@ -495,11 +487,11 @@ fun SendFormAddressTextField(
     ) {
         Text(
             text = stringResource(id = R.string.send_address_label),
-            color = ZashiColors.Inputs.Default.label,
-            style = ZashiTypography.textMd
+            color = ZappTheme.colors.textMuted,
+            style = ZappTheme.typography.body
         )
 
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingSmall))
+        Spacer(modifier = Modifier.height(8.dp))
 
         val recipientAddressValue = recipientAddressState.address
         val recipientAddressError =
@@ -530,12 +522,12 @@ fun SendFormAddressTextField(
                         }
                     },
             error = recipientAddressError,
-            textStyle = ZashiTypography.textMd.copy(fontFamily = RobotoMonoFontFamily),
+            textStyle = ZappTheme.typography.body.copy(fontFamily = ZappTheme.typography.mono.fontFamily),
             placeholder = {
                 Text(
                     text = stringResource(id = R.string.send_address_hint),
-                    style = ZashiTypography.textMd,
-                    color = ZashiColors.Inputs.Default.text
+                    style = ZappTheme.typography.body,
+                    color = ZappTheme.colors.textSubtle
                 )
             },
             suffix =
@@ -641,11 +633,11 @@ fun SendFormAmountTextField(
     ) {
         Text(
             text = stringResource(id = R.string.send_amount_label),
-            color = ZashiColors.Inputs.Default.label,
-            style = ZashiTypography.textMd
+            color = ZappTheme.colors.textMuted,
+            style = ZappTheme.typography.body
         )
 
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingSmall))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -678,8 +670,8 @@ fun SendFormAmountTextField(
                                 id = R.string.send_amount_hint,
                                 zcashCurrency
                             ),
-                        style = ZashiTypography.textMd,
-                        color = ZashiColors.Inputs.Default.text
+                        style = ZappTheme.typography.body,
+                        color = ZappTheme.colors.textSubtle
                     )
                 },
                 keyboardOptions =
@@ -700,7 +692,7 @@ fun SendFormAmountTextField(
                     Image(
                         painter = painterResource(R.drawable.ic_send_zashi),
                         contentDescription = null,
-                        colorFilter = ColorFilter.tint(color = ZashiColors.Inputs.Default.text),
+                        colorFilter = ColorFilter.tint(color = ZappTheme.colors.textSubtle),
                     )
                 }
             )
@@ -711,7 +703,7 @@ fun SendFormAmountTextField(
                     modifier = Modifier.padding(top = 12.dp),
                     painter = painterResource(id = R.drawable.ic_send_convert),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(color = ZcashTheme.colors.secondaryColor),
+                    colorFilter = ColorFilter.tint(color = ZappTheme.colors.accent),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 ZashiTextField(
@@ -737,7 +729,7 @@ fun SendFormAmountTextField(
                                 stringResource(
                                     id = R.string.send_usd_amount_hint
                                 ),
-                            style = ZashiTypography.textMd,
+                            style = ZappTheme.typography.body,
                             color = LocalContentColor.current
                         )
                     },
@@ -761,9 +753,9 @@ fun SendFormAmountTextField(
                             contentDescription = null,
                             colorFilter =
                                 if (!exchangeRateState.isStale) {
-                                    ColorFilter.tint(color = ZashiColors.Inputs.Default.text)
+                                    ColorFilter.tint(color = ZappTheme.colors.textSubtle)
                                 } else {
-                                    ColorFilter.tint(color = ZashiColors.Inputs.Disabled.text)
+                                    ColorFilter.tint(color = ZappTheme.colors.textSubtle)
                                 }
                         )
                     }
@@ -793,11 +785,11 @@ fun SendFormMemoTextField(
     ) {
         Text(
             text = stringResource(id = R.string.send_memo_label),
-            color = ZashiColors.Inputs.Default.label,
-            style = ZashiTypography.textMd
+            color = ZappTheme.colors.textMuted,
+            style = ZappTheme.typography.body
         )
 
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingSmall))
+        Spacer(modifier = Modifier.height(8.dp))
 
         ZashiTextField(
             minLines = if (isMemoFieldAvailable) 4 else 1,
@@ -822,14 +814,14 @@ fun SendFormMemoTextField(
                 if (isMemoFieldAvailable) {
                     Text(
                         text = stringResource(id = R.string.send_memo_hint),
-                        style = ZashiTypography.textMd,
-                        color = ZashiColors.Inputs.Default.text
+                        style = ZappTheme.typography.body,
+                        color = ZappTheme.colors.textSubtle
                     )
                 } else {
                     Text(
                         text = stringResource(R.string.send_transparent_memo),
-                        style = ZashiTypography.textSm,
-                        color = ZashiColors.Utility.Gray.utilityGray700
+                        style = ZappTheme.typography.caption,
+                        color = ZappTheme.colors.textMuted
                     )
                 }
             },
@@ -841,7 +833,7 @@ fun SendFormMemoTextField(
                         Image(
                             painter = painterResource(id = R.drawable.ic_confirmation_message_info),
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(ZashiColors.Utility.Gray.utilityGray500)
+                            colorFilter = ColorFilter.tint(ZappTheme.colors.textMuted)
                         )
                     }
                 },
@@ -850,11 +842,11 @@ fun SendFormMemoTextField(
                     ZashiTextFieldDefaults.defaultColors()
                 } else {
                     ZashiTextFieldDefaults.defaultColors(
-                        disabledTextColor = ZashiColors.Inputs.Disabled.text,
-                        disabledHintColor = ZashiColors.Inputs.Disabled.hint,
+                        disabledTextColor = ZappTheme.colors.textSubtle,
+                        disabledHintColor = ZappTheme.colors.textSubtle,
                         disabledBorderColor = Color.Unspecified,
-                        disabledContainerColor = ZashiColors.Inputs.Disabled.bg,
-                        disabledPlaceholderColor = ZashiColors.Inputs.Disabled.text,
+                        disabledContainerColor = ZappTheme.colors.surfaceAlt,
+                        disabledPlaceholderColor = ZappTheme.colors.textSubtle,
                     )
                 },
             modifier = Modifier.fillMaxWidth(),
@@ -870,16 +862,16 @@ fun SendFormMemoTextField(
                     ),
                 color =
                     if (memoState is MemoState.Correct) {
-                        ZashiColors.Inputs.Default.hint
+                        ZappTheme.colors.textSubtle
                     } else {
-                        ZashiColors.Inputs.Filled.required
+                        ZappTheme.colors.danger
                     },
                 textAlign = TextAlign.End,
-                style = ZashiTypography.textSm,
+                style = ZappTheme.typography.caption,
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = ZcashTheme.dimens.spacingTiny)
+                        .padding(top = 4.dp)
             )
         }
     }
@@ -916,15 +908,15 @@ private fun SendFailure(
             ) {
                 Text(
                     text = stringResource(id = R.string.send_dialog_error_text),
-                    color = ZcashTheme.colors.textPrimary,
+                    color = ZappTheme.colors.text,
                 )
 
-                Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingDefault))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = reason,
                     fontStyle = FontStyle.Italic,
-                    color = ZcashTheme.colors.textPrimary,
+                    color = ZappTheme.colors.text,
                 )
             }
         },

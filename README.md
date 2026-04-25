@@ -10,6 +10,40 @@ upstream Zcash wallet it adds:
 - Balance history chart on the Wallet home
 - Testnet toggle consolidated into the build flavor
 - Zapp rebrand (`ZappPalette`, app name, version 4.x)
+- Swiss-minimalist UI system (`ZappTheme`) with full design-token migration across all screens
+
+## UI Design System (`feat/newUI`)
+
+A new Swiss-minimalist design system (`ZappTheme`) has been introduced and applied across all screens. Key changes:
+
+### Design Standards
+- **Colors** — all screens now use `ZappTheme.colors.*` tokens (warm off-white backgrounds, `#FF9417` orange accent). Legacy `ZashiColors`, `ZcashTheme.colors`, and raw `MaterialTheme.colorScheme` references have been replaced.
+- **Typography** — all screens use `ZappTheme.typography.*` tokens. `ZashiTypography`, `RobotoMonoFontFamily`, and `MaterialTheme.typography` references have been replaced.
+- **Shapes** — no rounded corners anywhere. All `RoundedCornerShape` and `CircleShape` usage has been replaced with `RectangleShape` (flat Swiss geometry).
+- **Back button placement** — back buttons have moved from the top-left app bar to a `ZappBottomActionBar` at the bottom-left, horizontally aligned with the primary CTA so the thumb can reach both without stretching.
+
+### New Component: `ZappBottomActionBar`
+Added to `ui-design-lib/.../component/zapp/ZappComponents.kt`. Renders `ZappBackButton` on the left and an optional primary action composable on the right, with `windowInsetsPadding(WindowInsets.navigationBars)` for edge-to-edge correctness.
+
+### Migrated Screens
+| Screen | Changes |
+|--------|---------|
+| `ChatRoomView` | Replaced `MaterialTheme` + Material3 `TopAppBar` with `ZappScreenHeader` + `ZappBottomActionBar`; message bubbles use `RectangleShape` |
+| `ChatProfileView` | Replaced `MaterialTheme`, `Card`, `CircleShape` with Zapp tokens; square avatar with accent background |
+| `ChatSettingsView` | Replaced `MaterialTheme`, `Surface`, `HorizontalDivider` with `ZappGroupHeader`/`ZappRow`/`ZappRowDivider` |
+| `ContactEditView` | Replaced Material3 `TopAppBar` + `Button` with `ZappScreenHeader` + `ZappBottomActionBar` |
+| `NewConversationView` | Replaced Material3 scaffold with `ZappScreenHeader` + `ZappBottomActionBar`; contact chips use Zapp surface tokens |
+| `ChatListView` | Back button moved from `ZappScreenHeader.left` to bottom-left (aligned with FAB) |
+| `ChatContactsView` | Same as `ChatListView` |
+| `MoreView` | Replaced `ZashiSmallTopAppBar` with `ZappScreenHeader`; `ZappBottomActionBar` added |
+| `AddressBookView` | Back button moved to `ZappBottomActionBar` |
+| `SendView` | Replaced `ZashiTopAppbar`/`BlankBgScaffold` with `ZappScreenHeader`+`ZappBottomActionBar`; all `ZashiColors`/`ZashiTypography`/`RobotoMonoFontFamily`/`ZashiDimensions` replaced with Zapp tokens |
+| `ReceiveView` | Replaced `ZashiTopAppbar`/`BlankBgScaffold`; address panel color-mode theming replaced with flat Zapp surface tokens; `RoundedCornerShape` → `RectangleShape` |
+| `SwapView` | Replaced `ZashiSmallTopAppBar`+back with `ZappScreenHeader`+`ZappBottomActionBar`; all color/typography tokens migrated |
+| `TransactionDetailView` | Replaced `GradientBgScaffold`+`ZashiSmallTopAppBar` with flat `Scaffold`+`ZappScreenHeader`; `ZappBackButton` added to bottom action row |
+| `ScanView` | Removed `ScanTopAppBar`; back button moved into `ScanBottomItems` using `ZappBackButton` |
+| `RequestView` | Replaced `RequestTopAppBar`+`OldZashiBottomBar` with `ZappScreenHeader`+`ZappBottomActionBar` |
+| `HomeView` | Legacy spacing tokens (`ZashiDimensions`, `ZcashTheme.dimens`) replaced with direct dp values |
 
 See [`ZAPP_CHANGES.md`](ZAPP_CHANGES.md) for the full patch series and
 [`ZAPP_CHANGES.md#merge-procedure`](ZAPP_CHANGES.md#merge-procedure) for how
