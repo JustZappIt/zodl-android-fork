@@ -8,18 +8,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Contacts
@@ -28,22 +31,17 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,11 +52,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappChipVariant
+import co.electriccoin.zcash.ui.design.component.zapp.ZappFab
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
+import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
+import co.electriccoin.zcash.ui.design.component.zapp.ellipsizeAddress
+import co.electriccoin.zcash.ui.design.component.zapp.initialsOf
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
+import co.electriccoin.zcash.ui.design.theme.colors.ZappNavBar
 import co.electriccoin.zcash.ui.screen.chat.model.ChatContact
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 
@@ -88,87 +93,116 @@ fun ChatContactsView(
         }
     }
 
-    Scaffold(
-        modifier = modifier,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    Icons.Default.PersonAdd,
-                    contentDescription = "Add contact",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        },
-        topBar = {
-            TopAppBar(
-                title = { Text("Contacts", style = MaterialTheme.typography.headlineSmall) },
-                navigationIcon = {
-                    if (showBackButton) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    val c = ZappTheme.colors
+    val grouped =
+        remember(contacts) {
+            contacts
+                .sortedBy { it.name.lowercase() }
+                .groupBy { (it.name.firstOrNull() ?: '?').uppercaseChar() }
+        }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(WindowInsets.statusBars),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            ZappScreenHeader(
+                title = "Contacts",
+                right = {
+                    ZappStatusChip(
+                        text = "${contacts.size} saved",
+                        variant = ZappChipVariant.Muted,
+                    )
+                },
+            )
+
+            if (contacts.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Contacts,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = c.textSubtle,
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        BasicText(
+                            "No contacts yet",
+                            style = ZappTheme.typography.sectionTitle.copy(color = c.text),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        BasicText(
+                            "Add contacts to start chatting",
+                            style = ZappTheme.typography.body.copy(color = c.textMuted),
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = 4.dp,
+                        bottom = ZappNavBar.CLEARANCE_DP.dp,
+                    ),
+                ) {
+                    grouped.forEach { (letter, bucket) ->
+                        item(key = "header-$letter") {
+                            BasicText(
+                                text = letter.toString(),
+                                style = ZappTheme.typography.groupLabel.copy(color = c.textMuted),
+                                modifier = Modifier.padding(
+                                    start = 20.dp,
+                                    end = 20.dp,
+                                    top = 14.dp,
+                                    bottom = 4.dp,
+                                ),
+                            )
+                        }
+                        items(
+                            items = bucket,
+                            key = { it.publicKey },
+                        ) { contact ->
+                            ContactListItem(
+                                contact = contact,
+                                onChat = { onStartChat(contact.publicKey) },
+                            )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
+                }
+            }
         }
-    ) { paddingValues ->
-        if (contacts.isEmpty()) {
-            Box(
+
+        ZappFab(
+            icon = Icons.Default.PersonAdd,
+            contentDescription = "Add contact",
+            onClick = { showAddDialog = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = 20.dp,
+                    bottom = (ZappNavBar.CLEARANCE_DP + 12).dp,
+                ),
+        )
+
+        // Back button floats bottom-left, horizontally aligned with the FAB.
+        if (showBackButton) {
+            ZappBackButton(
+                onClick = onNavigateBack,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Contacts,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "No contacts yet",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Add contacts to start chatting",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(
-                    items = contacts.sortedBy { it.name.lowercase() },
-                    key = { it.publicKey }
-                ) { contact ->
-                    ContactListItem(
-                        contact = contact,
-                        onChat = { onStartChat(contact.publicKey) }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 72.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                }
-            }
+                    .align(Alignment.BottomStart)
+                    .padding(
+                        start = 20.dp,
+                        bottom = (ZappNavBar.CLEARANCE_DP + 12).dp,
+                    ),
+            )
         }
     }
 
@@ -191,44 +225,45 @@ fun ChatContactsView(
 @Composable
 private fun ContactListItem(
     contact: ChatContact,
-    onChat: () -> Unit
+    onChat: () -> Unit,
 ) {
+    val c = ZappTheme.colors
+    val initials = remember(contact.name) { initialsOf(contact.name) }
+    val shortKey = remember(contact.publicKey) { contact.publicKey.ellipsizeAddress() }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onChat)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 18.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-                    )
-                ),
-            contentAlignment = Alignment.Center
+                .size(40.dp)
+                .background(c.accent, RectangleShape),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = contact.name.take(2).uppercase(),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimary
+            BasicText(
+                text = initials,
+                style = ZappTheme.typography.rowTitle.copy(color = c.onAccent),
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(Modifier.width(14.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                contact.name,
-                style = MaterialTheme.typography.titleSmall
+            BasicText(
+                text = contact.name,
+                style = ZappTheme.typography.rowTitle.copy(color = c.text),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                "${contact.publicKey.take(8)}...${contact.publicKey.takeLast(4)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            BasicText(
+                text = shortKey,
+                style = ZappTheme.typography.mono.copy(color = c.textMuted),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
@@ -236,7 +271,7 @@ private fun ContactListItem(
             Icon(
                 Icons.AutoMirrored.Filled.Chat,
                 contentDescription = "Start chat",
-                tint = MaterialTheme.colorScheme.primary
+                tint = c.accent,
             )
         }
     }

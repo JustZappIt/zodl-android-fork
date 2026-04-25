@@ -1,5 +1,8 @@
 @file:Suppress("TooManyFunctions")
 
+// TODO(Zapp-design): migrate from Zashi to ZappTheme — replace ZashiColors, ZashiTypography,
+//  ZashiSmallTopAppBar, and ZashiTopAppBarBackNavigation with Zapp equivalents.
+//  Back button must move from top-left to ZappBottomActionBar (bottom-left).
 package co.electriccoin.zcash.ui.screen.send.view
 
 import androidx.compose.animation.AnimatedVisibility

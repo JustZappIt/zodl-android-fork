@@ -1,3 +1,7 @@
+// TODO(Zapp-design): special-case screen — full-screen camera with forced dark mode.
+//  Migrate SmallTopAppBar/TopAppBarBackNavigation to ZappScreenHeader + ZappBottomActionBar.
+//  Back button should move to bottom-left, inside ScanBottomItems, visible in all scan states.
+//  Replace ZashiColors and ZashiTypography with ZappTheme equivalents.
 package co.electriccoin.zcash.ui.screen.scan
 
 import android.Manifest

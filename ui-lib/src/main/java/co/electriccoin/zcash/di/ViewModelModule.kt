@@ -62,6 +62,7 @@ import co.electriccoin.zcash.ui.screen.selectkeystoneaccount.viewmodel.SelectKey
 import co.electriccoin.zcash.ui.screen.send.SendViewModel
 import co.electriccoin.zcash.ui.screen.signkeystonetransaction.SignKeystoneTransactionVM
 import co.electriccoin.zcash.ui.screen.support.viewmodel.SupportViewModel
+import co.electriccoin.zcash.ui.screen.tabs.viewmodel.WalletSyncStateVM
 import co.electriccoin.zcash.ui.screen.swap.SwapVM
 import co.electriccoin.zcash.ui.screen.swap.ab.AddSwapABContactVM
 import co.electriccoin.zcash.ui.screen.swap.ab.SelectSwapABRecipientVM
@@ -132,6 +133,7 @@ val viewModelModule =
         viewModelOf(::BalanceWidgetVM)
         viewModelOf(::BalanceChartVM)
         viewModelOf(::HomeVM)
+        viewModelOf(::WalletSyncStateVM)
         viewModelOf(::RestoreBDHeightVM)
         viewModelOf(::RestoreBDDateVM)
         viewModelOf(::RestoreBDEstimationVM)

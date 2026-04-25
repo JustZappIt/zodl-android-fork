@@ -1,5 +1,7 @@
 @file:Suppress("TooManyFunctions")
 
+// TODO(Zapp-design): migrate from ZcashTheme to ZappTheme — replace RequestTopAppBar (ZashiColors)
+//  with ZappScreenHeader + ZappBottomActionBar. Move back button to bottom-left.
 package co.electriccoin.zcash.ui.screen.request.view
 
 import androidx.compose.foundation.layout.Column

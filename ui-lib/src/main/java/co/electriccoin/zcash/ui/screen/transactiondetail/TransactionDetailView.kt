@@ -1,3 +1,5 @@
+// TODO(Zapp-design): migrate from Zashi to ZappTheme — replace ZashiColors, ZashiTypography,
+//  and back navigation with ZappScreenHeader + ZappBottomActionBar.
 package co.electriccoin.zcash.ui.screen.transactiondetail
 
 import androidx.compose.foundation.Image

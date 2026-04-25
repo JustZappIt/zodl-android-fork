@@ -1,3 +1,5 @@
+// TODO(Zapp-design): legacy screen — being replaced by WalletHomeView. Migrate ZcashTheme,
+//  ZashiTypography, and ZashiDimensions to ZappTheme when this screen is fully deprecated.
 package co.electriccoin.zcash.ui.screen.home
 
 import androidx.compose.foundation.layout.Arrangement
