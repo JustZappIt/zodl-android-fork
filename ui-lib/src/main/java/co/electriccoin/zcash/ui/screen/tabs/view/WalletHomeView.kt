@@ -37,8 +37,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cash.z.ecc.android.sdk.model.Zatoshi
 import cash.z.ecc.sdk.extension.toZecStringFull
@@ -216,6 +218,7 @@ private fun BalanceCard(
     modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
+    val hasBalance = balanceState.totalBalance.value > 0L
 
     Column(
         modifier = modifier
@@ -229,17 +232,17 @@ private fun BalanceCard(
 
         BalanceAmount(balanceState = balanceState)
 
-        Spacer(Modifier.height(10.dp))
-
-        BalanceDelta(chartState = chartState)
-
-        Spacer(Modifier.height(14.dp))
-
-        ChartArea(state = chartState)
-
-        Spacer(Modifier.height(14.dp))
-
-        PeriodSelector(state = chartState)
+        // Chart, period selector, and delta only render when there's something
+        // to chart. A flat-zero balance hides them entirely — the design says
+        // "show 0.00 cleanly, don't draw an empty chart".
+        if (hasBalance) {
+            Spacer(Modifier.height(10.dp))
+            BalanceDelta(chartState = chartState)
+            Spacer(Modifier.height(14.dp))
+            ChartArea(state = chartState)
+            Spacer(Modifier.height(14.dp))
+            PeriodSelector(state = chartState)
+        }
     }
 }
 
@@ -251,16 +254,27 @@ private fun BalanceAmount(balanceState: BalanceWidgetState) {
         balanceState.totalBalance.toZecStringFull()
     }
 
+    // Swiss display style — Black weight, oversized, tight tracking — matches
+    // the wallet hero in the design canvas (52sp whole / 26sp fraction).
+    val wholeStyle = ZappTheme.typography.display.copy(
+        color = c.text,
+        fontSize = 52.sp,
+        lineHeight = 52.sp,
+        fontWeight = FontWeight.Black,
+        letterSpacing = (-3).sp,
+    )
+    val fractionStyle = ZappTheme.typography.displaySecondary.copy(
+        color = c.textMuted,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-1).sp,
+    )
+
     if (fiat != null) {
         Row(verticalAlignment = Alignment.Bottom) {
-            BasicText(
-                text = fiat.whole,
-                style = ZappTheme.typography.display.copy(color = c.text),
-            )
-            BasicText(
-                text = fiat.fraction,
-                style = ZappTheme.typography.displaySecondary.copy(color = c.textMuted),
-            )
+            BasicText(text = fiat.whole, style = wholeStyle)
+            BasicText(text = fiat.fraction, style = fractionStyle)
         }
         Spacer(Modifier.height(2.dp))
         BasicText(
@@ -269,13 +283,10 @@ private fun BalanceAmount(balanceState: BalanceWidgetState) {
         )
     } else {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            BasicText(
-                text = zec,
-                style = ZappTheme.typography.display.copy(color = c.text),
-            )
+            BasicText(text = zec, style = wholeStyle)
             BasicText(
                 text = "ZEC",
-                style = ZappTheme.typography.displaySecondary.copy(color = c.textMuted),
+                style = fractionStyle,
                 modifier = Modifier.padding(bottom = 4.dp),
             )
         }
@@ -461,26 +472,38 @@ private fun ActivityRow(state: ActivityState) {
 @Composable
 private fun ActivityEmpty() {
     val c = ZappTheme.colors
+    // Swiss-style: left-aligned, no centered illustration, sharp top rule that
+    // matches the divider rhythm an actual transaction list would have.
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .border(BorderStroke(0.dp, c.border), RectangleShape)
+            .padding(horizontal = 18.dp, vertical = 18.dp),
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_transaction_widget_empty),
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(20.dp)
+                .background(c.accent, RectangleShape),
         )
         Spacer(Modifier.height(10.dp))
         BasicText(
-            text = "No transactions yet",
-            style = ZappTheme.typography.rowTitle.copy(color = c.text),
+            text = "No transactions yet.",
+            style = ZappTheme.typography.rowTitle.copy(
+                color = c.text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.3).sp,
+            ),
         )
         Spacer(Modifier.height(4.dp))
         BasicText(
             text = "Your sends and receives will appear here.",
-            style = ZappTheme.typography.rowSubtitle.copy(color = c.textMuted),
+            style = ZappTheme.typography.rowSubtitle.copy(
+                color = c.textMuted,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+            ),
         )
     }
 }

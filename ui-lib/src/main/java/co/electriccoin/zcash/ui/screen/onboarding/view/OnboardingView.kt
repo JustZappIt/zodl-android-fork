@@ -106,7 +106,11 @@ fun Onboarding(
             )
 
         OnboardingStep.MSG_SEED ->
+            // Legacy entry point. Production uses ZappOnboardingFlow; this exists for
+            // an instrumentation test only (see OnboardingTestSetup). Empty list here
+            // is fine because the screen isn't reached at runtime.
             MessagingSeedPhraseScreen(
+                words = emptyList(),
                 onBack = { step = OnboardingStep.MSG_USERNAME },
                 onContinue = { step = OnboardingStep.WALLET_INTRO },
             )

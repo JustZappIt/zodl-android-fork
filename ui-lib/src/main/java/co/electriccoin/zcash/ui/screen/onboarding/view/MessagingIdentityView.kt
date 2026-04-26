@@ -10,20 +10,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,141 +30,53 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.electriccoin.zcash.ui.design.component.ZashiButton
-import co.electriccoin.zcash.ui.design.component.ZashiButtonDefaults
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
-import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
-import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZappPalette
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 
-private val MSG_SEED_WORDS = listOf(
-    "river", "anchor", "willow", "lantern", "silver", "harbor",
-    "maple", "breeze", "copper", "quartz", "canyon", "ember"
-)
-
-// ───────────────────────────────────────────────
-// Progress bar — reused across all onboarding steps
-// ───────────────────────────────────────────────
-
-@Composable
-fun OnboardingProgressBar(
-    step: Int,
-    total: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        repeat(total) { i ->
-            Box(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .height(3.dp)
-                        .background(
-                            color = if (i < step) ZappPalette.Primary else ZashiColors.Surfaces.strokePrimary,
-                        ),
-            )
-        }
-    }
-}
-
-// ───────────────────────────────────────────────
-// Step 1/6 — Messaging phase intro
-// ───────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// 02 · Phase 1 intro — Messaging account
+// ───────────────────────────────────────────────────────────────
 
 @Composable
 fun MessagingPhaseIntro(
     onBack: () -> Unit,
     onContinue: () -> Unit,
 ) {
-    Scaffold { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState()),
-        ) {
-            Spacer(Modifier.height(16.dp))
-
-            OnboardingProgressBar(step = 1, total = 6)
-
-            Spacer(Modifier.height(24.dp))
-
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-
-            Spacer(Modifier.height(24.dp))
-
-            // Phase badge
-            Text(
-                text = "PART 1 OF 3 · MESSAGING",
-                color = ZappPalette.Primary,
-                style = ZashiTypography.textXs,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.5.sp,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Create your messaging identity",
-                style = ZashiTypography.header6,
-                fontWeight = FontWeight.Bold,
-                color = ZashiColors.Text.textPrimary,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Your messaging identity is separate from your wallet. It controls how others find you and how your messages are signed.",
-                style = ZashiTypography.textSm,
-                color = ZashiColors.Text.textTertiary,
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            BulletRow(
-                icon = "⊕",
-                title = "Username",
-                detail = "A human-readable handle (e.g. @alice) backed by an Ed25519 keypair.",
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            BulletRow(
-                icon = "⊕",
-                title = "Recovery phrase",
-                detail = "12 words that let you restore your messaging identity on a new device.",
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            ZashiButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Continue",
-                onClick = onContinue,
-            )
-
-            Spacer(Modifier.height(32.dp))
-        }
+    OnbScreen(
+        step = 1,
+        ghostNum = 1,
+        badge = "Part 1 of 3 · Messaging account",
+        cta = "Continue",
+        onCta = onContinue,
+        showBack = true,
+        onBack = onBack,
+    ) {
+        OnbHero(text = "Create your\nmessaging\nidentity")
+        Spacer(Modifier.height(16.dp))
+        OnbSub(
+            text = "Your identity is a username plus a 12-word phrase that lets you restore your chats on a new device.",
+            modifier = Modifier.fillMaxWidth(0.92f),
+        )
+        Spacer(Modifier.height(28.dp))
+        OnbBulletRow(
+            label = "Pick a username",
+            sub = "How friends find and message you",
+            isFirst = true,
+        )
+        OnbBulletRow(
+            label = "Save a recovery phrase",
+            sub = "Restore your account if you lose this phone",
+        )
     }
 }
 
-// ───────────────────────────────────────────────
-// Step 2/6 — Username entry
-// ───────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// 03 · Username
+// ───────────────────────────────────────────────────────────────
 
 @Composable
 fun UsernameEntryScreen(
@@ -175,393 +84,400 @@ fun UsernameEntryScreen(
     onContinue: (username: String) -> Unit,
 ) {
     var username by rememberSaveable { mutableStateOf("") }
+    val isLong = username.length >= 3
+    val isShort = username.length <= 20
+    val isClean = username.matches(Regex("[a-z0-9_]*"))
+    val isValid = isLong && isShort && isClean && username.isNotEmpty()
 
-    val isLongEnough = username.length >= 3
-    val isShortEnough = username.length <= 20
-    val isValidChars = username.matches(Regex("[a-z0-9_]*"))
-    val isValid = isLongEnough && isShortEnough && isValidChars && username.isNotEmpty()
+    OnbScreen(
+        step = 2,
+        ghostNum = 2,
+        badge = "Part 1 · Username",
+        cta = "Continue",
+        ctaEnabled = isValid,
+        onCta = { if (isValid) onContinue(username) },
+        showBack = true,
+        onBack = onBack,
+    ) {
+        OnbHero(text = "Choose a\nusername")
+        Spacer(Modifier.height(14.dp))
+        OnbSub("This is how friends find you. It cannot be changed later.")
+        Spacer(Modifier.height(28.dp))
 
-    Scaffold { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState()),
+        UsernameField(
+            value = username,
+            onChange = { username = it.lowercase().filter { ch -> ch.isLetterOrDigit() || ch == '_' } },
+            isValid = isValid,
+        )
+        Spacer(Modifier.height(12.dp))
+        ValidationRow(isLong = isLong && username.isNotEmpty(), isShort = isShort, isClean = isClean && username.isNotEmpty())
+        Spacer(Modifier.height(20.dp))
+        InfoCallout(text = "Zapp generates a local keypair. No server ever sees your private key.")
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// 04 · Messaging recovery phrase
+// ───────────────────────────────────────────────────────────────
+
+@Composable
+fun MessagingSeedPhraseScreen(
+    words: List<String>,
+    onBack: () -> Unit,
+    onContinue: () -> Unit,
+) {
+    SeedRevealScreen(
+        step = 3,
+        title = "Messaging\nrecovery phrase",
+        sub = "These words restore your chats. Different from your wallet phrase — save both safely.",
+        words = words,
+        onBack = onBack,
+        onContinue = onContinue,
+    )
+}
+
+// ───────────────────────────────────────────────────────────────
+// Shared screen scaffold (single Column owning body + dock)
+// ───────────────────────────────────────────────────────────────
+
+@Composable
+internal fun OnbScreen(
+    step: Int,
+    ghostNum: Int,
+    badge: String,
+    cta: String,
+    onCta: () -> Unit,
+    ctaEnabled: Boolean = true,
+    showBack: Boolean = false,
+    onBack: () -> Unit = {},
+    body: @Composable () -> Unit,
+) {
+    val c = ZappTheme.colors
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(WindowInsets.statusBars),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp)) {
+            OnbProgress(step = step)
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(start = 28.dp, end = 28.dp, top = 24.dp),
         ) {
-            Spacer(Modifier.height(16.dp))
-
-            OnboardingProgressBar(step = 2, total = 6)
-
-            Spacer(Modifier.height(24.dp))
-
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = "PART 1 · USERNAME",
-                color = ZappPalette.Primary,
-                style = ZashiTypography.textXs,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.5.sp,
+            GhostNum(
+                n = ghostNum,
+                modifier = Modifier.align(Alignment.TopEnd),
             )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Pick a username",
-                style = ZashiTypography.header6,
-                fontWeight = FontWeight.Bold,
-                color = ZashiColors.Text.textPrimary,
-            )
-
-            Spacer(Modifier.height(20.dp))
-
-            OutlinedTextField(
-                value = username,
-                onValueChange = { new ->
-                    if (new.length <= 20) username = new.lowercase()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text("e.g. alice", color = ZashiColors.Text.textTertiary)
-                },
-                prefix = {
-                    Text("@", color = ZashiColors.Text.textTertiary)
-                },
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Ascii,
-                        imeAction = ImeAction.Done,
-                    ),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ZappPalette.Primary,
-                        unfocusedBorderColor = ZashiColors.Surfaces.strokePrimary,
-                        focusedTextColor = ZashiColors.Text.textPrimary,
-                        unfocusedTextColor = ZashiColors.Text.textPrimary,
-                        cursorColor = ZappPalette.Primary,
-                    ),
-                shape = RoundedCornerShape(0.dp),
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ValidationChip(label = "3+ chars", passed = isLongEnough && username.isNotEmpty())
-                ValidationChip(label = "≤20 chars", passed = isShortEnough)
-                ValidationChip(label = "a–z, 0–9, _", passed = isValidChars && username.isNotEmpty())
+            Column(modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth()) {
+                Eyebrow(badge)
+                Spacer(Modifier.height(14.dp))
+                body()
             }
+        }
+        OnbBottomDock(
+            cta = cta,
+            onCta = onCta,
+            showBack = showBack,
+            onBack = onBack,
+            ctaEnabled = ctaEnabled,
+        )
+    }
+}
 
-            Spacer(Modifier.height(20.dp))
-
-            // Info box
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(ZashiColors.Surfaces.bgSecondary)
-                        .padding(16.dp),
-            ) {
-                Text(
-                    text = "About your messaging identity",
-                    style = ZashiTypography.textSm,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ZashiColors.Text.textPrimary,
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "Your username is paired with an Ed25519 keypair generated on this device. Others discover you by username, but messages are authenticated by your key — not just the name.",
-                    style = ZashiTypography.textXs,
-                    color = ZashiColors.Text.textTertiary,
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            ZashiButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Continue",
-                onClick = { if (isValid) onContinue(username) },
-                colors = if (isValid) ZashiButtonDefaults.primaryColors() else ZashiButtonDefaults.tertiaryColors(),
+@Composable
+internal fun UsernameField(
+    value: String,
+    onChange: (String) -> Unit,
+    isValid: Boolean,
+) {
+    val c = ZappTheme.colors
+    val borderColor = if (value.isNotEmpty()) c.text else c.border
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(width = 2.dp, color = borderColor, shape = RectangleShape)
+            .padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        BasicText(
+            text = "@",
+            style = ZappTheme.typography.display.copy(
+                color = c.textSubtle,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+            ),
+        )
+        Spacer(Modifier.width(2.dp))
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            cursorBrush = SolidColor(c.accent),
+            textStyle = ZappTheme.typography.display.copy(
+                color = c.text,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.8).sp,
+            ),
+            modifier = Modifier.weight(1f),
+            decorationBox = { inner ->
+                Box {
+                    if (value.isEmpty()) {
+                        BasicText(
+                            text = "your_handle",
+                            style = ZappTheme.typography.display.copy(
+                                color = c.textSubtle,
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-0.8).sp,
+                            ),
+                        )
+                    }
+                    inner()
+                }
+            },
+        )
+        if (isValid) {
+            BasicText(
+                text = "✓",
+                style = ZappTheme.typography.display.copy(
+                    color = c.success,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                ),
             )
-
-            Spacer(Modifier.height(32.dp))
         }
     }
 }
 
-// ───────────────────────────────────────────────
-// Step 3/6 — Messaging seed phrase
-// ───────────────────────────────────────────────
+@Composable
+internal fun ValidationRow(isLong: Boolean, isShort: Boolean, isClean: Boolean) {
+    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Chip(label = "3+ chars", ok = isLong)
+        Chip(label = "≤20 chars", ok = isShort)
+        Chip(label = "a–z 0–9 _", ok = isClean)
+    }
+}
 
 @Composable
-fun MessagingSeedPhraseScreen(
+private fun Chip(label: String, ok: Boolean) {
+    val c = ZappTheme.colors
+    val color = if (ok) c.success else c.textSubtle
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        BasicText(
+            text = if (ok) "✓" else "✕",
+            style = ZappTheme.typography.chip.copy(color = color, fontSize = 11.sp, fontWeight = FontWeight.Black),
+        )
+        Spacer(Modifier.width(4.dp))
+        BasicText(
+            text = label,
+            style = ZappTheme.typography.chip.copy(color = color, fontSize = 11.sp, fontWeight = FontWeight.Black),
+        )
+    }
+}
+
+@Composable
+internal fun InfoCallout(text: String) {
+    val c = ZappTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, c.border, RectangleShape)
+            .padding(12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        BasicText(
+            text = "🛡",
+            style = ZappTheme.typography.body.copy(color = c.accent, fontSize = 13.sp),
+        )
+        Spacer(Modifier.width(10.dp))
+        BasicText(
+            text = text,
+            style = ZappTheme.typography.body.copy(
+                color = c.textSubtle,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+            ),
+        )
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// Seed reveal — shared between messaging and wallet phases
+// ───────────────────────────────────────────────────────────────
+
+@Composable
+fun SeedRevealScreen(
+    step: Int,
+    title: String,
+    sub: String,
+    words: List<String>,
     onBack: () -> Unit,
     onContinue: () -> Unit,
 ) {
-    var isRevealed by rememberSaveable { mutableStateOf(false) }
-    var isConfirmed by rememberSaveable { mutableStateOf(false) }
+    var revealed by rememberSaveable { mutableStateOf(false) }
+    var saved by rememberSaveable { mutableStateOf(false) }
+    val c = ZappTheme.colors
 
-    Scaffold { paddingValues ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(WindowInsets.statusBars),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp)) {
+            OnbProgress(step = step)
+        }
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState()),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(start = 28.dp, end = 28.dp, top = 24.dp),
         ) {
-            Spacer(Modifier.height(16.dp))
-
-            OnboardingProgressBar(step = 3, total = 6)
-
-            Spacer(Modifier.height(24.dp))
-
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = "PART 1 · RECOVERY PHRASE",
-                color = ZappPalette.Primary,
-                style = ZashiTypography.textXs,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.5.sp,
+            BasicText(
+                text = title,
+                style = ZappTheme.typography.display.copy(
+                    color = c.text,
+                    fontSize = 26.sp,
+                    lineHeight = 30.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.8).sp,
+                ),
             )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Messaging recovery phrase",
-                style = ZashiTypography.header6,
-                fontWeight = FontWeight.Bold,
-                color = ZashiColors.Text.textPrimary,
-            )
-
             Spacer(Modifier.height(8.dp))
+            OnbSub(text = sub, modifier = Modifier.fillMaxWidth(0.92f))
+            Spacer(Modifier.height(20.dp))
 
-            Text(
-                text = "Write down these 12 words in order. You'll need them to restore your messaging identity.",
-                style = ZashiTypography.textSm,
-                color = ZashiColors.Text.textTertiary,
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            // 12-word grid
-            Box {
-                SeedWordGrid(
-                    words = MSG_SEED_WORDS,
-                    modifier = Modifier.blur(if (isRevealed) 0.dp else 14.dp),
+            Box(modifier = Modifier.fillMaxWidth()) {
+                SeedGrid(
+                    words = words,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, c.border, RectangleShape)
+                        .blur(if (revealed) 0.dp else 14.dp),
                 )
-
-                if (!isRevealed) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .matchParentSize()
-                                .clickable { isRevealed = true },
-                        contentAlignment = Alignment.Center,
+                if (!revealed) {
+                    Column(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { revealed = true },
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(c.text, RectangleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            BasicText(
+                                text = "👁",
+                                style = ZappTheme.typography.body.copy(color = c.bg, fontSize = 18.sp),
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        BasicText(
                             text = "Tap to reveal",
-                            style = ZashiTypography.textSm,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ZashiColors.Text.textPrimary,
+                            style = ZappTheme.typography.button.copy(
+                                color = c.text,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.2.sp,
+                            ),
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
             Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { if (isRevealed) isConfirmed = !isConfirmed }
-                        .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = revealed) { saved = !saved },
             ) {
-                Checkbox(
-                    checked = isConfirmed,
-                    onCheckedChange = { if (isRevealed) isConfirmed = it },
-                    colors =
-                        CheckboxDefaults.colors(
-                            checkedColor = ZappPalette.Primary,
-                            uncheckedColor = ZashiColors.Surfaces.strokePrimary,
-                        ),
-                )
-                Spacer(Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(if (saved) c.accent else c.bg, RectangleShape)
+                        .border(2.dp, if (saved) c.accent else c.borderStrong, RectangleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (saved) {
+                        BasicText(
+                            text = "✓",
+                            style = ZappTheme.typography.button.copy(color = c.onAccent, fontSize = 12.sp, fontWeight = FontWeight.Black),
+                        )
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
                 Text(
-                    text = "I've written down all 12 words",
-                    style = ZashiTypography.textSm,
-                    color = ZashiColors.Text.textPrimary,
+                    text = "I've written all 12 words in order. I understand this phrase cannot be recovered if lost.",
+                    style = ZappTheme.typography.body.copy(
+                        color = c.textMuted,
+                        fontSize = 12.sp,
+                        lineHeight = 19.sp,
+                    ),
                 )
             }
-
-            Spacer(Modifier.weight(1f))
-
-            ZashiButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = "I've saved it",
-                onClick = { if (isRevealed && isConfirmed) onContinue() },
-                colors =
-                    if (isRevealed && isConfirmed) {
-                        ZashiButtonDefaults.primaryColors()
-                    } else {
-                        ZashiButtonDefaults.tertiaryColors()
-                    },
-            )
-
-            Spacer(Modifier.height(32.dp))
         }
+        OnbBottomDock(
+            cta = "I've saved it",
+            onCta = onContinue,
+            showBack = true,
+            onBack = onBack,
+            ctaEnabled = revealed && saved,
+        )
     }
 }
 
-// ───────────────────────────────────────────────
-// Internal helpers
-// ───────────────────────────────────────────────
-
 @Composable
-private fun SeedWordGrid(
-    words: List<String>,
-    modifier: Modifier = Modifier,
-) {
-    val half = words.size / 2
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            words.take(half).forEachIndexed { i, word ->
-                SeedWordItem(index = i + 1, word = word)
+private fun SeedGrid(words: List<String>, modifier: Modifier = Modifier) {
+    val c = ZappTheme.colors
+    // 3-column grid; row count flexes with seed length (12 → 4 rows, 24 → 8 rows).
+    val rows = words.chunked(3)
+    Column(modifier = modifier) {
+        rows.forEachIndexed { ri, row ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                row.forEachIndexed { wi, w ->
+                    val idx = ri * 3 + wi
+                    val cellBg = if (ri % 2 == 0) c.bg else c.surfaceAlt
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(cellBg, RectangleShape)
+                            .padding(horizontal = 10.dp, vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        BasicText(
+                            text = String.format("%02d", idx + 1),
+                            style = ZappTheme.typography.mono.copy(
+                                color = c.textSubtle,
+                                fontSize = 9.sp,
+                            ),
+                            modifier = Modifier.width(16.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        BasicText(
+                            text = w,
+                            style = ZappTheme.typography.rowTitle.copy(
+                                color = c.text,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-0.1).sp,
+                            ),
+                        )
+                    }
+                }
+                // Pad incomplete final row so cells stay aligned.
+                repeat(3 - row.size) {
+                    Box(modifier = Modifier.weight(1f).background(c.bg, RectangleShape))
+                }
             }
         }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            words.drop(half).forEachIndexed { i, word ->
-                SeedWordItem(index = i + half + 1, word = word)
-            }
-        }
     }
 }
-
-@Composable
-private fun SeedWordItem(
-    index: Int,
-    word: String,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(ZashiColors.Surfaces.bgSecondary)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "$index",
-            style = ZashiTypography.textXs,
-            color = ZashiColors.Text.textTertiary,
-            modifier = Modifier.width(20.dp),
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = word,
-            style = ZashiTypography.textSm,
-            fontWeight = FontWeight.Medium,
-            color = ZashiColors.Text.textPrimary,
-            fontFamily = FontFamily.Monospace,
-        )
-    }
-}
-
-@Composable
-private fun BulletRow(
-    icon: String,
-    title: String,
-    detail: String,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(ZashiColors.Surfaces.bgSecondary)
-                .padding(16.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            text = icon,
-            color = ZappPalette.Primary,
-            style = ZashiTypography.textSm,
-        )
-        Spacer(Modifier.width(12.dp))
-        Column {
-            Text(
-                text = title,
-                style = ZashiTypography.textSm,
-                fontWeight = FontWeight.SemiBold,
-                color = ZashiColors.Text.textPrimary,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = detail,
-                style = ZashiTypography.textXs,
-                color = ZashiColors.Text.textTertiary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ValidationChip(
-    label: String,
-    passed: Boolean,
-) {
-    val bg = if (passed) ZappPalette.Primary.copy(alpha = 0.1f) else ZashiColors.Surfaces.bgSecondary
-    val fg = if (passed) ZappPalette.Primary else ZashiColors.Text.textTertiary
-
-    Text(
-        text = label,
-        style = ZashiTypography.textXs,
-        color = fg,
-        modifier =
-            Modifier
-                .background(bg)
-                .border(
-                    width = 1.dp,
-                    color = if (passed) ZappPalette.Primary else ZashiColors.Surfaces.strokePrimary,
-                    shape = RoundedCornerShape(0.dp),
-                )
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-    )
-}
-
-// ───────────────────────────────────────────────
-// Previews
-// ───────────────────────────────────────────────
-
-@PreviewScreens
-@Composable
-private fun MessagingPhaseIntroPreview() =
-    ZcashTheme {
-        MessagingPhaseIntro(onBack = {}, onContinue = {})
-    }
-
-@PreviewScreens
-@Composable
-private fun UsernameEntryPreview() =
-    ZcashTheme {
-        UsernameEntryScreen(onBack = {}, onContinue = {})
-    }
-
-@PreviewScreens
-@Composable
-private fun MessagingSeedPreview() =
-    ZcashTheme {
-        MessagingSeedPhraseScreen(onBack = {}, onContinue = {})
-    }

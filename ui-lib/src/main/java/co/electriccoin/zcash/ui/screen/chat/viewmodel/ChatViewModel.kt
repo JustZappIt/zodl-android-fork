@@ -367,6 +367,19 @@ class ChatViewModel(
         }
     }
 
+    /**
+     * Suspend variant used by Compose-driven flows (LaunchedEffect). Returns
+     * the recovery phrase as a single space-delimited string, or null on
+     * failure. Caller is responsible for not retaining the value longer than
+     * needed — it's sensitive material.
+     */
+    suspend fun exportSeedPhraseSuspending(): String? = try {
+        sdk.exportSeedPhrase()
+    } catch (e: Exception) {
+        _errorMessage.value = "Failed to export seed phrase: ${e.message}"
+        null
+    }
+
     // ── Conversation Management ─────────────────────────────────────────
 
     fun createDirectChat(
