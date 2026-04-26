@@ -268,7 +268,7 @@ class HomeVM(
         onSwapButtonClick = viewModelScope.launch { navigateToSwap() }
     }
 
-    private fun onBuyButtonClick() = navigateToPeerOnramp()
+    private fun onBuyButtonClick() = viewModelScope.launch { navigateToPeerOnramp() }
 
     private fun onSendButtonClick() = navigationRouter.forward(Send())
 

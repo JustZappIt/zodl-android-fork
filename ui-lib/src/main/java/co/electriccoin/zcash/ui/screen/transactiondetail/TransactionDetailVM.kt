@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cash.z.ecc.android.sdk.model.TransactionPool
 import cash.z.ecc.android.sdk.model.WalletAddress
+import cash.z.ecc.android.sdk.model.Zatoshi
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.R
@@ -21,6 +22,7 @@ import co.electriccoin.zcash.ui.common.model.SwapStatus.SUCCESS
 import co.electriccoin.zcash.ui.common.repository.ReceiveTransaction
 import co.electriccoin.zcash.ui.common.repository.SendTransaction
 import co.electriccoin.zcash.ui.common.repository.ShieldTransaction
+import co.electriccoin.zcash.ui.common.repository.Transaction
 import co.electriccoin.zcash.ui.common.usecase.CopyToClipboardUseCase
 import co.electriccoin.zcash.ui.common.usecase.DetailedTransactionData
 import co.electriccoin.zcash.ui.common.usecase.FlipTransactionBookmarkUseCase
@@ -38,7 +40,9 @@ import co.electriccoin.zcash.ui.design.util.stringResByAddress
 import co.electriccoin.zcash.ui.design.util.stringResByCurrencyNumber
 import co.electriccoin.zcash.ui.design.util.stringResByNumber
 import co.electriccoin.zcash.ui.design.util.stringResByTransactionId
+import co.electriccoin.zcash.ui.common.util.PeerXyzUtil
 import co.electriccoin.zcash.ui.screen.contact.AddZashiABContactArgs
+import co.electriccoin.zcash.ui.screen.offramp.OfframpArgs
 import co.electriccoin.zcash.ui.screen.swap.detail.support.SwapSupportArgs
 import co.electriccoin.zcash.ui.screen.transactiondetail.info.ReceiveShieldedState
 import co.electriccoin.zcash.ui.screen.transactiondetail.info.ReceiveTransparentState
@@ -76,6 +80,7 @@ class TransactionDetailVM(
     private val getSwapMessage: SwapSupportMapper,
 ) : ViewModel() {
     val log = loggableNot("TransactionDetailVM")
+    private val isPeerAvailable = PeerXyzUtil.isPeerAvailable()
     private val transaction =
         getTransactionDetailById
             .observe(transactionDetailArgs.transactionId)
@@ -394,7 +399,7 @@ class TransactionDetailVM(
                         onClick = { onSaveAddressClick(data) }
                     )
                 } else {
-                    null
+                    createConvertButtonState(data.transaction)
                 }
             }
 
@@ -405,7 +410,7 @@ class TransactionDetailVM(
                         onClick = { onSendAgainClick(data) }
                     )
                 } else {
-                    null
+                    createConvertButtonState(data.transaction)
                 }
             }
         }
@@ -437,6 +442,20 @@ class TransactionDetailVM(
 
             else -> createAddNoteButtonState()
         }
+    }
+
+    private fun createConvertButtonState(transaction: Transaction): ButtonState? =
+        if (transaction is ReceiveTransaction.Success && isPeerAvailable) {
+            ButtonState(
+                text = stringRes(R.string.transaction_detail_convert_button),
+                onClick = { onConvertClick(transaction.amount) }
+            )
+        } else {
+            null
+        }
+
+    private fun onConvertClick(amount: Zatoshi) {
+        navigationRouter.forward(OfframpArgs(prefillZatoshi = amount.value))
     }
 
     private fun onSaveAddressClick(transaction: DetailedTransactionData) {

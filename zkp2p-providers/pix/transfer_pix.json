@@ -1,0 +1,96 @@
+{
+  "actionType": "transfer_pix",
+  "proofEngine": "reclaim",
+  "authLink": "https://app.nubank.com.br/nu/",
+  "url": "https://prod-s0-webapp.nubank.com.br/api/pix/payments/{{PAYMENT_ID}}",
+  "method": "GET",
+  "skipRequestHeaders": ["Accept-Encoding", "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform"],
+  "body": "",
+  "metadata": {
+    "platform": "pix",
+    "urlRegex": "https://prod-s0-webapp\\.nubank\\.com\\.br/api/pix/payments\\?.*",
+    "method": "GET",
+    "fallbackUrlRegex": "https://prod-s0-webapp\\.nubank\\.com\\.br/api/proxy/.*pix.*transactions.*",
+    "fallbackMethod": "GET",
+    "preprocessRegex": "",
+    "shouldReplayRequestInPage": false,
+    "transactionsExtraction": {
+      "transactionJsonPathListSelector": "$.items",
+      "transactionJsonPathSelectors": {
+        "paymentId": "$.id",
+        "recipient": "$.originatorAccount.pixAlias",
+        "recipientName": "$.originatorAccount.name",
+        "amount": "$.amount",
+        "date": "$.createdAt",
+        "currency": "$.currency",
+        "status": "$.status"
+      }
+    },
+    "proofMetadataSelectors": [
+      { "type": "jsonPath", "value": "$.items[{{INDEX}}].id" },
+      { "type": "jsonPath", "value": "$.items[{{INDEX}}].originatorAccount.pixAlias" },
+      { "type": "jsonPath", "value": "$.items[{{INDEX}}].amount" }
+    ]
+  },
+  "paramNames": ["PAYMENT_ID"],
+  "paramSelectors": [
+    {
+      "type": "jsonPath",
+      "value": "$.items[{{INDEX}}].id",
+      "source": "responseBody"
+    }
+  ],
+  "secretHeaders": ["Authorization", "Cookie", "x-nu-correlation-id"],
+  "responseMatches": [
+    {
+      "type": "regex",
+      "value": "\"endToEndId\":\"(?<endToEndId>E[0-9]{8}[0-9]{14}[A-Za-z0-9]{11})\""
+    },
+    {
+      "type": "regex",
+      "value": "\"amount\":(?<amount>[0-9]+\\.?[0-9]*)"
+    },
+    {
+      "type": "regex",
+      "value": "\"pixAlias\":\"(?<recipientKey>[^\"]+)\""
+    },
+    {
+      "type": "regex",
+      "value": "\"status\":\"(?<status>COMPLETED|PROCESSED|SETTLED)\""
+    }
+  ],
+  "responseRedactions": [
+    { "jsonPath": "$.id" },
+    { "jsonPath": "$.endToEndId" },
+    { "jsonPath": "$.amount" },
+    { "jsonPath": "$.originatorAccount.pixAlias" },
+    { "jsonPath": "$.destinationAccount.pixAlias" },
+    { "jsonPath": "$.originatorAccount.taxIdentificationNumber" },
+    { "jsonPath": "$.destinationAccount.taxIdentificationNumber" },
+    { "jsonPath": "$.status" }
+  ],
+  "additionalProofs": [],
+  "mobile": {
+    "includeAdditionalCookieDomains": ["nubank.com.br", "prod-s0-webapp.nubank.com.br"],
+    "useExternalAction": true,
+    "userAgent": {
+      "android": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.207 Mobile Safari/537.36",
+      "ios": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+    },
+    "external": {
+      "actionLink": "nubank://pix",
+      "appStoreLink": "https://apps.apple.com/br/app/nubank/id814456780",
+      "playStoreLink": "https://play.google.com/store/apps/details?id=com.nu.production"
+    },
+    "login": {
+      "usernameSelector": "input[data-testid='cpf-field'], input[type='text'][name*='cpf'], input[placeholder*='CPF'], input[id*='cpf']",
+      "passwordSelector": "input[type='password']",
+      "submitSelector": "button[type='submit'], button[data-testid='submit-button']",
+      "revealTimeoutMs": 6000
+    },
+    "additionalClientOptions": {
+      "cipherSuites": ["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384"],
+      "supportedProtocolVersions": ["TLSv1.3", "TLSv1.2"]
+    }
+  }
+}

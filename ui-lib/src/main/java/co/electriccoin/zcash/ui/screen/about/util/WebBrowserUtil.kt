@@ -7,7 +7,6 @@ import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
 import co.electriccoin.zcash.ui.R
-import com.google.android.material.color.MaterialColors
 
 object WebBrowserUtil {
     internal fun startActivity(
@@ -28,12 +27,7 @@ object WebBrowserUtil {
         activity: Activity,
         url: String
     ) {
-        val toolbarColor =
-            MaterialColors.getColor(
-                activity,
-                com.google.android.material.R.attr.colorPrimary,
-                Color.BLACK
-            )
+        val toolbarColor = Color.parseColor("#FF9417") // Zapp orange
         val colorParams =
             CustomTabColorSchemeParams
                 .Builder()

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class BalanceWidgetVM(
     private val args: BalanceWidgetArgs,
@@ -104,7 +105,7 @@ class BalanceWidgetVM(
             onAddZec = if (account?.totalBalance == Zatoshi(0)) ::onAddZecClick else null,
         )
 
-    private fun onAddZecClick() = navigateToPeerOnramp()
+    private fun onAddZecClick() { viewModelScope.launch { navigateToPeerOnramp() } }
 
     private fun onBalanceButtonClick() = navigationRouter.forward(SpendableBalanceArgs)
 }

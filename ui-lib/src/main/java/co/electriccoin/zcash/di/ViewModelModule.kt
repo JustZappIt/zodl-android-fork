@@ -36,6 +36,7 @@ import co.electriccoin.zcash.ui.screen.home.shieldfunds.ShieldFundsInfoVM
 import co.electriccoin.zcash.ui.screen.hotfix.enhancement.EnhancementHotfixVM
 import co.electriccoin.zcash.ui.screen.hotfix.ephemeral.EphemeralHotfixVM
 import co.electriccoin.zcash.ui.screen.insufficientfunds.InsufficientFundsVM
+import co.electriccoin.zcash.ui.screen.offramp.OfframpVM
 import co.electriccoin.zcash.ui.screen.integrations.IntegrationsVM
 import co.electriccoin.zcash.ui.screen.more.MoreVM
 import co.electriccoin.zcash.ui.screen.pay.PayVM
@@ -178,6 +179,7 @@ val viewModelModule =
         viewModelOf(::DebugDBVM)
         viewModelOf(::TEXUnsupportedVM)
         viewModelOf(::InsufficientFundsVM)
+        viewModelOf(::OfframpVM)
         viewModelOf(::RestoreTorVM)
         viewModelOf(::ResetZashiVM)
         viewModelOf(::DisconnectVM)

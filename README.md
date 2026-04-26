@@ -12,6 +12,51 @@ upstream Zcash wallet it adds:
 - Zapp rebrand (`ZappPalette`, app name, version 4.x)
 - Swiss-minimalist UI system (`ZappTheme`) with full design-token migration across all screens
 
+## peer.xyz Integration
+
+Zapp integrates [peer.xyz](https://peer.xyz) as the primary fiat on/off-ramp, with [justzappit.xyz](https://justzappit.xyz/directory) as a fallback in unsupported regions.
+
+### Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| **A — Onramp** | Get ZEC button on Home, Buy CTA on zero-balance widget and insufficient-funds sheet, branded Chrome Custom Tabs, region detection | ✅ Complete |
+| **B — Offramp** | "Cash out" in More screen, "Convert" on received transaction detail, offramp bottom sheet with ZEC → fiat conversion, local ZEC-arrived notification | ✅ Complete |
+| **C — Provider builds** | ZKP2P provider templates for PIX (BR), UPI (IN), GCash (PH) — drafts in `zkp2p-providers/`; M-Pesa deferred pending Q6 | 🔄 Needs live capture |
+| **D — Facilitator mode** | Earnings dashboard, "Settle via peer.xyz" button, facilitator preference toggle | ⏳ Not started |
+
+### Phase C — What's needed before PR submission
+
+Provider drafts are in `zkp2p-providers/`. Each needs live validation using the `create-zkp2p-provider` skill with Chrome DevTools MCP:
+
+1. Attach to an authenticated Chrome session on the target platform (Nubank / Google Pay / GCash)
+2. Navigate transaction history → capture the exact API endpoint with `list_network_requests` + `get_network_request`
+3. Verify JSONPath selectors match the live response shape
+4. Test end-to-end at `https://developer.peer.xyz` with PeerAuth — run `AUTHENTICATE` → `PROVE`
+5. On success: set `"status": "live"` in `zkp2p-providers/providers.json`, remove the country code from `PeerXyzUtil.UNSUPPORTED_REGIONS`
+
+M-Pesa (KE/TZ/UG/GH) is blocked on Q6: whether M-Pesa confirmation is accessible via HTTPS or SMS-only. See `zkp2p-providers/mpesa/PENDING.md`.
+
+### Open questions (peer.xyz team)
+
+| # | Question | Blocks |
+|---|----------|--------|
+| Q4 | Exact offramp URL format and amount unit | Phase B going live |
+| Q5 | Does `referrer=Zapp` appear in analytics? Partner registration needed? | Attribution |
+| Q6 | M-Pesa confirmation: HTTPS or SMS-only? | Phase C M-Pesa |
+| Q7 | Provider review process + staging validator URL | Phase C all providers |
+
+### Phase D — Facilitator mode (not started)
+
+Facilitators pay local fiat to merchants and accumulate ZEC. Phase D adds:
+- `FacilitatorRepository` — DataStore-backed `isFacilitatorMode: Flow<Boolean>`
+- `GetTodayEarningsUseCase` — sums today's received ZEC
+- Facilitator dashboard screen (today's earnings + "Settle via peer.xyz" → reuses Phase B offramp sheet)
+- Conditional "Facilitator Dashboard" item in More screen
+- Gated on Phase C: useful only once PIX/UPI/GCash providers are live
+
+---
+
 ## UI Design System (`feat/newUI`)
 
 A new Swiss-minimalist design system (`ZappTheme`) has been introduced and applied across all screens. Key changes:
@@ -232,6 +277,14 @@ If this fails, verify in order:
    siblings. Check `.zapp-deps` for the expected commit SHAs.
 4. `gradle.properties` has not been locally modified.
 
+### Zapp-specific build gotchas
+
+- **`WhileSubscribed(Duration)` — unresolved overload.** When using `SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT)` (where the timeout is a `kotlin.time.Duration`), you must import the Duration extension: `import kotlinx.coroutines.flow.WhileSubscribed`. Without this import the compiler resolves the call to the `Long` overload and fails with _"actual type is Duration, but Long was expected"_.
+
+- **`MaterialColors` not available in `ui-lib`.** `com.google.android.material` is not a declared dependency of `ui-lib`. Do not use `MaterialColors.getColor`. For branded UI colors (e.g., Custom Tab toolbar), use `Color.parseColor("#FF9417")` or a color resource directly.
+
+- **`NavigateToPeerOnrampUseCase.invoke()` is suspend.** All call sites must use `viewModelScope.launch { navigateToPeerOnramp() }`. A bare `navigateToPeerOnramp()` from a non-coroutine function will fail to compile.
+
 # Forking
 
 If you plan to fork the project to create a new app of your own, please make
@@ -249,6 +302,15 @@ the project, these steps are not necessary.)
 1. Optional
     1. Configure secrets and variables for [Continuous Integration](docs/CI.md)
     1. Configure Firebase API keys and place them under `app/src/debug/google-services.json` and `app/src/release/google-services.json`
+
+## Code quality — recent cleanup (`feat/newUI`)
+
+The following improvements were made during the peer.xyz integration review pass:
+
+- **`PeerXyzUtil`** — removed the intermediate `buildOnrampUrl`/`buildOfframpUrl` helpers; URLs are inlined directly into the `get*` functions. Comment trimmed to a single line pointing to `zkp2p-providers/`.
+- **`TransactionDetailVM`** — `PeerXyzUtil.isPeerAvailable()` is now cached as a `private val` at VM construction (locale is immutable at runtime). The duplicate `ReceiveTransaction.Success → Convert button` block extracted into `createConvertButtonState(Transaction): ButtonState?`.
+
+---
 
 # Known Issues
 

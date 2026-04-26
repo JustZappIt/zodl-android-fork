@@ -1,0 +1,26 @@
+[
+  {
+    "platform": "pix",
+    "actionType": "transfer_pix",
+    "path": "pix/transfer_pix.json",
+    "label": "PIX",
+    "country": "BR",
+    "status": "draft"
+  },
+  {
+    "platform": "upi",
+    "actionType": "transfer_upi",
+    "path": "upi/transfer_upi.json",
+    "label": "UPI",
+    "country": "IN",
+    "status": "draft"
+  },
+  {
+    "platform": "gcash",
+    "actionType": "transfer_gcash",
+    "path": "gcash/transfer_gcash.json",
+    "label": "GCash",
+    "country": "PH",
+    "status": "draft"
+  }
+]

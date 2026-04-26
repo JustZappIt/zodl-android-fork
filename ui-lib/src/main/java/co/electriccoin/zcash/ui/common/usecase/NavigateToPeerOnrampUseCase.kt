@@ -9,8 +9,8 @@ class NavigateToPeerOnrampUseCase(
     private val accountDataSource: AccountDataSource,
     private val navigationRouter: NavigationRouter,
 ) {
-    operator fun invoke() {
-        val account = accountDataSource.selectedAccount.value ?: return
+    suspend operator fun invoke() {
+        val account = accountDataSource.getSelectedAccount()
         val ua = account.unified.address.address
         val url = PeerXyzUtil.getOnrampUrl(ua)
         navigationRouter.forward(ExternalUrl(url = url, branded = true))
