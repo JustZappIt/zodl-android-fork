@@ -20,9 +20,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.electriccoin.zcash.ui.NavigationRouter
+import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.viewmodel.SecretState
 import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
@@ -101,13 +103,13 @@ private fun WalletEmptyState(
     ) {
         Spacer(Modifier.height(32.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
-            Eyebrow(text = "Wallet")
+            Eyebrow(text = stringResource(R.string.wallet_empty_eyebrow))
         }
         Spacer(Modifier.height(28.dp))
-        OnbHero(text = "Set up\nyour wallet")
+        OnbHero(text = stringResource(R.string.wallet_empty_title))
         Spacer(Modifier.height(14.dp))
         OnbSub(
-            text = "Your wallet lives on this device. Only you hold the keys.",
+            text = stringResource(R.string.wallet_empty_subtitle),
             modifier = Modifier.fillMaxWidth(0.94f),
         )
         Spacer(Modifier.height(32.dp))
@@ -115,15 +117,15 @@ private fun WalletEmptyState(
             actions = listOf(
                 OnbAction(
                     icon = "✦",
-                    label = "Create new wallet",
-                    sub = "Get a fresh recovery phrase",
+                    label = stringResource(R.string.wallet_empty_create),
+                    sub = stringResource(R.string.wallet_empty_create_sub),
                     onClick = onCreate,
                     highlight = true,
                 ),
                 OnbAction(
                     icon = "⚿",
-                    label = "Restore from phrase",
-                    sub = "Use your existing recovery phrase",
+                    label = stringResource(R.string.wallet_empty_restore),
+                    sub = stringResource(R.string.wallet_empty_restore_sub),
                     onClick = onRestore,
                 ),
             ),

@@ -98,6 +98,9 @@ fun WalletHomeView() {
 
     val balanceState by balanceVM.state.collectAsStateWithLifecycle()
     val homeState by homeVM.state.collectAsStateWithLifecycle()
+    // Side-effect-only subscription. The pipeline drives sync-error + restore-success
+    // navigation inside HomeVM; collecting here keeps its WhileSubscribed scope alive
+    // for as long as this screen is on. Same pattern as AndroidHome.kt:37.
     homeVM.uiLifecyclePipeline.collectAsStateWithLifecycle()
     val activityState by activityVM.state.collectAsStateWithLifecycle()
     val chartState by chartVM.state.collectAsStateWithLifecycle()

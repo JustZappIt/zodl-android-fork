@@ -75,7 +75,7 @@ private fun ChatRestoreContent(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
-    val wordCount = phrase.trim().split("\\s+".toRegex()).count { it.isNotEmpty() }
+    val wordCount = if (phrase.isBlank()) 0 else phrase.trim().split(Regex("\\s+")).size
     val nameValid = displayName.trim().isNotEmpty()
     val phraseValid = wordCount == EXPECTED_WORDS
     val isValid = nameValid && phraseValid && !isLoading

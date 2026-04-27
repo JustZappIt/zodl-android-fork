@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -415,8 +414,8 @@ fun SeedRevealScreen(
                     }
                 }
                 Spacer(Modifier.width(12.dp))
-                Text(
-                    text = "I've written all 12 words in order. I understand this phrase cannot be recovered if lost.",
+                BasicText(
+                    text = "I've written all ${words.size} words in order. I understand this phrase cannot be recovered if lost.",
                     style = ZappTheme.typography.body.copy(
                         color = c.textMuted,
                         fontSize = 12.sp,

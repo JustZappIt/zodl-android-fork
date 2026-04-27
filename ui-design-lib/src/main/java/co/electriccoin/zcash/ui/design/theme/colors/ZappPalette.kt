@@ -84,48 +84,6 @@ internal val LocalZappColors = staticCompositionLocalOf { LightZappColors }
 
 internal val LocalZappDarkMode = compositionLocalOf { false }
 
-/**
- * Static shim retained for callers that pre-date [ZappTheme]. New code should
- * read colors via `ZappTheme.colors` so dark mode resolves from the current
- * composition instead of hard-coding the light variant.
- */
-object ZappPalette {
-    val Primary = LightZappColors.accent
-    val Accent = Color(0xFFFFB866)
-    val AccentSoft = LightZappColors.accentSoft
-    val AccentText = LightZappColors.accentText
-
-    val Background = LightZappColors.bg
-    val BackgroundDark = DarkZappColors.bg
-    val Surface = LightZappColors.surface
-    val SurfaceAlt = LightZappColors.surfaceAlt
-    val SurfaceInput = LightZappColors.surfaceInput
-    val SecondaryBackground = LightZappColors.surfaceAlt
-    val SecondaryBackgroundDark = DarkZappColors.surfaceAlt
-
-    val Border = LightZappColors.border
-    val BorderStrong = LightZappColors.borderStrong
-    val BorderDark = DarkZappColors.border
-
-    val TextPrimary = LightZappColors.text
-    val TextPrimaryDark = DarkZappColors.text
-    val TextSecondary = LightZappColors.textMuted
-    val TextSecondaryDark = DarkZappColors.textMuted
-    val TextTertiary = LightZappColors.textSubtle
-    val TextTertiaryDark = DarkZappColors.textSubtle
-
-    val Error = LightZappColors.danger
-    val ErrorSoft = LightZappColors.dangerSoft
-    val Success = LightZappColors.success
-    val SuccessSoft = LightZappColors.successSoft
-    val Warning = LightZappColors.accent
-
-    val OnPrimary = LightZappColors.onAccent
-    val ChipBg = LightZappColors.chipBg
-    val NavPill = LightZappColors.navPill
-    val CardShadow = LightZappColors.shadow
-}
-
 object ZappNavBar {
     /** Bottom clearance screens must preserve for the floating pill nav. */
     const val CLEARANCE_DP = 88

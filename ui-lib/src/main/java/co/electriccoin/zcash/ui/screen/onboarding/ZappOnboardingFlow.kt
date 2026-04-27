@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,14 +85,22 @@ fun ZappOnboardingFlow(
     val secretState by walletViewModel.secretState.collectAsStateWithLifecycle()
     val chatError by chatViewModel.errorMessage.collectAsStateWithLifecycle()
 
-    val chatSeed = remember { mutableStateOf<List<String>?>(null) }
+    // Stored as a single space-joined string so rememberSaveable can persist it
+    // across config changes / process death without a custom Saver. Empty string
+    // means "not yet fetched".
+    var chatSeedJoined by rememberSaveable { mutableStateOf("") }
+    val chatSeed by remember {
+        derivedStateOf {
+            chatSeedJoined.takeIf { it.isNotEmpty() }?.split(" ")?.filter { it.isNotBlank() }
+        }
+    }
 
     // Once the chat identity exists (post-createIdentity on the username step),
     // pull the real recovery phrase off the SDK so MSG_SEED can render it.
     LaunchedEffect(chatIdentity) {
-        if (chatIdentity != null && chatSeed.value == null) {
+        if (chatIdentity != null && chatSeedJoined.isEmpty()) {
             chatViewModel.exportSeedPhraseSuspending()?.let { phrase ->
-                chatSeed.value = phrase.split(" ").filter { it.isNotBlank() }
+                chatSeedJoined = phrase
             }
         }
     }
@@ -100,7 +109,9 @@ fun ZappOnboardingFlow(
     // completes, secretState flips to READY and the user is popped back into
     // the tabs scaffold, which re-renders this flow at the saved WALLET_CHOICE
     // step. Auto-advance so they don't have to re-tap "Restore" / "Create".
-    LaunchedEffect(secretState, step) {
+    // Effect is keyed only on secretState — step is checked inside but doesn't
+    // need to retrigger the effect on its own changes.
+    LaunchedEffect(secretState) {
         if (secretState == SecretState.READY && step == Step.WALLET_CHOICE) {
             step = Step.SECURE_CHOICE
         }
@@ -123,9 +134,9 @@ fun ZappOnboardingFlow(
             },
         )
         Step.MSG_SEED -> {
-            val words = chatSeed.value
+            val words = chatSeed
             if (words == null) {
-                SeedLoadingPlaceholder(error = chatError)
+                SeedLoadingPlaceholder(sdkError = chatError)
             } else {
                 MessagingSeedPhraseScreen(
                     words = words,
@@ -153,7 +164,10 @@ fun ZappOnboardingFlow(
         Step.WALLET_SEED -> {
             val words = walletSeed
             if (words == null) {
-                SeedLoadingPlaceholder(error = null)
+                // Wallet creation has no error pipe today — fall back to a
+                // timeout so the user isn't stuck on a spinner if persistence
+                // silently stalls.
+                SeedLoadingPlaceholder(sdkError = null)
             } else {
                 WalletSeedPhraseScreen(
                     words = words,
@@ -180,26 +194,41 @@ fun ZappOnboardingFlow(
     }
 }
 
+private const val SEED_LOAD_TIMEOUT_MS = 15_000L
+
 /**
  * Brief skeleton shown while the SDK finishes generating the recovery phrase
  * (chat) or persisting the new wallet (wallet). On the happy path this flashes
- * for under a second; if [error] is non-null we surface it instead so the user
- * isn't stuck staring at an indefinite spinner.
+ * for under a second; if [sdkError] is non-null we surface it immediately. If
+ * the SDK doesn't error but also doesn't finish within [SEED_LOAD_TIMEOUT_MS],
+ * we fall back to a generic message so the user isn't trapped on a spinner.
  */
 @Composable
-private fun SeedLoadingPlaceholder(error: String?) {
+private fun SeedLoadingPlaceholder(sdkError: String?) {
     val c = ZappTheme.colors
+    var timedOut by remember { mutableStateOf(false) }
+
+    LaunchedEffect(sdkError) {
+        if (sdkError == null) {
+            kotlinx.coroutines.delay(SEED_LOAD_TIMEOUT_MS)
+            timedOut = true
+        }
+    }
+
+    val displayError = sdkError
+        ?: "Taking longer than expected.".takeIf { timedOut }
+
     Box(
         modifier = Modifier.fillMaxSize().background(c.bg),
         contentAlignment = Alignment.Center,
     ) {
-        if (error != null) {
+        if (displayError != null) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 BasicText(
-                    text = error,
+                    text = displayError,
                     style = ZappTheme.typography.body.copy(
                         color = c.danger,
                         fontSize = 13.sp,

@@ -237,59 +237,74 @@ fun OnbActionListCard(
                         .background(c.border, RectangleShape),
                 )
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(if (action.highlight) c.accentSoft else c.bg, RectangleShape)
-                    .clickable(onClick = action.onClick)
-                    .padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(36.dp)
-                        .height(36.dp)
-                        .background(if (action.highlight) c.accent else c.surfaceAlt, RectangleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    BasicText(
-                        text = action.icon,
-                        style = ZappTheme.typography.body.copy(
-                            color = if (action.highlight) c.onAccent else c.text,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Black,
-                        ),
-                    )
-                }
-                Spacer(Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    BasicText(
-                        text = action.label,
-                        style = ZappTheme.typography.rowTitle.copy(
-                            color = c.text,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Black,
-                        ),
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    BasicText(
-                        text = action.sub,
-                        style = ZappTheme.typography.rowSubtitle.copy(
-                            color = c.textMuted,
-                            fontSize = 12.sp,
-                        ),
-                    )
-                }
-                BasicText(
-                    text = "›",
-                    style = ZappTheme.typography.body.copy(
-                        color = c.textSubtle,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                    ),
-                )
-            }
+            OnbActionRow(action = action, modifier = Modifier.fillMaxWidth())
         }
+    }
+}
+
+/**
+ * Single tappable action row: icon box on the left, label + sub stacked in the
+ * middle, chevron on the right. Highlighted rows use accentSoft background and
+ * an accent-coloured icon box. Lives outside [OnbActionListCard] so standalone
+ * tiles (e.g. the 2FA choice screen) can render the same row treatment without
+ * the surrounding list-card border.
+ */
+@Composable
+fun OnbActionRow(
+    action: OnbAction,
+    modifier: Modifier = Modifier,
+) {
+    val c = ZappTheme.colors
+    Row(
+        modifier = modifier
+            .background(if (action.highlight) c.accentSoft else c.bg, RectangleShape)
+            .clickable(onClick = action.onClick)
+            .padding(18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .width(36.dp)
+                .height(36.dp)
+                .background(if (action.highlight) c.accent else c.surfaceAlt, RectangleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            BasicText(
+                text = action.icon,
+                style = ZappTheme.typography.body.copy(
+                    color = if (action.highlight) c.onAccent else c.text,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Black,
+                ),
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            BasicText(
+                text = action.label,
+                style = ZappTheme.typography.rowTitle.copy(
+                    color = c.text,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black,
+                ),
+            )
+            Spacer(Modifier.height(2.dp))
+            BasicText(
+                text = action.sub,
+                style = ZappTheme.typography.rowSubtitle.copy(
+                    color = c.textMuted,
+                    fontSize = 12.sp,
+                ),
+            )
+        }
+        BasicText(
+            text = "›",
+            style = ZappTheme.typography.body.copy(
+                color = c.textSubtle,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Black,
+            ),
+        )
     }
 }
 

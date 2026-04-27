@@ -355,18 +355,6 @@ class ChatViewModel(
         }
     }
 
-    fun exportSeedPhrase(onResult: (String?) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val seedPhrase = sdk.exportSeedPhrase()
-                onResult(seedPhrase)
-            } catch (e: Exception) {
-                _errorMessage.value = "Failed to export seed phrase: ${e.message}"
-                onResult(null)
-            }
-        }
-    }
-
     /**
      * Suspend variant used by Compose-driven flows (LaunchedEffect). Returns
      * the recovery phrase as a single space-delimited string, or null on
@@ -378,6 +366,13 @@ class ChatViewModel(
     } catch (e: Exception) {
         _errorMessage.value = "Failed to export seed phrase: ${e.message}"
         null
+    }
+
+    /** Callback variant for non-coroutine call sites (legacy chat profile/setup screens). */
+    fun exportSeedPhrase(onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            onResult(exportSeedPhraseSuspending())
+        }
     }
 
     // ── Conversation Management ─────────────────────────────────────────

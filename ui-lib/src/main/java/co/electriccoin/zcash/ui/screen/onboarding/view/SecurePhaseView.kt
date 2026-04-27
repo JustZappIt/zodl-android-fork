@@ -8,11 +8,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -69,20 +66,34 @@ fun TwoFAChoiceScreen(
         OnbSub("Choose how you unlock Zapp and authorise payments.")
         Spacer(Modifier.height(28.dp))
 
-        SecureTile(
-            label = "Biometric",
-            sub = "Fingerprint or face — fastest",
-            onClick = { onPick(TwoFAMode.Bio) },
-            primary = true,
-            glyph = "◎",
-        )
-        SecureTile(
-            label = "6-digit PIN",
-            sub = "A passcode you remember",
-            onClick = { onPick(TwoFAMode.Pin) },
-            primary = false,
-            glyph = "✱",
-        )
+        // Each tile carries its own 1dp border (no shared list-card frame), so
+        // we render a Column of standalone OnbActionRows rather than wrapping
+        // them in OnbActionListCard. Same row treatment, different chrome.
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            OnbActionRow(
+                action = OnbAction(
+                    icon = "◎",
+                    label = "Biometric",
+                    sub = "Fingerprint or face — fastest",
+                    onClick = { onPick(TwoFAMode.Bio) },
+                    highlight = true,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, ZappTheme.colors.border, RectangleShape),
+            )
+            OnbActionRow(
+                action = OnbAction(
+                    icon = "✱",
+                    label = "6-digit PIN",
+                    sub = "A passcode you remember",
+                    onClick = { onPick(TwoFAMode.Pin) },
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, ZappTheme.colors.border, RectangleShape),
+            )
+        }
     }
 }
 
@@ -239,65 +250,3 @@ fun OnboardingDoneScreen(
     }
 }
 
-@Composable
-private fun SecureTile(
-    label: String,
-    sub: String,
-    onClick: () -> Unit,
-    primary: Boolean,
-    glyph: String,
-) {
-    val c = ZappTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(if (primary) c.accentSoft else c.bg, RectangleShape)
-            .border(1.dp, c.border, RectangleShape)
-            .clickable(onClick = onClick)
-            .padding(18.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .background(if (primary) c.accent else c.surfaceAlt, RectangleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            BasicText(
-                text = glyph,
-                style = ZappTheme.typography.body.copy(
-                    color = if (primary) c.onAccent else c.text,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Black,
-                ),
-            )
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            BasicText(
-                text = label,
-                style = ZappTheme.typography.rowTitle.copy(
-                    color = c.text,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Black,
-                ),
-            )
-            Spacer(Modifier.height(2.dp))
-            BasicText(
-                text = sub,
-                style = ZappTheme.typography.rowSubtitle.copy(
-                    color = c.textMuted,
-                    fontSize = 12.sp,
-                ),
-            )
-        }
-        BasicText(
-            text = "›",
-            style = ZappTheme.typography.body.copy(
-                color = c.textSubtle,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
-            ),
-        )
-    }
-}
