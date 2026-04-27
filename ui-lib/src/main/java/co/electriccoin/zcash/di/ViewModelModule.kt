@@ -1,6 +1,7 @@
 package co.electriccoin.zcash.di
 
 import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarVM
+import co.electriccoin.zcash.ui.screen.welcome.WelcomeGateVM
 import co.electriccoin.zcash.ui.common.viewmodel.AuthenticationViewModel
 import co.electriccoin.zcash.ui.common.viewmodel.OldHomeViewModel
 import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
@@ -119,6 +120,7 @@ val viewModelModule =
         viewModelOf(::SignKeystoneTransactionVM)
         viewModelOf(::AccountListVM)
         viewModelOf(::ZashiTopAppBarVM)
+        viewModelOf(::WelcomeGateVM)
         viewModelOf(::SelectKeystoneAccountViewModel)
         viewModelOf(::ReviewTransactionVM)
         viewModelOf(::TransactionFiltersVM)

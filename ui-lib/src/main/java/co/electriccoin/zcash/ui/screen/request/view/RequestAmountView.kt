@@ -33,8 +33,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
 import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
@@ -130,10 +132,12 @@ private fun RequestAmountWithMainFiatView(
 
         AutoSizingText(
             text = fiatText,
-            style =
-                ZashiTypography.header1.copy(
-                    fontWeight = FontWeight.SemiBold
-                )
+            style = ZappTheme.typography.display.copy(
+                fontSize = 44.sp,
+                lineHeight = 48.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1.8).sp,
+            ),
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -203,10 +207,12 @@ private fun RequestAmountWithMainZecView(
 
         AutoSizingText(
             text = zecText,
-            style =
-                ZashiTypography.header1.copy(
-                    fontWeight = FontWeight.SemiBold
-                )
+            style = ZappTheme.typography.display.copy(
+                fontSize = 44.sp,
+                lineHeight = 48.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1.8).sp,
+            ),
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -274,10 +280,12 @@ private fun RequestAmountNoFiatView(
 
         AutoSizingText(
             text = fiatText,
-            style =
-                ZashiTypography.header1.copy(
-                    fontWeight = FontWeight.SemiBold
-                )
+            style = ZappTheme.typography.display.copy(
+                fontSize = 44.sp,
+                lineHeight = 48.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1.8).sp,
+            ),
         )
     }
 }

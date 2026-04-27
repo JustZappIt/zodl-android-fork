@@ -285,6 +285,20 @@ If this fails, verify in order:
 
 - **`NavigateToPeerOnrampUseCase.invoke()` is suspend.** All call sites must use `viewModelScope.launch { navigateToPeerOnramp() }`. A bare `navigateToPeerOnramp()` from a non-coroutine function will fail to compile.
 
+- **Shared Gradle build cache poisons the precompiled-script-plugin compile.** Gradle's local build cache (`~/.gradle/caches/build-cache-1`) is per-machine, not per-project. The fork's `settings.gradle.kts` includes two extra projects (`:zappmessaging`, `:bare-kit`) that aren't in upstream `zodl-android` / `zodl-android-real`, so the fork's `:build-conventions-secant` produces a different plugin-spec hash. If you build upstream and the fork on the same machine without isolation, kotlinc fails with `Source file or directory not found: …/_<hash>/PluginSpecBuilders.kt` because tasks pull mismatched outputs `FROM-CACHE`. To recover:
+
+  ```
+  ./gradlew --stop
+  rm -rf ~/.gradle/caches/build-cache-1 \
+         build-conventions-secant/{build,.gradle,.kotlin} \
+         .gradle
+  ./gradlew :app:installZcashmainnetFossDebug --no-build-cache
+  ```
+
+  Long-term, either always pass `--no-build-cache` when switching between this fork and the upstream repo on the same machine, or set a per-project `GRADLE_USER_HOME` (e.g. `export GRADLE_USER_HOME="$PWD/.gradle-home"`) so each repo has its own cache. Android Studio doesn't hit this because its daemon stays warm and re-uses the same build cache entries it just wrote.
+
+- **JDK 21 required for Gradle, JDK 17 toolchain for project source.** Set `JAVA_HOME` to a JDK 21 install (Android Studio's bundled JBR at `/Applications/Android Studio.app/Contents/jbr/Contents/Home` is verified) for the Gradle launcher. Gradle 8.14.4 ships with Kotlin 2.0.21 and that compiler emits Java 21 bytecode for precompiled-script-plugins; running the launcher on JDK 17 surfaces as `class file version 65.0, this version of the Java Runtime only recognizes class file versions up to 61.0`. The project's own source is still pinned to `JVM_TOOLCHAIN=17` and Gradle auto-provisions a JDK 17 for it.
+
 # Forking
 
 If you plan to fork the project to create a new app of your own, please make

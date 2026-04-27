@@ -3,4 +3,13 @@
     <string name="onboarding_header">Zcash-powered mobile wallet built for financial sovereignty.</string>
     <string name="onboarding_create_new_wallet">Create New Wallet</string>
     <string name="onboarding_import_existing_wallet">Restore Existing Wallet</string>
+
+    <!-- Wallet-tab empty state: shown when the user reached the tabs without setting up a wallet. -->
+    <string name="wallet_empty_eyebrow">Wallet</string>
+    <string name="wallet_empty_title">Set up\nyour wallet</string>
+    <string name="wallet_empty_subtitle">Your wallet lives on this device. Only you hold the keys.</string>
+    <string name="wallet_empty_create">Create new wallet</string>
+    <string name="wallet_empty_create_sub">Get a fresh recovery phrase</string>
+    <string name="wallet_empty_restore">Restore from phrase</string>
+    <string name="wallet_empty_restore_sub">Use your existing recovery phrase</string>
 </resources>

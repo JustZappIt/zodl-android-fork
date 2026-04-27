@@ -1,8 +1,10 @@
 package co.electriccoin.zcash.ui.screen.receive
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,26 +20,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
 import co.electriccoin.zcash.ui.design.component.CircularScreenProgressIndicator
 import co.electriccoin.zcash.ui.design.component.IconButtonState
-import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiImageButton
 import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
 import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
@@ -89,42 +89,62 @@ private fun ReceiveContents(
     items: List<ReceiveAddressState>,
     modifier: Modifier = Modifier,
 ) {
+    val c = ZappTheme.colors
     Column(
         modifier =
             modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(all = 8.dp),
+                .padding(horizontal = 18.dp, vertical = 12.dp),
     ) {
         items.forEachIndexed { index, state ->
             if (index != 0) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
             }
-
             AddressPanel(
                 state = state,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
-        Spacer(24.dp)
-        Spacer(1f)
-        Image(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            painter = painterResource(R.drawable.ic_receive_info),
-            contentDescription = null
-        )
-        Spacer(8.dp)
-        Text(
-            text = stringResource(id = R.string.receive_prioritize_shielded),
-            color = ZappTheme.colors.textMuted,
-            style = ZappTheme.typography.caption,
-            modifier =
-                Modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
-        Spacer(8.dp)
+
+        Spacer(Modifier.height(20.dp))
+
+        // Swiss tip block — replaces the centered illustration + caption from
+        // the old layout. Same information, lower visual volume.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(36.dp)
+                    .background(c.accent, RectangleShape),
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                BasicText(
+                    text = "TIP",
+                    style = ZappTheme.typography.eyebrow.copy(
+                        color = c.textSubtle,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.8.sp,
+                        fontWeight = FontWeight.Black,
+                    ),
+                )
+                Spacer(Modifier.height(4.dp))
+                BasicText(
+                    text = stringResource(id = R.string.receive_prioritize_shielded),
+                    style = ZappTheme.typography.body.copy(
+                        color = c.textMuted,
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                    ),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -136,55 +156,62 @@ private fun AddressPanel(
     val c = ZappTheme.colors
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            modifier
-                .wrapContentHeight()
-                .background(c.surface, RectangleShape)
-                .clip(RectangleShape)
-                .clickable(onClick = state.onClick)
-                .padding(16.dp)
+        modifier = modifier
+            .wrapContentHeight()
+            .background(c.bg, RectangleShape)
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .clickable(onClick = state.onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box {
                 Image(
                     modifier = Modifier.size(40.dp),
                     painter = painterResource(id = state.icon),
-                    contentDescription = null
+                    contentDescription = null,
                 )
                 if (state.isShielded) {
                     Image(
-                        modifier =
-                            Modifier
-                                .size(14.dp)
-                                .align(Alignment.BottomEnd)
-                                .offset(1.5.dp, .5.dp),
-                        painter = painterResource(co.electriccoin.zcash.ui.design.R.drawable.ic_zec_shielded),
+                        modifier = Modifier
+                            .size(14.dp)
+                            .align(Alignment.BottomEnd)
+                            .offset(1.5.dp, .5.dp),
+                        painter = painterResource(
+                            co.electriccoin.zcash.ui.design.R.drawable.ic_zec_shielded,
+                        ),
                         contentDescription = null,
                     )
                 }
             }
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(14.dp))
 
-            Column {
-                Text(
+            Column(modifier = Modifier.weight(1f)) {
+                BasicText(
                     text = state.title.getValue(),
-                    color = c.text,
-                    style = ZappTheme.typography.body,
-                    fontWeight = FontWeight.SemiBold
+                    style = ZappTheme.typography.rowTitle.copy(
+                        color = c.text,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.2).sp,
+                    ),
                 )
-                Spacer(4.dp)
-                Text(
+                Spacer(Modifier.height(4.dp))
+                BasicText(
                     text = state.subtitle.getValue(),
-                    color = c.textMuted,
-                    style = ZappTheme.typography.caption
+                    style = ZappTheme.typography.rowSubtitle.copy(
+                        color = c.textMuted,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        fontFamily = FontFamily.Monospace,
+                    ),
                 )
             }
 
             Spacer(Modifier.width(8.dp))
-
-            Spacer(modifier = Modifier.weight(1f))
 
             ZashiImageButton(
                 modifier = Modifier.size(32.dp),
@@ -193,80 +220,78 @@ private fun AddressPanel(
         }
 
         AnimatedVisibility(visible = state.isExpanded) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier =
-                    Modifier
+            Column {
+                // Sharp 1dp rule between header and actions, matches the
+                // section-divider rhythm used elsewhere in the Swiss surfaces.
+                Spacer(Modifier.height(14.dp))
+                Box(
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
-            ) {
-                if (state.isShielded) {
+                        .height(1.dp)
+                        .background(c.border, RectangleShape),
+                )
+                Spacer(Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (state.isShielded) {
+                        ReceiveIconButton(
+                            iconPainter = painterResource(id = R.drawable.ic_copy_shielded),
+                            onClick = state.onCopyClicked,
+                            text = stringResource(id = R.string.receive_copy),
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                     ReceiveIconButton(
-                        containerColor = c.surfaceAlt,
-                        contentColor = c.text,
-                        iconPainter = painterResource(id = R.drawable.ic_copy_shielded),
-                        onClick = state.onCopyClicked,
-                        text = stringResource(id = R.string.receive_copy),
-                        modifier = Modifier.weight(1f)
+                        iconPainter = painterResource(id = R.drawable.ic_qr_code_shielded),
+                        onClick = state.onQrClicked,
+                        text = stringResource(id = R.string.receive_qr_code),
+                        modifier = Modifier.weight(1f),
                     )
-
-                    Spacer(modifier = Modifier.width(8.dp))
+                    ReceiveIconButton(
+                        iconPainter = painterResource(id = R.drawable.ic_request_shielded),
+                        onClick = state.onRequestClicked,
+                        text = stringResource(id = R.string.receive_request),
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-
-                ReceiveIconButton(
-                    containerColor = c.surfaceAlt,
-                    contentColor = c.text,
-                    iconPainter = painterResource(id = R.drawable.ic_qr_code_shielded),
-                    onClick = state.onQrClicked,
-                    text = stringResource(id = R.string.receive_qr_code),
-                    modifier = Modifier.weight(1f)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                ReceiveIconButton(
-                    containerColor = c.surfaceAlt,
-                    contentColor = c.text,
-                    iconPainter = painterResource(id = R.drawable.ic_request_shielded),
-                    onClick = state.onRequestClicked,
-                    text = stringResource(id = R.string.receive_request),
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
     }
 }
 
 @Composable
-@Suppress("LongParameterList")
 private fun ReceiveIconButton(
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
     iconPainter: Painter,
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val c = ZappTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            modifier
-                .background(containerColor, RectangleShape)
-                .clip(RectangleShape)
-                .clickable { onClick() }
-                .padding(12.dp)
+        modifier = modifier
+            .background(c.surfaceAlt, RectangleShape)
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 8.dp),
     ) {
-        Icon(
+        Image(
             painter = iconPainter,
             contentDescription = text,
-            tint = contentColor
+            modifier = Modifier.size(18.dp),
         )
-        Spacer(4.dp)
-        Text(
-            text = text,
-            color = contentColor,
-            style = ZappTheme.typography.caption,
-            fontWeight = FontWeight.Medium
+        Spacer(Modifier.height(6.dp))
+        BasicText(
+            text = text.uppercase(),
+            style = ZappTheme.typography.eyebrow.copy(
+                color = c.text,
+                fontSize = 10.sp,
+                letterSpacing = 1.0.sp,
+                fontWeight = FontWeight.Black,
+            ),
         )
     }
 }

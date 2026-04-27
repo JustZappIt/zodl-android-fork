@@ -1,155 +1,144 @@
+@file:Suppress("TooManyFunctions")
+
 package co.electriccoin.zcash.ui.screen.onboarding.view
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.electriccoin.zcash.ui.design.component.ZashiButton
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
-import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
-import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZappPalette
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 
-// ───────────────────────────────────────────────
-// Step 4/6 — Wallet phase intro
-// ───────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// 05 · Phase 2 intro — Wallet
+// ───────────────────────────────────────────────────────────────
 
 @Composable
 fun WalletPhaseIntro(
     onBack: () -> Unit,
     onContinue: () -> Unit,
+    onSkip: () -> Unit = {},
 ) {
-    Scaffold { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState()),
-        ) {
-            Spacer(Modifier.height(16.dp))
-
-            OnboardingProgressBar(step = 4, total = 6)
-
-            Spacer(Modifier.height(24.dp))
-
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-
-            Spacer(Modifier.height(24.dp))
-
-            // Phase badge
-            Text(
-                text = "PART 2 OF 3 · WALLET",
-                color = ZappPalette.Primary,
-                style = ZashiTypography.textXs,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.5.sp,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Set up your wallet",
-                style = ZashiTypography.header6,
-                fontWeight = FontWeight.Bold,
-                color = ZashiColors.Text.textPrimary,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Your wallet is independent from your messaging identity. It holds your ZEC and requires its own recovery phrase.",
-                style = ZashiTypography.textSm,
-                color = ZashiColors.Text.textTertiary,
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            BulletRowWallet(
-                icon = "⊕",
-                title = "Create or restore",
-                detail = "Generate a new wallet or restore an existing one from a 24-word seed phrase.",
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            BulletRowWallet(
-                icon = "⊕",
-                title = "Second recovery phrase",
-                detail = "Your wallet uses a separate 24-word BIP-39 phrase — keep it stored securely offline.",
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            ZashiButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Continue",
-                onClick = onContinue,
-            )
-
-            Spacer(Modifier.height(32.dp))
-        }
-    }
-}
-
-@Composable
-private fun BulletRowWallet(
-    icon: String,
-    title: String,
-    detail: String,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(ZashiColors.Surfaces.bgSecondary)
-                .padding(16.dp),
-        verticalAlignment = Alignment.Top,
+    OnbScreen(
+        step = 4,
+        ghostNum = 5,
+        badge = "Part 2 of 3 · Wallet",
+        cta = "Continue",
+        onCta = onContinue,
+        showBack = true,
+        onBack = onBack,
     ) {
-        Text(
-            text = icon,
-            color = ZappPalette.Primary,
-            style = ZashiTypography.textSm,
+        OnbHero(text = "Now set up\nyour wallet")
+        Spacer(Modifier.height(16.dp))
+        OnbSub(
+            text = "Your wallet is separate from your messaging identity. It has its own recovery phrase. You can also skip this and add a wallet later.",
+            modifier = Modifier.fillMaxWidth(0.94f),
         )
-        Spacer(Modifier.width(12.dp))
-        Column {
-            Text(
-                text = title,
-                style = ZashiTypography.textSm,
-                fontWeight = FontWeight.SemiBold,
-                color = ZashiColors.Text.textPrimary,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = detail,
-                style = ZashiTypography.textXs,
-                color = ZashiColors.Text.textTertiary,
-            )
-        }
+        Spacer(Modifier.height(28.dp))
+        OnbBulletRow(
+            label = "Create a new wallet",
+            sub = "Or restore one you already have",
+            isFirst = true,
+        )
+        OnbBulletRow(
+            label = "Save a second recovery phrase",
+            sub = "Different words — keep both safe",
+        )
+        Spacer(Modifier.height(20.dp))
+        SkipLink(onSkip)
     }
 }
 
-@PreviewScreens
+// ───────────────────────────────────────────────────────────────
+// 06 · Wallet choice — Create / Restore (skip via dock)
+// ───────────────────────────────────────────────────────────────
+
 @Composable
-private fun WalletPhaseIntroPreview() =
-    ZcashTheme {
-        WalletPhaseIntro(onBack = {}, onContinue = {})
+fun WalletChoiceScreen(
+    onBack: () -> Unit,
+    onCreate: () -> Unit,
+    onRestore: () -> Unit,
+    onSkip: () -> Unit = {},
+) {
+    OnbScreen(
+        step = 4,
+        ghostNum = 6,
+        badge = "Part 2 · Wallet",
+        cta = "Skip wallet for now",
+        onCta = onSkip,
+        showBack = true,
+        onBack = onBack,
+    ) {
+        OnbHero(text = "Set up\nyour wallet")
+        Spacer(Modifier.height(14.dp))
+        OnbSub("Your wallet lives on this device. Only you hold the keys.")
+        Spacer(Modifier.height(28.dp))
+
+        OnbActionListCard(
+            actions = listOf(
+                OnbAction(
+                    icon = "✦",
+                    label = "Create new wallet",
+                    sub = "Get a fresh recovery phrase",
+                    onClick = onCreate,
+                    highlight = true,
+                ),
+                OnbAction(
+                    icon = "⚿",
+                    label = "Restore from phrase",
+                    sub = "Use your existing recovery phrase",
+                    onClick = onRestore,
+                ),
+            ),
+        )
     }
+}
+
+// ───────────────────────────────────────────────────────────────
+// 07 · Wallet recovery phrase
+// ───────────────────────────────────────────────────────────────
+
+@Composable
+fun WalletSeedPhraseScreen(
+    words: List<String>,
+    onBack: () -> Unit,
+    onContinue: () -> Unit,
+) {
+    SeedRevealScreen(
+        step = 5,
+        title = "Wallet\nrecovery phrase",
+        sub = "These words restore your funds. Different from your messaging phrase.",
+        words = words,
+        onBack = onBack,
+        onContinue = onContinue,
+    )
+}
+
+@Composable
+private fun SkipLink(onSkip: () -> Unit) {
+    val c = ZappTheme.colors
+    Row(
+        modifier = Modifier
+            .clickable(onClick = onSkip)
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicText(
+            text = "Skip wallet — I'll add it later",
+            style = ZappTheme.typography.button.copy(
+                color = c.accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 0.2.sp,
+            ),
+        )
+    }
+}
