@@ -33,6 +33,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
@@ -256,13 +261,18 @@ fun ZappButton(
     onClick: () -> Unit,
 ) {
     val c = ZappTheme.colors
+    // Primary disabled: surfaceAlt bg + textSubtle text per design system.
+    // Other variants dim with alpha when disabled.
     val (bg, fg, borderCol) =
-        when (variant) {
-            ZappButtonVariant.Primary -> Triple(c.accent, c.onAccent, null)
-            ZappButtonVariant.Secondary -> Triple(c.surfaceAlt, c.text, null)
-            ZappButtonVariant.Ghost -> Triple(Color.Transparent, c.text, c.border)
-            ZappButtonVariant.Danger -> Triple(c.dangerSoft, c.danger, null)
-            ZappButtonVariant.AccentGhost -> Triple(Color.Transparent, c.accent, c.accent)
+        when {
+            variant == ZappButtonVariant.Primary && !enabled -> Triple(c.surfaceAlt, c.textSubtle, null)
+            else -> when (variant) {
+                ZappButtonVariant.Primary -> Triple(c.accent, c.onAccent, null)
+                ZappButtonVariant.Secondary -> Triple(c.surfaceAlt, c.text, null)
+                ZappButtonVariant.Ghost -> Triple(Color.Transparent, c.text, c.border)
+                ZappButtonVariant.Danger -> Triple(c.dangerSoft, c.danger, null)
+                ZappButtonVariant.AccentGhost -> Triple(Color.Transparent, c.accent, c.accent)
+            }
         }
 
     Box(
@@ -276,13 +286,18 @@ fun ZappButton(
                     Modifier
                 },
             )
-            .alpha(if (enabled) 1f else 0.45f)
+            .alpha(if (enabled || variant == ZappButtonVariant.Primary) 1f else 0.45f)
             .clickable(
                 enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(color = fg),
                 onClick = onClick,
             )
+            .semantics(mergeDescendants = true) {
+                this.contentDescription = text
+                this.role = Role.Button
+                if (!enabled) disabled()
+            }
             .padding(horizontal = 18.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -361,7 +376,8 @@ fun ZappFab(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(color = c.onAccent, bounded = true),
                 onClick = onClick,
-            ),
+            )
+            .semantics(mergeDescendants = true) { role = Role.Button },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -404,7 +420,7 @@ fun ZappBottomActionBar(
     }
 }
 
-/** 32-dp touch target. Intended for use inside [ZappBottomActionBar] (bottom-left). */
+/** 48-dp touch target (Google Play minimum). Visual arrow is 20dp, centered. */
 @Composable
 fun ZappBackButton(
     onClick: () -> Unit,
@@ -413,13 +429,21 @@ fun ZappBackButton(
     val c = ZappTheme.colors
     Box(
         modifier = modifier
-            .size(32.dp)
-            .clickable(onClick = onClick),
+            .size(48.dp)
+            .clickable(
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = true, color = c.text),
+            )
+            .semantics {
+                contentDescription = "Go back"
+                role = Role.Button
+            },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Back",
+            contentDescription = null,
             tint = c.text,
             modifier = Modifier.size(20.dp),
         )

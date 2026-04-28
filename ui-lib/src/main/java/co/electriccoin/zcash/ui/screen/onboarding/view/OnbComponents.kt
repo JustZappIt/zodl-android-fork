@@ -26,13 +26,13 @@ import androidx.compose.ui.unit.sp
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 
 /**
- * Six segmented progress bar pinned to the top of every onboarding step
+ * Five segmented progress bar pinned to the top of every onboarding step
  * (mirrors `OnbProgress` in the design's React reference).
  */
 @Composable
 fun OnbProgress(
     step: Int,
-    total: Int = 6,
+    total: Int = 5,
     modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
@@ -112,6 +112,7 @@ fun OnbBottomDock(
     showBack: Boolean = false,
     onBack: () -> Unit = {},
     noBorder: Boolean = false,
+    showCta: Boolean = true,
 ) {
     val c = ZappTheme.colors
     Column(
@@ -128,7 +129,7 @@ fun OnbBottomDock(
                 Box(
                     modifier = Modifier
                         .height(52.dp)
-                        .width(72.dp)
+                        .let { if (showCta) it.width(72.dp) else it.fillMaxWidth() }
                         .clickable(onClick = onBack)
                         .border(1.dp, c.border, RectangleShape),
                     contentAlignment = Alignment.Center,
@@ -143,25 +144,27 @@ fun OnbBottomDock(
                     )
                 }
             }
-            val bg = if (ctaEnabled) c.accent else c.surfaceAlt
-            val fg = if (ctaEnabled) c.onAccent else c.textSubtle
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp)
-                    .background(bg, RectangleShape)
-                    .clickable(enabled = ctaEnabled, onClick = onCta),
-                contentAlignment = Alignment.Center,
-            ) {
-                BasicText(
-                    text = cta,
-                    style = ZappTheme.typography.button.copy(
-                        color = fg,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.2.sp,
-                    ),
-                )
+            if (showCta) {
+                val bg = if (ctaEnabled) c.accent else c.surfaceAlt
+                val fg = if (ctaEnabled) c.onAccent else c.textSubtle
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp)
+                        .background(bg, RectangleShape)
+                        .clickable(enabled = ctaEnabled, onClick = onCta),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText(
+                        text = cta,
+                        style = ZappTheme.typography.button.copy(
+                            color = fg,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.2.sp,
+                        ),
+                    )
+                }
             }
         }
     }

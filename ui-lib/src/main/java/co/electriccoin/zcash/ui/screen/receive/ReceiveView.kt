@@ -11,18 +11,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +32,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,7 +51,6 @@ import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.util.getValue
-import co.electriccoin.zcash.ui.design.util.scaffoldScrollPadding
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.design.util.styledStringResource
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
@@ -62,22 +67,21 @@ internal fun ReceiveView(
         }
 
         else -> {
-            Scaffold(
-                topBar = {
-                    ZappScreenHeader(title = stringResource(R.string.receive_title, CURRENCY_TICKER))
-                },
-                bottomBar = {
-                    ZappBottomActionBar(onBack = state.onBack)
-                },
-            ) { paddingValues ->
+            val c = ZappTheme.colors
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(c.bg)
+                    .windowInsetsPadding(WindowInsets.statusBars),
+            ) {
+                ZappScreenHeader(title = stringResource(R.string.receive_title, CURRENCY_TICKER))
+
                 ReceiveContents(
                     items = state.items.orEmpty(),
-                    modifier =
-                        Modifier.scaffoldScrollPadding(
-                            paddingValues = paddingValues,
-                            top = paddingValues.calculateTopPadding()
-                        ),
+                    modifier = Modifier.weight(1f),
                 )
+
+                ZappBottomActionBar(onBack = state.onBack)
             }
         }
     }
@@ -91,11 +95,10 @@ private fun ReceiveContents(
 ) {
     val c = ZappTheme.colors
     Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp, vertical = 12.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 18.dp, vertical = 12.dp),
     ) {
         items.forEachIndexed { index, state ->
             if (index != 0) {
@@ -158,8 +161,9 @@ private fun AddressPanel(
     Column(
         modifier = modifier
             .wrapContentHeight()
-            .background(c.bg, RectangleShape)
+            .background(c.surface, RectangleShape)
             .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .semantics(mergeDescendants = true) { role = Role.Button }
             .clickable(onClick = state.onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
@@ -214,7 +218,7 @@ private fun AddressPanel(
             Spacer(Modifier.width(8.dp))
 
             ZashiImageButton(
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(48.dp),
                 state = state.infoIconButton,
             )
         }
@@ -275,12 +279,16 @@ private fun ReceiveIconButton(
         modifier = modifier
             .background(c.surfaceAlt, RectangleShape)
             .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .semantics {
+                contentDescription = text
+                role = Role.Button
+            }
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 8.dp),
     ) {
         Image(
             painter = iconPainter,
-            contentDescription = text,
+            contentDescription = null,
             modifier = Modifier.size(18.dp),
         )
         Spacer(Modifier.height(6.dp))

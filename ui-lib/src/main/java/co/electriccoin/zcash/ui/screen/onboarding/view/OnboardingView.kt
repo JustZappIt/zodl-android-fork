@@ -50,7 +50,6 @@ enum class OnboardingStep {
     WELCOME,
     MSG_INTRO,
     MSG_USERNAME,
-    MSG_SEED,
     WALLET_INTRO,
 }
 
@@ -101,23 +100,13 @@ fun Onboarding(
                 onBack = { step = OnboardingStep.MSG_INTRO },
                 onContinue = { username ->
                     pendingUsername = username
-                    step = OnboardingStep.MSG_SEED
+                    step = OnboardingStep.WALLET_INTRO
                 },
-            )
-
-        OnboardingStep.MSG_SEED ->
-            // Legacy entry point. Production uses ZappOnboardingFlow; this exists for
-            // an instrumentation test only (see OnboardingTestSetup). Empty list here
-            // is fine because the screen isn't reached at runtime.
-            MessagingSeedPhraseScreen(
-                words = emptyList(),
-                onBack = { step = OnboardingStep.MSG_USERNAME },
-                onContinue = { step = OnboardingStep.WALLET_INTRO },
             )
 
         OnboardingStep.WALLET_INTRO ->
             WalletPhaseIntro(
-                onBack = { step = OnboardingStep.MSG_SEED },
+                onBack = { step = OnboardingStep.MSG_USERNAME },
                 onContinue = onCreateWallet,
             )
     }

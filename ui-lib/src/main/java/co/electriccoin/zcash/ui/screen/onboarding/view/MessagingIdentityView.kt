@@ -57,7 +57,7 @@ fun MessagingPhaseIntro(
         OnbHero(text = "Create your\nmessaging\nidentity")
         Spacer(Modifier.height(16.dp))
         OnbSub(
-            text = "Your identity is a username plus a 12-word phrase that lets you restore your chats on a new device.",
+            text = "Your identity is a username backed by your wallet's recovery phrase — one phrase restores your chats and your wallet on any device.",
             modifier = Modifier.fillMaxWidth(0.92f),
         )
         Spacer(Modifier.height(28.dp))
@@ -67,8 +67,8 @@ fun MessagingPhaseIntro(
             isFirst = true,
         )
         OnbBulletRow(
-            label = "Save a recovery phrase",
-            sub = "Restore your account if you lose this phone",
+            label = "One recovery phrase",
+            sub = "Your wallet's 24-word phrase also restores your messaging identity.",
         )
     }
 }
@@ -116,26 +116,6 @@ fun UsernameEntryScreen(
 }
 
 // ───────────────────────────────────────────────────────────────
-// 04 · Messaging recovery phrase
-// ───────────────────────────────────────────────────────────────
-
-@Composable
-fun MessagingSeedPhraseScreen(
-    words: List<String>,
-    onBack: () -> Unit,
-    onContinue: () -> Unit,
-) {
-    SeedRevealScreen(
-        step = 3,
-        title = "Messaging\nrecovery phrase",
-        sub = "These words restore your chats. Different from your wallet phrase — save both safely.",
-        words = words,
-        onBack = onBack,
-        onContinue = onContinue,
-    )
-}
-
-// ───────────────────────────────────────────────────────────────
 // Shared screen scaffold (single Column owning body + dock)
 // ───────────────────────────────────────────────────────────────
 
@@ -149,6 +129,7 @@ internal fun OnbScreen(
     ctaEnabled: Boolean = true,
     showBack: Boolean = false,
     onBack: () -> Unit = {},
+    showCta: Boolean = true,
     body: @Composable () -> Unit,
 ) {
     val c = ZappTheme.colors
@@ -183,6 +164,7 @@ internal fun OnbScreen(
             showBack = showBack,
             onBack = onBack,
             ctaEnabled = ctaEnabled,
+            showCta = showCta,
         )
     }
 }
