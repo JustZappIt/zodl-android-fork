@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -222,6 +223,11 @@ private fun SwissBackBox(onClick: () -> Unit) {
     }
 }
 
+// Swiss primary button uses brand yellow (matches Receive / Advanced
+// Settings accents) so the request CTA reads as on-brand.
+private val RequestYellow = Color(0xFFFCBB1A)
+private val RequestYellowText = Color(0xFF1A1100)
+
 @Composable
 private fun SwissPrimaryButton(
     text: String,
@@ -230,8 +236,8 @@ private fun SwissPrimaryButton(
     modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
-    val bg = if (enabled) c.accent else c.surfaceAlt
-    val fg = if (enabled) c.onAccent else c.textSubtle
+    val bg = if (enabled) RequestYellow else c.surfaceAlt
+    val fg = if (enabled) RequestYellowText else c.textSubtle
     Box(
         modifier = modifier
             .fillMaxWidth()

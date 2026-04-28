@@ -82,48 +82,53 @@ class AdvancedSettingsVM(
                         bigIcon = imageRes(R.drawable.ic_advanced_settings_export),
                         onClick = ::onExportPrivateDataClick
                     ),
-                    ListItemState(
-                        title = stringRes(R.string.advanced_settings_tax),
-                        bigIcon =
-                            imageRes(
-                                if (walletRestoringState == WalletRestoringState.RESTORING) {
-                                    R.drawable.ic_advanced_settings_tax_disabled
-                                } else {
-                                    R.drawable.ic_advanced_settings_tax
-                                }
-                            ),
-                        isEnabled = walletRestoringState != WalletRestoringState.RESTORING,
-                        onClick = ::onTaxExportClick
-                    ),
-                    ListItemState(
-                        title = stringRes(R.string.advanced_settings_choose_server),
-                        bigIcon = imageRes(R.drawable.ic_advanced_settings_choose_server),
-                        onClick = ::onChooseServerClick
-                    ),
+                    // HIDDEN: Tax export — uncomment to restore
+                    // ListItemState(
+                    //     title = stringRes(R.string.advanced_settings_tax),
+                    //     bigIcon =
+                    //         imageRes(
+                    //             if (walletRestoringState == WalletRestoringState.RESTORING) {
+                    //                 R.drawable.ic_advanced_settings_tax_disabled
+                    //             } else {
+                    //                 R.drawable.ic_advanced_settings_tax
+                    //             }
+                    //         ),
+                    //     isEnabled = walletRestoringState != WalletRestoringState.RESTORING,
+                    //     onClick = ::onTaxExportClick
+                    // ),
+                    // HIDDEN: Choose server — uncomment to restore
+                    // ListItemState(
+                    //     title = stringRes(R.string.advanced_settings_choose_server),
+                    //     bigIcon = imageRes(R.drawable.ic_advanced_settings_choose_server),
+                    //     onClick = ::onChooseServerClick
+                    // ),
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_resync_wallet),
                     //     bigIcon = imageRes(R.drawable.ic_advanced_settings_resync),
                     //     onClick = ::onResyncWalletClick
                     // ),
-                    ListItemState(
-                        title = stringRes(R.string.advanced_settings_privacy),
-                        bigIcon = imageRes(R.drawable.ic_advanced_settings_privacy),
-                        onClick = ::onPrivacyClick
-                    ),
-                    ListItemState(
-                        title = stringRes(R.string.advanced_settings_crash_reporting),
-                        bigIcon = imageRes(R.drawable.ic_advanced_settings_crash_reporting),
-                        onClick = ::onCrashReportingClick
-                    ).takeIf { versionInfo.distribution == DistributionDimension.STORE },
+                    // HIDDEN: Tor / Privacy — uncomment to restore
+                    // ListItemState(
+                    //     title = stringRes(R.string.advanced_settings_privacy),
+                    //     bigIcon = imageRes(R.drawable.ic_advanced_settings_privacy),
+                    //     onClick = ::onPrivacyClick
+                    // ),
+                    // HIDDEN: Crash reporting — uncomment to restore
+                    // ListItemState(
+                    //     title = stringRes(R.string.advanced_settings_crash_reporting),
+                    //     bigIcon = imageRes(R.drawable.ic_advanced_settings_crash_reporting),
+                    //     onClick = ::onCrashReportingClick
+                    // ).takeIf { versionInfo.distribution == DistributionDimension.STORE },
                     ListItemState(
                         title = stringRes(R.string.advanced_settings_disconnect_hw_wallet),
                         bigIcon = imageRes(R.drawable.ic_advanced_settings_disconnect_hw),
                         onClick = ::onDisconnectHwWalletClick
                     ).takeIf { hasKeystoneAccount },
-                    ListItemState(
-                        title = stringRes("Debug menu"),
-                        onClick = ::onDebugMenuClick
-                    ).takeIf { BuildConfig.DEBUG },
+                    // HIDDEN: Debug menu — uncomment to restore
+                    // ListItemState(
+                    //     title = stringRes("Debug menu"),
+                    //     onClick = ::onDebugMenuClick
+                    // ).takeIf { BuildConfig.DEBUG },
                 ),
             deleteButton =
                 ButtonState(

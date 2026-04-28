@@ -129,11 +129,10 @@ fun ChatProfileView(
                 style = ZappTheme.typography.sectionTitle.copy(color = c.text),
             )
 
-            // QR code of public key
+            // QR code of public key — sized to content; parent column centers it.
             identity?.publicKey?.let { pk ->
                 ZashiQr(
                     state = QrState(qrData = pk),
-                    modifier = Modifier.fillMaxWidth(),
                     qrSize = 200.dp,
                 )
 
@@ -196,22 +195,24 @@ fun ChatProfileView(
                     }
                 },
             )
-            ZappRowDivider(inset = true)
-            ZappRow(
-                title = "Contacts",
-                subtitle = "Manage your contacts",
-                icon = Icons.Default.Contacts,
-                iconBackground = c.surfaceAlt,
-                onClick = onNavigateToContacts,
-            )
-            ZappRowDivider(inset = true)
-            ZappRow(
-                title = "Network Status",
-                subtitle = "P2P connection info",
-                icon = Icons.Default.Settings,
-                iconBackground = c.surfaceAlt,
-                onClick = {},
-            )
+            // HIDDEN: Contacts — uncomment to restore (and the divider above)
+            // ZappRowDivider(inset = true)
+            // ZappRow(
+            //     title = "Contacts",
+            //     subtitle = "Manage your contacts",
+            //     icon = Icons.Default.Contacts,
+            //     iconBackground = c.surfaceAlt,
+            //     onClick = onNavigateToContacts,
+            // )
+            // HIDDEN: Network Status — uncomment to restore (and the divider above)
+            // ZappRowDivider(inset = true)
+            // ZappRow(
+            //     title = "Network Status",
+            //     subtitle = "P2P connection info",
+            //     icon = Icons.Default.Settings,
+            //     iconBackground = c.surfaceAlt,
+            //     onClick = {},
+            // )
         }
     }
 

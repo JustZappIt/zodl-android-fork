@@ -158,28 +158,30 @@ fun SettingsTabContent(
                         iconBackground = c.accentSoft,
                         onClick = { navigationRouter.forward(ChatProfileArgs) },
                     )
-                    ZappRowDivider(inset = true)
-                    ZappRow(
-                        title = "Backup / restore",
-                        subtitle = "Coming soon",
-                        icon = Icons.Default.Backup,
-                        onClick = {
-                            scope.launch { snackbarHostState.showSnackbar("Backup & restore coming soon.") }
-                        },
-                    )
+                    // HIDDEN: Backup / restore — uncomment to restore (and the divider above)
+                    // ZappRowDivider(inset = true)
+                    // ZappRow(
+                    //     title = "Backup / restore",
+                    //     subtitle = "Coming soon",
+                    //     icon = Icons.Default.Backup,
+                    //     onClick = {
+                    //         scope.launch { snackbarHostState.showSnackbar("Backup & restore coming soon.") }
+                    //     },
+                    // )
                 }
 
                 if (hasWallet) {
                     SettingsGroup(title = "Wallet") {
-                        ZappRow(
-                            title = "Backup seed phrase",
-                            subtitle = "View and save your 24-word recovery phrase",
-                            icon = Icons.Default.AccountBalanceWallet,
-                            iconTint = c.accentText,
-                            iconBackground = c.accentSoft,
-                            onClick = { navigationRouter.forward(AdvancedSettingsArgs) },
-                        )
-                        ZappRowDivider(inset = true)
+                        // HIDDEN: Backup seed phrase — uncomment to restore (and the divider below)
+                        // ZappRow(
+                        //     title = "Backup seed phrase",
+                        //     subtitle = "View and save your 24-word recovery phrase",
+                        //     icon = Icons.Default.AccountBalanceWallet,
+                        //     iconTint = c.accentText,
+                        //     iconBackground = c.accentSoft,
+                        //     onClick = { navigationRouter.forward(AdvancedSettingsArgs) },
+                        // )
+                        // ZappRowDivider(inset = true)
                         ZappRow(
                             title = "Server",
                             subtitle = "Choose a lightwalletd server",
@@ -207,13 +209,14 @@ fun SettingsTabContent(
                     )
                 }
 
-                SettingsGroup(title = "About") {
-                    ZappRow(
-                        title = "About Zapp",
-                        icon = Icons.Default.Info,
-                        onClick = { navigationRouter.forward(AboutArgs) },
-                    )
-                }
+                // HIDDEN: About — uncomment to restore
+                // SettingsGroup(title = "About") {
+                //     ZappRow(
+                //         title = "About Zapp",
+                //         icon = Icons.Default.Info,
+                //         onClick = { navigationRouter.forward(AboutArgs) },
+                //     )
+                // }
 
                 SettingsGroup(title = "Advanced") {
                     ZappRow(
@@ -222,20 +225,22 @@ fun SettingsTabContent(
                         icon = Icons.Default.CurrencyExchange,
                         onClick = { navigationRouter.forward(SwapArgs) },
                     )
-                    ZappRowDivider(inset = true)
-                    ZappRow(
-                        title = "Tor / Privacy",
-                        subtitle = "Route traffic through the Tor network",
-                        icon = Icons.Default.VpnLock,
-                        onClick = { navigationRouter.forward(TorOptInArgs) },
-                    )
-                    ZappRowDivider(inset = true)
-                    ZappRow(
-                        title = "Tax export",
-                        subtitle = "Export transaction history for tax reporting",
-                        icon = Icons.Default.Receipt,
-                        onClick = { navigationRouter.forward(TaxExport) },
-                    )
+                    // HIDDEN: Tor / Privacy — uncomment to restore (and the divider above)
+                    // ZappRowDivider(inset = true)
+                    // ZappRow(
+                    //     title = "Tor / Privacy",
+                    //     subtitle = "Route traffic through the Tor network",
+                    //     icon = Icons.Default.VpnLock,
+                    //     onClick = { navigationRouter.forward(TorOptInArgs) },
+                    // )
+                    // HIDDEN: Tax export — uncomment to restore (and the divider above)
+                    // ZappRowDivider(inset = true)
+                    // ZappRow(
+                    //     title = "Tax export",
+                    //     subtitle = "Export transaction history for tax reporting",
+                    //     icon = Icons.Default.Receipt,
+                    //     onClick = { navigationRouter.forward(TaxExport) },
+                    // )
                 }
 
                 Spacer(Modifier.height(20.dp))

@@ -28,6 +28,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
@@ -55,6 +57,12 @@ import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.design.util.styledStringResource
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
 import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
+
+// Brand yellow accent for receive/request affordances (replaces the
+// pre-tinted purple drawables that didn't fit the Swiss palette).
+private val ReceiveYellow = Color(0xFFFCBB1A)
+private val ReceiveYellowSoft = Color(0xFFFFF2C6)
+private val ReceiveYellowText = Color(0xFF6B4F00)
 
 @Composable
 internal fun ReceiveView(
@@ -122,7 +130,7 @@ private fun ReceiveContents(
                 modifier = Modifier
                     .width(3.dp)
                     .height(36.dp)
-                    .background(c.accent, RectangleShape),
+                    .background(ReceiveYellow, RectangleShape),
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -217,10 +225,27 @@ private fun AddressPanel(
 
             Spacer(Modifier.width(8.dp))
 
-            ZashiImageButton(
-                modifier = Modifier.size(48.dp),
-                state = state.infoIconButton,
-            )
+            // Custom Swiss info button with yellow tint (replaces the
+            // pre-tinted purple ZashiImageButton drawable).
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(ReceiveYellowSoft, RectangleShape)
+                    .border(BorderStroke(1.dp, c.border), RectangleShape)
+                    .semantics { role = Role.Button }
+                    .clickable(onClick = state.infoIconButton.onClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                BasicText(
+                    text = "i",
+                    style = ZappTheme.typography.body.copy(
+                        color = ReceiveYellowText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Serif,
+                    ),
+                )
+            }
         }
 
         AnimatedVisibility(visible = state.isExpanded) {
@@ -290,6 +315,7 @@ private fun ReceiveIconButton(
             painter = iconPainter,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
+            colorFilter = ColorFilter.tint(ReceiveYellowText),
         )
         Spacer(Modifier.height(6.dp))
         BasicText(
