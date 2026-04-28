@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import co.electriccoin.zcash.ui.common.provider.PersistableWalletProvider
 import co.electriccoin.zcash.ui.common.usecase.GetZashiAccountUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToScanPublicKeyUseCase
 import co.electriccoin.zcash.ui.screen.chat.media.FileUtils
@@ -34,6 +36,7 @@ import xyz.justzappit.zappmessaging.ZappMessagingSDK
 class ChatViewModel(
     application: Application,
     private val sdk: ZappMessagingSDK,
+    private val persistableWalletProvider: PersistableWalletProvider,
     private val navigateToScanPublicKey: NavigateToScanPublicKeyUseCase,
     private val getZashiAccount: GetZashiAccountUseCase
 ) : AndroidViewModel(application) {
@@ -328,6 +331,23 @@ class ChatViewModel(
                 Log.i(TAG, "Identity restored: ${zmIdentity.displayName}")
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to restore identity: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun restoreFromWalletSeed(displayName: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val wallet = persistableWalletProvider.persistableWallet.first { it != null }!!
+                val seedWords = wallet.seedPhrase.joinToString()
+                val zmIdentity = sdk.restoreFromSeedPhrase(seedWords, displayName)
+                _identity.value = ChatIdentity.from(zmIdentity)
+                Log.i(TAG, "Identity initialized from wallet seed: ${zmIdentity.displayName}")
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to initialize identity from wallet: ${e.message}"
             } finally {
                 _isLoading.value = false
             }

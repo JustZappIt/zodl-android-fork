@@ -108,7 +108,7 @@ fun ChatIdentitySetupView(
             if (selectedTab == 0)
                 "Create a display name to get started with peer-to-peer messaging."
             else
-                "Restore your identity using your 24-word seed phrase.",
+                "Restore your messaging identity using your wallet's 24-word seed phrase.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -209,7 +209,7 @@ fun ChatIdentitySetupView(
                 TextField(
                     value = seedPhraseInput,
                     onValueChange = { seedPhraseInput = it },
-                    placeholder = { Text("Enter 24-word seed phrase") },
+                    placeholder = { Text("Enter your wallet seed phrase (24 words)") },
                     minLines = 3,
                     maxLines = 5,
                     modifier = Modifier.fillMaxWidth(),

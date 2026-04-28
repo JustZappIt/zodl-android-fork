@@ -8,23 +8,32 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -57,22 +66,20 @@ import cash.z.ecc.sdk.fixture.ZatoshiFixture
 import cash.z.ecc.sdk.type.ZcashCurrency
 import co.electriccoin.zcash.spackle.Twig
 import co.electriccoin.zcash.ui.R
-import androidx.compose.material3.Scaffold
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
 import co.electriccoin.zcash.ui.common.model.WalletAccount
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
 import co.electriccoin.zcash.ui.design.component.AppAlertDialog
 import co.electriccoin.zcash.ui.design.component.BlankSurface
 import co.electriccoin.zcash.ui.design.component.Spacer
-import co.electriccoin.zcash.ui.design.component.ZashiButton
 import co.electriccoin.zcash.ui.design.component.ZashiTextField
 import co.electriccoin.zcash.ui.design.component.ZashiTextFieldDefaults
 import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappButton
 import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.util.rememberDesiredFormatLocale
-import co.electriccoin.zcash.ui.design.util.scaffoldPadding
 import co.electriccoin.zcash.ui.fixture.BalanceStateFixture
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidget
@@ -188,28 +195,36 @@ fun Send(
         return
     }
 
-    Scaffold(
-        topBar = { ZappScreenHeader(title = "") },
-        bottomBar = { ZappBottomActionBar(onBack = onBack) }
-    ) { paddingValues ->
-        SendMainContent(
-            balanceWidgetState = balanceWidgetState,
-            selectedAccount = selectedAccount,
-            exchangeRateState = exchangeRateState,
-            onBack = onBack,
-            onCreateZecSend = onCreateZecSend,
-            sendStage = sendStage,
-            onQrScannerOpen = onQrScannerOpen,
-            recipientAddressState = recipientAddressState,
-            onRecipientAddressChange = onRecipientAddressChange,
-            hasCameraFeature = hasCameraFeature,
-            amountState = amountState,
-            setAmountState = setAmountState,
-            memoState = memoState,
-            setMemoState = setMemoState,
-            sendState = sendAddressBookState,
-            modifier = Modifier.scaffoldPadding(paddingValues)
-        )
+    val c = ZappTheme.colors
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
+            .imePadding(),
+    ) {
+        ZappScreenHeader(title = "Send")
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            SendMainContent(
+                balanceWidgetState = balanceWidgetState,
+                selectedAccount = selectedAccount,
+                exchangeRateState = exchangeRateState,
+                onBack = onBack,
+                onCreateZecSend = onCreateZecSend,
+                sendStage = sendStage,
+                onQrScannerOpen = onQrScannerOpen,
+                recipientAddressState = recipientAddressState,
+                onRecipientAddressChange = onRecipientAddressChange,
+                hasCameraFeature = hasCameraFeature,
+                amountState = amountState,
+                setAmountState = setAmountState,
+                memoState = memoState,
+                setMemoState = setMemoState,
+                sendState = sendAddressBookState,
+                modifier = Modifier.padding(horizontal = 28.dp),
+            )
+        }
+        ZappBottomActionBar(onBack = onBack)
     }
 }
 
@@ -394,7 +409,12 @@ fun SendButton(
             // A valid memo is necessary only for non-transparent recipient
             (recipientAddressState.type == AddressType.Transparent || memoState is MemoState.Correct)
 
-    ZashiButton(
+    ZappButton(
+        text = stringResource(id = R.string.send_create),
+        enabled = sendButtonEnabled,
+        modifier = Modifier
+            .testTag(SendTag.SEND_FORM_BUTTON)
+            .fillMaxWidth(),
         onClick = {
             scope.launch {
                 // SDK side validations
@@ -454,12 +474,6 @@ fun SendButton(
                 }
             }
         },
-        text = stringResource(id = R.string.send_create),
-        enabled = sendButtonEnabled,
-        modifier =
-            Modifier
-                .testTag(SendTag.SEND_FORM_BUTTON)
-                .fillMaxWidth()
     )
 }
 
@@ -485,10 +499,9 @@ fun SendFormAddressTextField(
                 // Scroll TextField above ime keyboard
                 .bringIntoViewRequester(bringIntoViewRequester)
     ) {
-        Text(
+        BasicText(
             text = stringResource(id = R.string.send_address_label),
-            color = ZappTheme.colors.textMuted,
-            style = ZappTheme.typography.body
+            style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textMuted),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -524,45 +537,50 @@ fun SendFormAddressTextField(
             error = recipientAddressError,
             textStyle = ZappTheme.typography.body.copy(fontFamily = ZappTheme.typography.mono.fontFamily),
             placeholder = {
-                Text(
+                BasicText(
                     text = stringResource(id = R.string.send_address_hint),
-                    style = ZappTheme.typography.body,
-                    color = ZappTheme.colors.textSubtle
+                    style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textSubtle),
                 )
             },
             suffix =
                 if (hasCameraFeature) {
                     {
                         Row(
-                            verticalAlignment = Alignment.Top
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Image(
-                                modifier =
-                                    Modifier.clickable(
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clickable(
                                         onClick = sendAddressBookState.onButtonClick,
-                                        role = Role.Button,
-                                        indication = ripple(radius = 4.dp),
-                                        interactionSource = remember { MutableInteractionSource() }
-                                    ),
-                                painter = painterResource(sendAddressBookState.mode.icon),
-                                contentDescription = stringResource(R.string.send_address_book_content_description),
-                            )
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(bounded = true),
+                                    )
+                                    .semantics(mergeDescendants = true) { role = Role.Button },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(sendAddressBookState.mode.icon),
+                                    contentDescription = stringResource(R.string.send_address_book_content_description),
+                                )
+                            }
 
-                            Spacer(modifier = Modifier.width(4.dp))
-
-                            Image(
-                                modifier =
-                                    Modifier.clickable(
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clickable(
                                         onClick = onQrScannerOpen,
-                                        role = Role.Button,
-                                        indication = ripple(radius = 4.dp),
-                                        interactionSource = remember { MutableInteractionSource() }
-                                    ),
-                                painter = painterResource(R.drawable.qr_code_icon),
-                                contentDescription = stringResource(R.string.send_scan_content_description),
-                            )
-
-                            // Spacer(modifier = Modifier.width(6.dp))
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(bounded = true),
+                                    )
+                                    .semantics(mergeDescendants = true) { role = Role.Button },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.qr_code_icon),
+                                    contentDescription = stringResource(R.string.send_scan_content_description),
+                                )
+                            }
                         }
                     }
                 } else {
@@ -631,10 +649,9 @@ fun SendFormAmountTextField(
                 // Scroll TextField above ime keyboard
                 .bringIntoViewRequester(bringIntoViewRequester)
     ) {
-        Text(
+        BasicText(
             text = stringResource(id = R.string.send_amount_label),
-            color = ZappTheme.colors.textMuted,
-            style = ZappTheme.typography.body
+            style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textMuted),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -664,14 +681,12 @@ fun SendFormAmountTextField(
                         .testTag(SendTag.SEND_AMOUNT_FIELD),
                 error = amountError,
                 placeholder = {
-                    Text(
-                        text =
-                            stringResource(
-                                id = R.string.send_amount_hint,
-                                zcashCurrency
-                            ),
-                        style = ZappTheme.typography.body,
-                        color = ZappTheme.colors.textSubtle
+                    BasicText(
+                        text = stringResource(
+                            id = R.string.send_amount_hint,
+                            zcashCurrency
+                        ),
+                        style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textSubtle),
                     )
                 },
                 keyboardOptions =
@@ -724,13 +739,9 @@ fun SendFormAmountTextField(
                     },
                     modifier = Modifier.weight(1f),
                     placeholder = {
-                        Text(
-                            text =
-                                stringResource(
-                                    id = R.string.send_usd_amount_hint
-                                ),
-                            style = ZappTheme.typography.body,
-                            color = LocalContentColor.current
+                        BasicText(
+                            text = stringResource(id = R.string.send_usd_amount_hint),
+                            style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textSubtle),
                         )
                     },
                     keyboardOptions =
@@ -783,10 +794,9 @@ fun SendFormMemoTextField(
                 // Scroll TextField above ime keyboard
                 .bringIntoViewRequester(bringIntoViewRequester)
     ) {
-        Text(
+        BasicText(
             text = stringResource(id = R.string.send_memo_label),
-            color = ZappTheme.colors.textMuted,
-            style = ZappTheme.typography.body
+            style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textMuted),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -812,16 +822,14 @@ fun SendFormMemoTextField(
                 ),
             placeholder = {
                 if (isMemoFieldAvailable) {
-                    Text(
+                    BasicText(
                         text = stringResource(id = R.string.send_memo_hint),
-                        style = ZappTheme.typography.body,
-                        color = ZappTheme.colors.textSubtle
+                        style = ZappTheme.typography.body.copy(color = ZappTheme.colors.textSubtle),
                     )
                 } else {
-                    Text(
+                    BasicText(
                         text = stringResource(R.string.send_transparent_memo),
-                        style = ZappTheme.typography.caption,
-                        color = ZappTheme.colors.textMuted
+                        style = ZappTheme.typography.caption.copy(color = ZappTheme.colors.textMuted),
                     )
                 }
             },
@@ -853,25 +861,23 @@ fun SendFormMemoTextField(
         )
 
         if (isMemoFieldAvailable) {
-            Text(
-                text =
-                    stringResource(
-                        id = R.string.send_memo_bytes_counter,
-                        Memo.MAX_MEMO_LENGTH_BYTES - memoState.byteSize,
-                        Memo.MAX_MEMO_LENGTH_BYTES
-                    ),
-                color =
-                    if (memoState is MemoState.Correct) {
+            BasicText(
+                text = stringResource(
+                    id = R.string.send_memo_bytes_counter,
+                    Memo.MAX_MEMO_LENGTH_BYTES - memoState.byteSize,
+                    Memo.MAX_MEMO_LENGTH_BYTES
+                ),
+                style = ZappTheme.typography.caption.copy(
+                    color = if (memoState is MemoState.Correct) {
                         ZappTheme.colors.textSubtle
                     } else {
                         ZappTheme.colors.danger
                     },
-                textAlign = TextAlign.End,
-                style = ZappTheme.typography.caption,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp)
+                    textAlign = TextAlign.End,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
             )
         }
     }
@@ -906,17 +912,19 @@ private fun SendFailure(
             Column(
                 Modifier.verticalScroll(rememberScrollState())
             ) {
-                Text(
+                BasicText(
                     text = stringResource(id = R.string.send_dialog_error_text),
-                    color = ZappTheme.colors.text,
+                    style = ZappTheme.typography.body.copy(color = ZappTheme.colors.text),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
+                BasicText(
                     text = reason,
-                    fontStyle = FontStyle.Italic,
-                    color = ZappTheme.colors.text,
+                    style = ZappTheme.typography.body.copy(
+                        fontStyle = FontStyle.Italic,
+                        color = ZappTheme.colors.text,
+                    ),
                 )
             }
         },
