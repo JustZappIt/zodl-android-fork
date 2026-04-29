@@ -3,8 +3,6 @@ package co.electriccoin.zcash.ui.util
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import cash.z.ecc.android.sdk.model.ZcashNetwork
-import co.electriccoin.zcash.ui.common.model.DistributionDimension
 import co.electriccoin.zcash.ui.common.model.VersionInfo
 import java.io.File
 
@@ -15,23 +13,6 @@ object FileShareUtil {
 
     const val ZASHI_INTERNAL_DATA_MIME_TYPE = "application/octet-stream"
     const val ZASHI_QR_CODE_MIME_TYPE = "image/png"
-
-    const val ZASHI_INTERNAL_DATA_AUTHORITY = "co.electriccoin.zcash.provider"
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_DEBUG = "co.electriccoin.zcash.debug.provider"
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_INTERNAL = "co.electriccoin.zcash.internal.provider"
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_INTERNAL_DEBUG = "co.electriccoin.zcash.internal.debug.provider"
-
-    const val ZASHI_INTERNAL_DATA_FOSS_AUTHORITY = "co.electriccoin.zcash.foss.provider"
-    const val ZASHI_INTERNAL_DATA_FOSS_AUTHORITY_DEBUG = "co.electriccoin.zcash.foss.debug.provider"
-
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET = "co.electriccoin.zcash.provider.testnet"
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET_DEBUG = "co.electriccoin.zcash.debug.provider.testnet"
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET_INTERNAL = "co.electriccoin.zcash.internal.provider.testnet"
-    const val ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET_INTERNAL_DEBUG =
-        "co.electriccoin.zcash.internal.debug.provider.testnet"
-
-    const val ZASHI_INTERNAL_DATA_FOSS_AUTHORITY_TESTNET = "co.electriccoin.zcash.foss.provider.testnet"
-    const val ZASHI_INTERNAL_DATA_FOSS_AUTHORITY_TESTNET_DEBUG = "co.electriccoin.zcash.foss.debug.provider.testnet"
 
     /**
      * Returns a new share internal app data intent with necessary permission granted exclusively to the data file.
@@ -58,6 +39,7 @@ object FileShareUtil {
             fileType = fileType,
         )
 
+    @Suppress("UNUSED_PARAMETER")
     internal fun newShareContentIntent(
         context: Context,
         file: File,
@@ -68,11 +50,8 @@ object FileShareUtil {
     ): Intent {
         val fileUri =
             FileProvider.getUriForFile(
-                // context =
                 context,
-                // authority =
-                getAuthorityByVersionInfo(versionInfo),
-                // file =
+                fileProviderAuthority(context),
                 file
             )
 
@@ -101,60 +80,11 @@ object FileShareUtil {
         return shareDataIntent
     }
 
-    private fun getAuthorityByVersionInfo(versionInfo: VersionInfo) =
-        if (versionInfo.network == ZcashNetwork.Testnet) {
-            when (versionInfo.distribution) {
-                DistributionDimension.FOSS -> getFossTestnetAuthority(versionInfo)
-                DistributionDimension.INTERNAL -> getInternalTestnetAuthority(versionInfo)
-                DistributionDimension.STORE -> getStoreTestnetAuthority(versionInfo)
-            }
-        } else {
-            when (versionInfo.distribution) {
-                DistributionDimension.FOSS -> getFossMainnetAuthority(versionInfo)
-                DistributionDimension.INTERNAL -> getInternalMainnetAuthority(versionInfo)
-                DistributionDimension.STORE -> getStoreMainnetAuthority(versionInfo)
-            }
-        }
-
-    private fun getStoreMainnetAuthority(versionInfo: VersionInfo) =
-        if (versionInfo.isDebuggable) {
-            ZASHI_INTERNAL_DATA_AUTHORITY_DEBUG
-        } else {
-            ZASHI_INTERNAL_DATA_AUTHORITY
-        }
-
-    private fun getFossMainnetAuthority(versionInfo: VersionInfo) =
-        if (versionInfo.isDebuggable) {
-            ZASHI_INTERNAL_DATA_FOSS_AUTHORITY_DEBUG
-        } else {
-            ZASHI_INTERNAL_DATA_FOSS_AUTHORITY
-        }
-
-    private fun getInternalMainnetAuthority(versionInfo: VersionInfo) =
-        if (versionInfo.isDebuggable) {
-            ZASHI_INTERNAL_DATA_AUTHORITY_INTERNAL_DEBUG
-        } else {
-            ZASHI_INTERNAL_DATA_AUTHORITY_INTERNAL
-        }
-
-    private fun getStoreTestnetAuthority(versionInfo: VersionInfo) =
-        if (versionInfo.isDebuggable) {
-            ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET_DEBUG
-        } else {
-            ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET
-        }
-
-    private fun getFossTestnetAuthority(versionInfo: VersionInfo) =
-        if (versionInfo.isDebuggable) {
-            ZASHI_INTERNAL_DATA_FOSS_AUTHORITY_TESTNET_DEBUG
-        } else {
-            ZASHI_INTERNAL_DATA_FOSS_AUTHORITY_TESTNET
-        }
-
-    private fun getInternalTestnetAuthority(versionInfo: VersionInfo) =
-        if (versionInfo.isDebuggable) {
-            ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET_INTERNAL_DEBUG
-        } else {
-            ZASHI_INTERNAL_DATA_AUTHORITY_TESTNET_INTERNAL
-        }
+    /**
+     * The authority registered in every variant's AndroidManifest as
+     * `android:authorities="${applicationId}.provider"`. Reading it from the
+     * runtime package name keeps the runtime aligned with the manifest no
+     * matter which build variant or fork's applicationId is in play.
+     */
+    fun fileProviderAuthority(context: Context): String = "${context.packageName}.provider"
 }

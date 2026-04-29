@@ -54,8 +54,6 @@ data class ContactEditArgs(val publicKey: String)
 fun AndroidChatHome(
     onNavigateToChatRoom: (String) -> Unit,
     onNavigateToNewConversation: () -> Unit,
-    onNavigateToContacts: () -> Unit,
-    onNavigateToSettings: () -> Unit = {},
     onNavigateBack: () -> Unit
 ) {
     val viewModel: ChatViewModel = koinViewModel()
@@ -84,8 +82,6 @@ fun AndroidChatHome(
                     onNavigateToChatRoom(conversation.id)
                 },
                 onNewMessage = onNavigateToNewConversation,
-                onNavigateToSettings = onNavigateToSettings,
-                onNavigateToContacts = onNavigateToContacts,
                 onNavigateBack = onNavigateBack,
                 viewModel = viewModel
             )

@@ -2,9 +2,9 @@ package co.electriccoin.zcash.ui.screen.offramp
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cash.z.ecc.android.sdk.ext.convertZatoshiToZec
 import cash.z.ecc.android.sdk.model.Zatoshi
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
-import cash.z.ecc.sdk.extension.toZecStringFull
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.repository.ExchangeRateRepository
@@ -30,7 +30,7 @@ class OfframpVM(
 ) : ViewModel() {
 
     val amountZec: MutableStateFlow<String> = MutableStateFlow(
-        args.prefillZatoshi?.let { Zatoshi(it).toZecStringFull() }.orEmpty()
+        args.prefillZatoshi?.let { Zatoshi(it).convertZatoshiToZec().toPlainString() }.orEmpty()
     )
 
     val state: StateFlow<OfframpState?> =
