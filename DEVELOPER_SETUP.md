@@ -57,13 +57,15 @@ sdkmanager "ndk;28.2.13676358" "cmake;4.1.2" "platforms;android-36" "build-tools
 
 ### 3. Clone the Repo
 
-The project expects sibling directories for the messaging modules:
+The project expects sibling directories for the messaging modules **and** the
+Zcash Android SDK (consumed via Gradle `includeBuild`, see step 3a):
 
 ```
 dev/zapp/
-  zodl-android/      # This repo
-  zappMessaging/      # P2P messaging SDK (android/ subdirectory)
-  bare-kit/           # BareKit JS runtime (android/ subdirectory)
+  zodl-android/                 # This repo
+  zappMessaging/                # P2P messaging SDK (android/ subdirectory)
+  bare-kit/                     # BareKit JS runtime (android/ subdirectory)
+  zcash-android-wallet-sdk/     # Zcash SDK source — built locally, not from Maven
 ```
 
 ```bash
@@ -71,7 +73,43 @@ cd ~/dev/zapp
 git clone <zodl-android-repo-url> zodl-android
 git clone <zappMessaging-repo-url> zappMessaging
 git clone <bare-kit-repo-url> bare-kit
+git clone https://github.com/zcash/zcash-android-wallet-sdk.git
 ```
+
+### 3a. Pin the Zcash SDK SHA
+
+Upstream `zodl-inc/zodl-android` `main` builds against unreleased commits of
+the Zcash Android SDK that are not yet published to Maven Central
+(`ZcashDecimalFormatSymbols`, `zatoshiFormatter`, etc. live on the SDK's `main`
+branch but not in tag `v2.4.8`). Building our fork from Maven would fail the
+same way upstream's CI fails on `pull-request.yml` — verified directly. The
+fix is the official `SDK_INCLUDED_BUILD_PATH` mechanism documented in
+upstream's `docs/Setup.md`.
+
+After cloning the SDK, check out the SHA pinned in `.zapp-deps`:
+
+```bash
+cd ~/dev/zapp/zcash-android-wallet-sdk
+git checkout $(grep ^zcashAndroidWalletSdk= ../zodl-android/.zapp-deps | cut -d= -f2)
+```
+
+The `gradle.properties` in this repo already sets:
+
+```
+SDK_INCLUDED_BUILD_PATH=../zcash-android-wallet-sdk
+```
+
+That tells Gradle to compile the SDK from source on every build instead of
+downloading the Maven jar. **APK size is unchanged** — only the *origin* of the
+SDK's compiled `.class` files changes. First build is slower (Rust toolchain
+compiles the SDK's native backend); subsequent builds are cached.
+
+Requirements added by this step:
+- **Rust toolchain** (`cargo`, `rustc`) — `brew install rust` if missing.
+- **Disk** ~1.7 GB for the SDK clone (native blockchain checkpoints).
+
+To revert to Maven, blank the line: `SDK_INCLUDED_BUILD_PATH=`. Builds will
+then fail until upstream publishes a new SDK release with the missing symbols.
 
 ### 4. Build
 

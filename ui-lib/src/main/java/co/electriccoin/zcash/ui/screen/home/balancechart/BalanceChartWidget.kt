@@ -22,7 +22,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cash.z.ecc.android.sdk.model.Zatoshi
-import cash.z.ecc.sdk.extension.toZecStringFull
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.design.component.BlankSurface
 import co.electriccoin.zcash.ui.design.component.ZashiCard
@@ -32,6 +31,9 @@ import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
 import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
+import co.electriccoin.zcash.ui.design.util.TickerLocation
+import co.electriccoin.zcash.ui.design.util.getValue
+import co.electriccoin.zcash.ui.design.util.stringRes
 
 fun LazyListScope.balanceChartWidget(
     state: BalanceChartState,
@@ -161,7 +163,7 @@ private fun Footer(balance: Zatoshi) {
         text =
             stringResource(
                 R.string.home_balance_chart_footer,
-                balance.toZecStringFull(),
+                stringRes(balance, TickerLocation.HIDDEN).getValue(),
             ),
         color = ZashiColors.Text.textTertiary,
         style = ZashiTypography.textXs,

@@ -10,3 +10,9 @@ zappMessaging=d7f5460c50d8eb5f7f32018760412bf182d94d02
 # The local ../bare-kit/ directory has no git history; CI checks out the pinned commit.
 # Update both this SHA and the workflow ref when upgrading bare-kit.
 bare-kit=15a3569f3d704de7151761051c8d9cc2e299414f
+
+# zcash-android-wallet-sdk is consumed via Gradle includeBuild (SDK_INCLUDED_BUILD_PATH).
+# Upstream zodl-android tracks unreleased SDK commits ahead of the published Maven artifact,
+# so we mirror the SHA upstream's main is built against. Bump alongside upstream-sync work.
+# GitHub: https://github.com/zcash/zcash-android-wallet-sdk
+zcashAndroidWalletSdk=88499adb8d62d364b2c39b3513e996549f2c662e
