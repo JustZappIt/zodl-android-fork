@@ -229,8 +229,6 @@ private fun BalanceCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(c.surfaceAlt, RectangleShape)
-            .border(BorderStroke(1.dp, c.border), RectangleShape)
             .padding(horizontal = 20.dp, vertical = 18.dp),
     ) {
         ZappSectionLabel(text = "Total balance")

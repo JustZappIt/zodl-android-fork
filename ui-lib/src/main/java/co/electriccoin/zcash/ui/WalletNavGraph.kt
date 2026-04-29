@@ -342,12 +342,6 @@ fun NavGraphBuilder.walletNavGraph(
                 onNavigateToNewConversation = {
                     navigationRouter.forward(NewConversationArgs)
                 },
-                onNavigateToContacts = {
-                    navigationRouter.forward(ChatContactsArgs)
-                },
-                onNavigateToSettings = {
-                    navigationRouter.forward(ChatSettingsArgs)
-                },
                 onNavigateBack = { navigationRouter.back() }
             )
         }

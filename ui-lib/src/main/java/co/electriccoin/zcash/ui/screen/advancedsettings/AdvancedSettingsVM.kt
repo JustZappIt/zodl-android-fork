@@ -77,11 +77,12 @@ class AdvancedSettingsVM(
                         bigIcon = imageRes(R.drawable.ic_advanced_settings_recovery),
                         onClick = ::onSeedRecoveryClick
                     ),
-                    ListItemState(
-                        title = stringRes(R.string.advanced_settings_export),
-                        bigIcon = imageRes(R.drawable.ic_advanced_settings_export),
-                        onClick = ::onExportPrivateDataClick
-                    ),
+                    // HIDDEN: Export private data — uncomment to restore
+                    // ListItemState(
+                    //     title = stringRes(R.string.advanced_settings_export),
+                    //     bigIcon = imageRes(R.drawable.ic_advanced_settings_export),
+                    //     onClick = ::onExportPrivateDataClick
+                    // ),
                     // HIDDEN: Tax export — uncomment to restore
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_tax),
