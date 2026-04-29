@@ -108,7 +108,7 @@ fun ChatIdentitySetupView(
             if (selectedTab == 0)
                 "Create a display name to get started with peer-to-peer messaging."
             else
-                "Restore your identity using your 24-word seed phrase.",
+                "Restore your messaging identity using your wallet's 24-word seed phrase.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -120,7 +120,7 @@ fun ChatIdentitySetupView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(4.dp)
         ) {
@@ -128,7 +128,7 @@ fun ChatIdentitySetupView(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(6.dp))
+                        .clip(RoundedCornerShape(0.dp))
                         .background(if (selectedTab == index) MaterialTheme.colorScheme.surface else Color.Transparent)
                         .clickable { selectedTab = index }
                         .padding(vertical = 10.dp),
@@ -154,7 +154,7 @@ fun ChatIdentitySetupView(
                     placeholder = { Text("Display name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(0.dp),
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
@@ -176,7 +176,7 @@ fun ChatIdentitySetupView(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(0.dp)
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
@@ -197,7 +197,7 @@ fun ChatIdentitySetupView(
                     placeholder = { Text("Display name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(0.dp),
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
@@ -209,11 +209,11 @@ fun ChatIdentitySetupView(
                 TextField(
                     value = seedPhraseInput,
                     onValueChange = { seedPhraseInput = it },
-                    placeholder = { Text("Enter 24-word seed phrase") },
+                    placeholder = { Text("Enter your wallet seed phrase (24 words)") },
                     minLines = 3,
                     maxLines = 5,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(0.dp),
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
@@ -237,7 +237,7 @@ fun ChatIdentitySetupView(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(0.dp)
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
@@ -289,7 +289,7 @@ private fun SeedPhraseBackupDialog(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
                 .wrapContentHeight(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(0.dp),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 6.dp
         ) {
@@ -336,7 +336,7 @@ private fun SeedPhraseBackupDialog(
                         ) {
                             column.forEachIndexed { i, word ->
                                 Surface(
-                                    shape = RoundedCornerShape(6.dp),
+                                    shape = RoundedCornerShape(0.dp),
                                     color = MaterialTheme.colorScheme.surfaceVariant
                                 ) {
                                     Row(
@@ -365,7 +365,7 @@ private fun SeedPhraseBackupDialog(
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(0.dp)
                 ) {
                     Text("I've Saved My Seed Phrase", modifier = Modifier.padding(vertical = 4.dp))
                 }

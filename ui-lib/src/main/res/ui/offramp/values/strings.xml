@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offramp_title">Cash out</string>
+    <string name="offramp_amount_label">Amount</string>
+    <string name="offramp_info_body">A buyer sends fiat directly to your Venmo, Cash App, or Revolut. Usually under 10 min.</string>
+    <string name="offramp_continue_button">Continue on peer.xyz</string>
+    <string name="offramp_attribution">Powered by peer.xyz</string>
+    <string name="offramp_cancel">Cancel</string>
+    <string name="offramp_amount_hint">0.0000</string>
+    <string name="notification_zec_arrived_title">ZEC arrived</string>
+    <string name="notification_zec_arrived_body">Your ZEC has arrived.</string>
+</resources>

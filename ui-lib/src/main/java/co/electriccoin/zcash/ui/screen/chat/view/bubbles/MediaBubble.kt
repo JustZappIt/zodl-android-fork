@@ -50,10 +50,10 @@ fun MediaBubble(message: ChatMessage, isFromMe: Boolean) {
     }
 
     val shape = RoundedCornerShape(
-        topStart = 16.dp,
-        topEnd = 16.dp,
-        bottomStart = if (isFromMe) 16.dp else 4.dp,
-        bottomEnd = if (isFromMe) 4.dp else 16.dp
+        topStart = 0.dp,
+        topEnd = 0.dp,
+        bottomStart = if (isFromMe) 0.dp else 4.dp,
+        bottomEnd = if (isFromMe) 4.dp else 0.dp
     )
 
     Surface(
@@ -68,7 +68,7 @@ fun MediaBubble(message: ChatMessage, isFromMe: Boolean) {
                     .fillMaxWidth()
                     .heightIn(min = 120.dp, max = 300.dp)
                     .clip(
-                        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                        RoundedCornerShape(0.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {

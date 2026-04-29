@@ -2,11 +2,24 @@
 
 package co.electriccoin.zcash.ui.screen.request.view
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -15,25 +28,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cash.z.ecc.sdk.type.ZcashCurrency
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
 import co.electriccoin.zcash.ui.design.component.CircularScreenProgressIndicator
-import co.electriccoin.zcash.ui.design.component.OldZashiBottomBar
 import co.electriccoin.zcash.ui.design.component.QrCodeDefaults
-import co.electriccoin.zcash.ui.design.component.ZashiButton
-import co.electriccoin.zcash.ui.design.component.ZashiButtonDefaults
-import co.electriccoin.zcash.ui.design.component.ZashiSmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.screen.request.model.AmountState
 import co.electriccoin.zcash.ui.screen.request.model.MemoState
@@ -92,11 +105,9 @@ internal fun RequestView(
         }
 
         is RequestState.Prepared -> {
-            BlankBgScaffold(
+            Scaffold(
                 topBar = {
-                    RequestTopAppBar(
-                        onBack = state.onBack,
-                    )
+                    ZappScreenHeader(title = stringResource(id = R.string.request_title))
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 bottomBar = {
@@ -117,74 +128,165 @@ internal fun RequestView(
 }
 
 @Composable
-private fun RequestTopAppBar(
-    onBack: () -> Unit,
-) {
-    ZashiSmallTopAppBar(
-        title = stringResource(id = R.string.request_title),
-        navigationAction = {
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-        },
-    )
-}
-
-@Composable
 private fun RequestBottomBar(
     state: RequestState.Prepared,
     modifier: Modifier = Modifier,
 ) {
-    OldZashiBottomBar(modifier = modifier.fillMaxWidth()) {
+    val c = ZappTheme.colors
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(c.bg)
+            .border(BorderStroke(1.dp, c.text), RectangleShape)
+            .windowInsetsPadding(WindowInsets.navigationBars),
+    ) {
         when (state) {
-            is RequestState.Amount -> {
-                ZashiButton(
-                    text = stringResource(id = R.string.request_amount_btn),
-                    onClick = state.onDone,
-                    enabled = state.request.amountState.isValid == true,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                )
-            }
+            is RequestState.Amount -> SwissDockRow(
+                onBack = state.onBack,
+                cta = stringResource(id = R.string.request_amount_btn),
+                onCta = state.onDone,
+                ctaEnabled = state.request.amountState.isValid == true,
+            )
 
-            is RequestState.Memo -> {
-                ZashiButton(
-                    enabled = state.request.memoState.isValid(),
-                    onClick = state.onDone,
-                    text = stringResource(id = R.string.request_memo_btn),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                )
-            }
+            is RequestState.Memo -> SwissDockRow(
+                onBack = state.onBack,
+                cta = stringResource(id = R.string.request_memo_btn),
+                onCta = state.onDone,
+                ctaEnabled = state.request.memoState.isValid(),
+            )
 
             is RequestState.QrCode -> {
                 val sizePixels = with(LocalDensity.current) { DEFAULT_QR_CODE_SIZE.toPx() }.roundToInt()
                 val colors = QrCodeDefaults.colors()
-
-                ZashiButton(
-                    text = stringResource(id = R.string.request_qr_share_btn),
-                    icon = R.drawable.ic_share,
-                    onClick = { state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri) },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                )
-
-                Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingTiny))
-
-                ZashiButton(
-                    colors = ZashiButtonDefaults.secondaryColors(),
-                    onClick = state.onClose,
-                    text = stringResource(id = R.string.request_qr_close_btn),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                )
+                // QR step has two stacked CTAs (share + close), back arrow on
+                // the left like the other steps.
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    SwissBackBox(onClick = state.onBack)
+                    Column(modifier = Modifier.weight(1f)) {
+                        SwissPrimaryButton(
+                            text = stringResource(id = R.string.request_qr_share_btn),
+                            onClick = {
+                                state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri)
+                            },
+                            enabled = true,
+                        )
+                        SwissGhostButton(
+                            text = stringResource(id = R.string.request_qr_close_btn),
+                            onClick = state.onClose,
+                        )
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun SwissDockRow(
+    onBack: () -> Unit,
+    cta: String,
+    onCta: () -> Unit,
+    ctaEnabled: Boolean,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SwissBackBox(onClick = onBack)
+        SwissPrimaryButton(
+            text = cta,
+            onClick = onCta,
+            enabled = ctaEnabled,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun SwissBackBox(onClick: () -> Unit) {
+    val c = ZappTheme.colors
+    Box(
+        modifier = Modifier
+            .size(width = 72.dp, height = 52.dp)
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        BasicText(
+            text = "←",
+            style = ZappTheme.typography.button.copy(
+                color = c.text,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Black,
+            ),
+        )
+    }
+}
+
+// Swiss primary button uses brand yellow (matches Receive / Advanced
+// Settings accents) so the request CTA reads as on-brand.
+private val RequestYellow = Color(0xFFFCBB1A)
+private val RequestYellowText = Color(0xFF1A1100)
+
+@Composable
+private fun SwissPrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val c = ZappTheme.colors
+    val bg = if (enabled) RequestYellow else c.surfaceAlt
+    val fg = if (enabled) RequestYellowText else c.textSubtle
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .background(bg, RectangleShape)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        BasicText(
+            text = text.uppercase(),
+            style = ZappTheme.typography.button.copy(
+                color = fg,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 0.6.sp,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun SwissGhostButton(
+    text: String,
+    onClick: () -> Unit,
+) {
+    val c = ZappTheme.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(width = 20.dp, height = 1.dp)
+                    .background(c.text, RectangleShape),
+            )
+            Spacer(Modifier.width(10.dp))
+            BasicText(
+                text = text.uppercase(),
+                style = ZappTheme.typography.button.copy(
+                    color = c.text,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.6.sp,
+                ),
+            )
         }
     }
 }

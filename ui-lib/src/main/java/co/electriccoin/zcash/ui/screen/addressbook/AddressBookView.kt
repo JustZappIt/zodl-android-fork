@@ -1,5 +1,7 @@
 @file:Suppress("TooManyFunctions")
 
+// TODO(Zapp-design): migrate ZashiSmallTopAppBar, ZashiContactListItem, ZashiButton, ZashiColors,
+//  and ZashiTypography to ZappTheme equivalents. Back button is already moved to ZappBottomActionBar.
 package co.electriccoin.zcash.ui.screen.addressbook
 
 import androidx.compose.foundation.Image
@@ -50,7 +52,7 @@ import co.electriccoin.zcash.ui.design.component.ZashiButton
 import co.electriccoin.zcash.ui.design.component.ZashiHorizontalDivider
 import co.electriccoin.zcash.ui.design.component.ZashiIconButton
 import co.electriccoin.zcash.ui.design.component.ZashiSmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
 import co.electriccoin.zcash.ui.design.component.listitem.ContactListItemState
 import co.electriccoin.zcash.ui.design.component.listitem.ZashiContactListItem
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
@@ -72,11 +74,11 @@ fun AddressBookView(
 ) {
     BlankBgScaffold(
         topBar = {
-            AddressBookTopAppBar(
-                onBack = state.onBack,
-                state = state
-            )
-        }
+            AddressBookTopAppBar(state = state)
+        },
+        bottomBar = {
+            ZappBottomActionBar(onBack = state.onBack)
+        },
     ) { paddingValues ->
         when {
             state.items.isEmpty() && state.isLoading -> {
@@ -185,10 +187,10 @@ private fun EmptyItem(modifier: Modifier = Modifier) {
             modifier.dashedBorder(
                 strokeWidth = 2.5.dp,
                 color = ZashiColors.Surfaces.strokeSecondary,
-                cornerRadiusDp = 16.dp,
+                cornerRadiusDp = 0.dp,
                 density = LocalDensity.current
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 64.dp),
@@ -318,22 +320,20 @@ private fun AddContactButton(
 
 @Composable
 private fun AddressBookTopAppBar(
-    onBack: () -> Unit,
     state: AddressBookState,
 ) {
+    // TODO(Zapp-design): replace ZashiSmallTopAppBar with ZappScreenHeader — waiting for full
+    //  ZashiIconButton → Zapp equivalent migration. Back button is in ZappBottomActionBar.
     ZashiSmallTopAppBar(
         title = state.title.getValue(),
         modifier = Modifier.testTag(AddressBookTag.TOP_APP_BAR),
         showTitleLogo = true,
-        navigationAction = {
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-        },
         regularActions = {
             state.info?.let {
                 ZashiIconButton(it)
                 Spacer(20.dp)
             }
-        }
+        },
     )
 }
 

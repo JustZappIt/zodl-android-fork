@@ -1,6 +1,7 @@
 package co.electriccoin.zcash.di
 
 import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarVM
+import co.electriccoin.zcash.ui.screen.welcome.WelcomeGateVM
 import co.electriccoin.zcash.ui.common.viewmodel.AuthenticationViewModel
 import co.electriccoin.zcash.ui.common.viewmodel.OldHomeViewModel
 import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
@@ -36,6 +37,7 @@ import co.electriccoin.zcash.ui.screen.home.shieldfunds.ShieldFundsInfoVM
 import co.electriccoin.zcash.ui.screen.hotfix.enhancement.EnhancementHotfixVM
 import co.electriccoin.zcash.ui.screen.hotfix.ephemeral.EphemeralHotfixVM
 import co.electriccoin.zcash.ui.screen.insufficientfunds.InsufficientFundsVM
+import co.electriccoin.zcash.ui.screen.offramp.OfframpVM
 import co.electriccoin.zcash.ui.screen.integrations.IntegrationsVM
 import co.electriccoin.zcash.ui.screen.more.MoreVM
 import co.electriccoin.zcash.ui.screen.pay.PayVM
@@ -62,6 +64,7 @@ import co.electriccoin.zcash.ui.screen.selectkeystoneaccount.viewmodel.SelectKey
 import co.electriccoin.zcash.ui.screen.send.SendViewModel
 import co.electriccoin.zcash.ui.screen.signkeystonetransaction.SignKeystoneTransactionVM
 import co.electriccoin.zcash.ui.screen.support.viewmodel.SupportViewModel
+import co.electriccoin.zcash.ui.screen.tabs.viewmodel.WalletSyncStateVM
 import co.electriccoin.zcash.ui.screen.swap.SwapVM
 import co.electriccoin.zcash.ui.screen.swap.ab.AddSwapABContactVM
 import co.electriccoin.zcash.ui.screen.swap.ab.SelectSwapABRecipientVM
@@ -117,6 +120,7 @@ val viewModelModule =
         viewModelOf(::SignKeystoneTransactionVM)
         viewModelOf(::AccountListVM)
         viewModelOf(::ZashiTopAppBarVM)
+        viewModelOf(::WelcomeGateVM)
         viewModelOf(::SelectKeystoneAccountViewModel)
         viewModelOf(::ReviewTransactionVM)
         viewModelOf(::TransactionFiltersVM)
@@ -132,6 +136,7 @@ val viewModelModule =
         viewModelOf(::BalanceWidgetVM)
         viewModelOf(::BalanceChartVM)
         viewModelOf(::HomeVM)
+        viewModelOf(::WalletSyncStateVM)
         viewModelOf(::RestoreBDHeightVM)
         viewModelOf(::RestoreBDDateVM)
         viewModelOf(::RestoreBDEstimationVM)
@@ -176,6 +181,7 @@ val viewModelModule =
         viewModelOf(::DebugDBVM)
         viewModelOf(::TEXUnsupportedVM)
         viewModelOf(::InsufficientFundsVM)
+        viewModelOf(::OfframpVM)
         viewModelOf(::RestoreTorVM)
         viewModelOf(::ResetZashiVM)
         viewModelOf(::DisconnectVM)

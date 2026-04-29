@@ -29,12 +29,11 @@ import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
 import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarWithAccountSelection
 import co.electriccoin.zcash.ui.design.component.BigIconButtonState
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
+import androidx.compose.material3.Scaffold
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiBigIconButton
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
 import co.electriccoin.zcash.ui.design.util.scaffoldPadding
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.fixture.BalanceStateFixture
@@ -57,11 +56,11 @@ internal fun HomeView(
     transactionWidgetState: ActivityWidgetState,
     state: HomeState
 ) {
-    BlankBgScaffold(
+    Scaffold(
         topBar = { ZashiTopAppBarWithAccountSelection(appBarState) }
     ) { paddingValues ->
         Content(
-            modifier = Modifier.padding(top = paddingValues.calculateTopPadding() + ZashiDimensions.Spacing.spacingLg),
+            modifier = Modifier.padding(top = paddingValues.calculateTopPadding() + 24.dp),
             paddingValues = paddingValues,
             activityWidgetState = transactionWidgetState,
             balanceWidgetState = balanceWidgetState,
@@ -91,8 +90,8 @@ private fun Content(
                 modifier =
                     Modifier
                         .padding(
-                            start = ZcashTheme.dimens.screenHorizontalSpacingRegular,
-                            end = ZcashTheme.dimens.screenHorizontalSpacingRegular,
+                            start = 18.dp,
+                            end = 18.dp,
                         ),
                 state = balanceWidgetState,
             )
@@ -117,7 +116,7 @@ private fun Content(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                            .clip(RoundedCornerShape(0.dp)),
                     contentPadding = PaddingValues(top = 24.dp)
                 ) {
                     balanceChartWidget(

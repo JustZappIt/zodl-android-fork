@@ -574,7 +574,7 @@ private fun ImageButton(
         contentDescription = contentDescription,
         modifier =
             modifier
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .clickable { onClick() }
     )
 }

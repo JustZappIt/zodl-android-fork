@@ -1,33 +1,36 @@
 package co.electriccoin.zcash.ui.screen.request.view
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cash.z.ecc.android.sdk.model.WalletAddress
 import co.electriccoin.zcash.ui.R
-import co.electriccoin.zcash.ui.design.component.ZashiBadge
-import co.electriccoin.zcash.ui.design.component.ZashiBadgeColors
 import co.electriccoin.zcash.ui.design.component.ZashiQr
-import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
+import co.electriccoin.zcash.ui.design.component.zapp.ZappChipVariant
+import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.screen.request.model.RequestState
 
@@ -36,78 +39,60 @@ internal fun RequestQrCodeView(
     state: RequestState.QrCode,
     modifier: Modifier = Modifier
 ) {
+    val c = ZappTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = ZcashTheme.dimens.spacingLarge),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 28.dp),
     ) {
-        Spacer(Modifier.height(ZcashTheme.dimens.spacingDefault))
+        Spacer(Modifier.height(20.dp))
 
         when (state.walletAddress) {
-            is WalletAddress.Transparent -> {
-                ZashiBadge(
-                    text = stringResource(id = R.string.request_privacy_level_transparent),
-                    leadingIconVector = painterResource(id = R.drawable.ic_alert_circle),
-                    colors =
-                        ZashiBadgeColors(
-                            border = ZashiColors.Utility.WarningYellow.utilityOrange200,
-                            text = ZashiColors.Utility.WarningYellow.utilityOrange700,
-                            container = ZashiColors.Utility.WarningYellow.utilityOrange50,
-                        )
-                )
-            }
-
-            is WalletAddress.Unified, is WalletAddress.Sapling -> {
-                ZashiBadge(
-                    text = stringResource(id = R.string.request_privacy_level_shielded),
-                    leadingIconVector = painterResource(id = R.drawable.ic_solid_check),
-                    colors =
-                        ZashiBadgeColors(
-                            border = ZashiColors.Utility.Purple.utilityPurple200,
-                            text = ZashiColors.Utility.Purple.utilityPurple700,
-                            container = ZashiColors.Utility.Purple.utilityPurple50,
-                        )
-                )
-            }
-
-            else -> {
-                error("Unsupported address type")
-            }
+            is WalletAddress.Transparent -> ZappStatusChip(
+                text = stringResource(id = R.string.request_privacy_level_transparent).uppercase(),
+                variant = ZappChipVariant.Accent,
+                dotColor = c.accent,
+            )
+            is WalletAddress.Unified, is WalletAddress.Sapling -> ZappStatusChip(
+                text = stringResource(id = R.string.request_privacy_level_shielded).uppercase(),
+                variant = ZappChipVariant.Success,
+                dotColor = c.success,
+            )
+            else -> error("Unsupported address type")
         }
 
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingMid))
+        Spacer(Modifier.height(20.dp))
 
-        RequestQrCodeZecAmountView(
-            state = state,
-            modifier = Modifier.padding(horizontal = ZcashTheme.dimens.spacingSmall)
-        )
+        RequestQrCodeZecAmountView(state = state)
 
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingBig))
+        Spacer(Modifier.height(28.dp))
 
-        QrCode(
-            requestState = state,
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
+        Box(
+            modifier = Modifier
+                .background(c.bg, RectangleShape)
+                .border(BorderStroke(1.dp, c.border), RectangleShape)
+                .padding(12.dp),
+        ) {
+            QrCode(requestState = state)
+        }
 
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingDefault))
+        Spacer(Modifier.height(20.dp))
     }
 }
 
 @Composable
-private fun ColumnScope.QrCode(
+private fun QrCode(
     requestState: RequestState.QrCode,
     modifier: Modifier = Modifier
 ) {
     ZashiQr(
-        state =
-            requestState.toQrState(
-                contentDescription = stringRes(R.string.request_qr_code_content_description),
-                centerImage = requestState.icon
-            ),
-        modifier = modifier.align(CenterHorizontally),
+        state = requestState.toQrState(
+            contentDescription = stringRes(R.string.request_qr_code_content_description),
+            centerImage = requestState.icon,
+        ),
+        modifier = modifier,
     )
 }
 
@@ -116,23 +101,57 @@ private fun RequestQrCodeZecAmountView(
     state: RequestState.QrCode,
     modifier: Modifier = Modifier
 ) {
-    val zecText =
-        buildAnnotatedString {
-            withStyle(style = SpanStyle(color = ZashiColors.Text.textPrimary)) {
-                append(state.request.qrCodeState.zecAmount)
-            }
-            append("\u2009") // Add an extra thin space between the texts
-            withStyle(style = SpanStyle(color = ZashiColors.Text.textQuaternary)) {
-                append(state.zcashCurrency.localizedName(LocalContext.current))
-            }
+    val c = ZappTheme.colors
+    val zecText = buildAnnotatedString {
+        withStyle(style = SpanStyle(color = c.text)) {
+            append(state.request.qrCodeState.zecAmount)
         }
+        append("\u2009")
+        withStyle(style = SpanStyle(color = c.textMuted)) {
+            append(state.zcashCurrency.localizedName(LocalContext.current))
+        }
+    }
 
     AutoSizingText(
         text = zecText,
-        style =
-            ZashiTypography.header1.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-        modifier = modifier
+        style = ZappTheme.typography.display.copy(
+            color = c.text,
+            fontSize = 44.sp,
+            lineHeight = 48.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = (-1.8).sp,
+        ),
+        modifier = modifier.fillMaxWidth(),
     )
+
+    if (state.request.qrCodeState.memo.isNotBlank()) {
+        Spacer(Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(BorderStroke(1.dp, c.border), RectangleShape)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+        ) {
+            Column {
+                BasicText(
+                    text = "MEMO",
+                    style = ZappTheme.typography.eyebrow.copy(
+                        color = c.textSubtle,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.8.sp,
+                        fontWeight = FontWeight.Black,
+                    ),
+                )
+                Spacer(Modifier.height(4.dp))
+                BasicText(
+                    text = state.request.qrCodeState.memo,
+                    style = ZappTheme.typography.body.copy(
+                        color = c.textMuted,
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                    ),
+                )
+            }
+        }
+    }
 }

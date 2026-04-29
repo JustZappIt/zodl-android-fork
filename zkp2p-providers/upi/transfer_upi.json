@@ -1,0 +1,104 @@
+{
+  "actionType": "transfer_upi",
+  "proofEngine": "reclaim",
+  "authLink": "https://pay.google.com/",
+  "url": "https://pay.google.com/gp/p/api/v1/transactions/{{TRANSACTION_ID}}",
+  "method": "GET",
+  "skipRequestHeaders": ["Accept-Encoding", "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform", "x-client-data"],
+  "body": "",
+  "metadata": {
+    "platform": "upi",
+    "urlRegex": "https://pay\\.google\\.com/gp/p/api/v1/transactions\\?.*",
+    "method": "GET",
+    "fallbackUrlRegex": "https://pay\\.google\\.com/gp/p/api/v1/payments.*",
+    "fallbackMethod": "GET",
+    "preprocessRegex": "",
+    "shouldReplayRequestInPage": false,
+    "transactionsExtraction": {
+      "transactionJsonPathListSelector": "$.transactions",
+      "transactionJsonPathSelectors": {
+        "paymentId": "$.transactionId",
+        "recipient": "$.payeeVpa",
+        "recipientName": "$.payeeName",
+        "amount": "$.amount",
+        "date": "$.transactionDate",
+        "currency": "$.currency",
+        "status": "$.status",
+        "type": "$.transactionType"
+      }
+    },
+    "proofMetadataSelectors": [
+      { "type": "jsonPath", "value": "$.transactions[{{INDEX}}].transactionId" },
+      { "type": "jsonPath", "value": "$.transactions[{{INDEX}}].payeeVpa" },
+      { "type": "jsonPath", "value": "$.transactions[{{INDEX}}].amount" }
+    ]
+  },
+  "paramNames": ["TRANSACTION_ID"],
+  "paramSelectors": [
+    {
+      "type": "jsonPath",
+      "value": "$.transactions[{{INDEX}}].transactionId",
+      "source": "responseBody"
+    }
+  ],
+  "secretHeaders": ["Authorization", "Cookie", "x-goog-authuser"],
+  "responseMatches": [
+    {
+      "type": "regex",
+      "value": "\"utr\":\"(?<utr>[0-9]{12})\""
+    },
+    {
+      "type": "regex",
+      "value": "\"amount\":\"?(?<amount>[0-9]+\\.?[0-9]*)\"?"
+    },
+    {
+      "type": "regex",
+      "value": "\"payerVpa\":\"(?<payerVpa>[a-zA-Z0-9._-]+@[a-zA-Z0-9]+)\""
+    },
+    {
+      "type": "regex",
+      "value": "\"payeeVpa\":\"(?<payeeVpa>[a-zA-Z0-9._-]+@[a-zA-Z0-9]+)\""
+    },
+    {
+      "type": "regex",
+      "value": "\"status\":\"(?<status>SUCCESS|COMPLETED|SETTLED)\""
+    }
+  ],
+  "responseRedactions": [
+    { "jsonPath": "$.transactionId" },
+    { "jsonPath": "$.utr" },
+    { "jsonPath": "$.amount" },
+    { "jsonPath": "$.payerVpa" },
+    { "jsonPath": "$.payeeVpa" },
+    { "jsonPath": "$.status" }
+  ],
+  "additionalProofs": [],
+  "mobile": {
+    "includeAdditionalCookieDomains": ["pay.google.com", "accounts.google.com"],
+    "useExternalAction": true,
+    "userAgent": {
+      "android": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.207 Mobile Safari/537.36",
+      "ios": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+    },
+    "external": {
+      "actionLink": "gpay://upi/pay?payeeVpa={{PAYEE_VPA}}",
+      "appStoreLink": "https://apps.apple.com/in/app/google-pay-save-and-pay/id1193357041",
+      "playStoreLink": "https://play.google.com/store/apps/details?id=com.google.android.apps.nbu.paisa.user"
+    },
+    "internal": {
+      "actionLink": "https://pay.google.com/",
+      "actionCompletedUrlRegex": "https://pay\\.google\\.com/gp/p/api/v1/transactions.*"
+    },
+    "login": {
+      "usernameSelector": "input[type='email'], input[name='identifier']",
+      "passwordSelector": "input[type='password'], input[name='Passwd']",
+      "submitSelector": "button[id='identifierNext'], button[id='passwordNext'], div[id='identifierNext']",
+      "nextSelector": "button[id='identifierNext'], div[id='identifierNext']",
+      "revealTimeoutMs": 7000
+    },
+    "additionalClientOptions": {
+      "cipherSuites": ["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384"],
+      "supportedProtocolVersions": ["TLSv1.3", "TLSv1.2"]
+    }
+  }
+}

@@ -241,7 +241,7 @@ private fun ExchangeRateButton(
         modifier = modifier.height(36.dp),
         onClick = onClick,
         enabled = isEnabled,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(0.dp),
         elevation =
             ButtonDefaults.elevatedButtonElevation(
                 defaultElevation = 0.dp,

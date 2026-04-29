@@ -14,8 +14,10 @@ import co.electriccoin.zcash.ui.screen.about.AboutArgs
 import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.exchangerate.settings.ExchangeRateSettingsArgs
 import co.electriccoin.zcash.ui.screen.feedback.FeedbackArgs
+import co.electriccoin.zcash.ui.common.util.PeerXyzUtil
 import co.electriccoin.zcash.ui.screen.hotfix.enhancement.EnhancementHotfixArgs
 import co.electriccoin.zcash.ui.screen.hotfix.ephemeral.EphemeralHotfixArgs
+import co.electriccoin.zcash.ui.screen.offramp.OfframpArgs
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,11 @@ class MoreVM(
             onBack = ::onBack,
             items =
                 listOfNotNull(
+                    ListItemState(
+                        title = stringRes(R.string.more_cash_out),
+                        bigIcon = imageRes(R.drawable.ic_home_buy),
+                        onClick = ::onCashOutClick,
+                    ).takeIf { PeerXyzUtil.isPeerAvailable() },
                     ListItemState(
                         title = stringRes(R.string.settings_address_book),
                         bigIcon = imageRes(R.drawable.ic_settings_address_book),
@@ -68,6 +75,8 @@ class MoreVM(
             onVersionLongClick = ::onVersionLongClick,
             onVersionDoubleClick = ::onVersionDoubleClick
         )
+
+    private fun onCashOutClick() = navigationRouter.forward(OfframpArgs())
 
     private fun onCurrencyConversionClick() = navigationRouter.forward(ExchangeRateSettingsArgs)
 

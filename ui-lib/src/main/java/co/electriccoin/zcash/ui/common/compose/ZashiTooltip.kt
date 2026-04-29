@@ -96,8 +96,8 @@ fun ZashiTooltip(
         Box(
             Modifier
                 .fillMaxWidth()
-                .background(ZashiColors.HintTooltips.surfacePrimary, RoundedCornerShape(8.dp))
-                .clip(RoundedCornerShape(8.dp))
+                .background(ZashiColors.HintTooltips.surfacePrimary, RoundedCornerShape(0.dp))
+                .clip(RoundedCornerShape(0.dp))
                 .clickable(onClick = onDismissRequest)
                 .padding(start = 12.dp, bottom = 12.dp),
         ) {

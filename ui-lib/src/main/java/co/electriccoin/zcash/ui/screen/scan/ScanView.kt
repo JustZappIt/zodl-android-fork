@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -76,13 +75,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import co.electriccoin.zcash.spackle.Twig
 import co.electriccoin.zcash.ui.R
-import co.electriccoin.zcash.ui.design.component.SmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.TopAppBarBackNavigation
 import co.electriccoin.zcash.ui.design.component.ZashiButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.screen.scan.util.QrCodeAnalyzerImpl
 import co.electriccoin.zcash.ui.screen.scankeystone.view.CAMERA_TRANSLUCENT_BORDER
 import co.electriccoin.zcash.ui.screen.scankeystone.view.FramePosition
@@ -172,10 +169,6 @@ fun ScanView(
                 // Intentionally omitting paddingValues to have edge to edge design
             )
 
-            ScanTopAppBar(
-                onBack = onBack,
-                showBack = scanState != ScanScreenState.Scanning,
-            )
         }
     }
 }
@@ -227,8 +220,8 @@ fun ScanBottomItems(
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = failureText,
-                    style = ZashiTypography.textXs,
-                    color = ZashiColors.Text.textPrimary,
+                    style = ZappTheme.typography.caption,
+                    color = Color.White,
                     fontWeight = FontWeight.Medium,
                     modifier =
                         Modifier
@@ -242,19 +235,21 @@ fun ScanBottomItems(
 
         when (scanState) {
             ScanScreenState.Scanning, ScanScreenState.Failed -> {
-                ZashiButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onBack,
-                    text = stringResource(id = R.string.scan_cancel_button)
-                )
+                ZappBackButton(onClick = onBack)
             }
 
             ScanScreenState.Permission -> {
-                ZashiButton(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = onOpenSettings,
-                    text = stringResource(id = R.string.scan_settings_button)
-                )
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ZappBackButton(onClick = onBack)
+                    ZashiButton(
+                        onClick = onOpenSettings,
+                        text = stringResource(id = R.string.scan_settings_button)
+                    )
+                }
             }
         }
 
@@ -263,24 +258,6 @@ fun ScanBottomItems(
     }
 }
 
-@Composable
-private fun ScanTopAppBar(
-    onBack: () -> Unit,
-    showBack: Boolean
-) {
-    SmallTopAppBar(
-        navigationAction = {
-            if (showBack) {
-                TopAppBarBackNavigation(
-                    backText = stringResource(id = R.string.back_navigation).uppercase(),
-                    backContentDescriptionText = stringResource(R.string.back_navigation_content_description),
-                    onBack = onBack
-                )
-            }
-        },
-        colors = ZcashTheme.colors.transparentTopAppBarColors,
-    )
-}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Suppress(
@@ -550,7 +527,7 @@ private fun ImageButton(
         contentDescription = contentDescription,
         modifier =
             modifier
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RectangleShape)
                 .clickable { onClick() }
     )
 }

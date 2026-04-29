@@ -39,7 +39,7 @@ fun LocationBubble(message: ChatMessage, isFromMe: Boolean) {
     val lng = parsed?.optDouble("longitude") ?: 0.0
 
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
         color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f),
         modifier = Modifier.widthIn(max = 280.dp)
     ) {

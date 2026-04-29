@@ -26,7 +26,7 @@ internal object Dark {
     val reference = Color(0xFFFFFFFF)
 
     val welcomeAnimationColor = Color(0xFF181716)
-    val complementaryColor = Color(0xFFF4B728)
+    val complementaryColor = Color(0xFFFF9417)
 
     val primaryDividerColor = Color(0xFF4D4D4D)
     val secondaryDividerColor = Color(0xFFFFFFFF)
@@ -81,7 +81,7 @@ internal object Light {
     val reference = Color(0xFF000000)
 
     val welcomeAnimationColor = Color(0xFF231F20)
-    val complementaryColor = Color(0xFFF4B728)
+    val complementaryColor = Color(0xFFFF9417)
 
     val primaryDividerColor = Color(0xFFDDDDDD)
     val secondaryDividerColor = Color(0xFF000000)

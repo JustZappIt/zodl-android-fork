@@ -66,6 +66,7 @@ import co.electriccoin.zcash.ui.common.usecase.NavigateToAddressBookUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToEstimateBlockHeightUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToExportPrivateDataUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToNearPayUseCase
+import co.electriccoin.zcash.ui.common.usecase.NavigateToPeerOnrampUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToReceiveUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToRequestShieldedUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToResetWalletUseCase
@@ -264,6 +265,7 @@ val useCaseModule =
         factoryOf(::ConfirmResyncUseCase)
         factoryOf(::ValidateSwapABContactAddressUseCase)
         factoryOf(::NavigateToNearPayUseCase)
+        factoryOf(::NavigateToPeerOnrampUseCase)
         factoryOf(::SaveORSwapUseCase)
         factoryOf(::GetORSwapQuoteUseCase)
         factoryOf(::ShareQRUseCase)

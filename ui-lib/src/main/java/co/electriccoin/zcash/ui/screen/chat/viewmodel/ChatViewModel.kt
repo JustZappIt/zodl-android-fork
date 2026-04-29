@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import co.electriccoin.zcash.ui.common.provider.PersistableWalletProvider
 import co.electriccoin.zcash.ui.common.usecase.GetZashiAccountUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToScanPublicKeyUseCase
 import co.electriccoin.zcash.ui.screen.chat.media.FileUtils
@@ -34,6 +36,7 @@ import xyz.justzappit.zappmessaging.ZappMessagingSDK
 class ChatViewModel(
     application: Application,
     private val sdk: ZappMessagingSDK,
+    private val persistableWalletProvider: PersistableWalletProvider,
     private val navigateToScanPublicKey: NavigateToScanPublicKeyUseCase,
     private val getZashiAccount: GetZashiAccountUseCase
 ) : AndroidViewModel(application) {
@@ -334,6 +337,23 @@ class ChatViewModel(
         }
     }
 
+    fun restoreFromWalletSeed(displayName: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val wallet = persistableWalletProvider.persistableWallet.first { it != null }!!
+                val seedWords = wallet.seedPhrase.joinToString()
+                val zmIdentity = sdk.restoreFromSeedPhrase(seedWords, displayName)
+                _identity.value = ChatIdentity.from(zmIdentity)
+                Log.i(TAG, "Identity initialized from wallet seed: ${zmIdentity.displayName}")
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to initialize identity from wallet: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun updateDisplayName(name: String) {
         val trimmed = name.trim()
         if (trimmed.isBlank()) return
@@ -355,15 +375,23 @@ class ChatViewModel(
         }
     }
 
+    /**
+     * Suspend variant used by Compose-driven flows (LaunchedEffect). Returns
+     * the recovery phrase as a single space-delimited string, or null on
+     * failure. Caller is responsible for not retaining the value longer than
+     * needed — it's sensitive material.
+     */
+    suspend fun exportSeedPhraseSuspending(): String? = try {
+        sdk.exportSeedPhrase()
+    } catch (e: Exception) {
+        _errorMessage.value = "Failed to export seed phrase: ${e.message}"
+        null
+    }
+
+    /** Callback variant for non-coroutine call sites (legacy chat profile/setup screens). */
     fun exportSeedPhrase(onResult: (String?) -> Unit) {
         viewModelScope.launch {
-            try {
-                val seedPhrase = sdk.exportSeedPhrase()
-                onResult(seedPhrase)
-            } catch (e: Exception) {
-                _errorMessage.value = "Failed to export seed phrase: ${e.message}"
-                onResult(null)
-            }
+            onResult(exportSeedPhraseSuspending())
         }
     }
 

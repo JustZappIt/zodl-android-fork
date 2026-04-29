@@ -1,0 +1,101 @@
+{
+  "actionType": "transfer_gcash",
+  "proofEngine": "reclaim",
+  "authLink": "https://app.gcash.com/activity",
+  "url": "https://app.gcash.com/api/v2/cash-in-cash-out/transaction/{{TRANSACTION_REF}}",
+  "method": "GET",
+  "skipRequestHeaders": ["Accept-Encoding", "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform"],
+  "body": "",
+  "metadata": {
+    "platform": "gcash",
+    "urlRegex": "https://app\\.gcash\\.com/api/v[0-9]+/cash-in-cash-out/transaction.*",
+    "method": "GET",
+    "fallbackUrlRegex": "https://app\\.gcash\\.com/api/v[0-9]+/transfer.*history.*",
+    "fallbackMethod": "GET",
+    "preprocessRegex": "",
+    "shouldReplayRequestInPage": false,
+    "metadataUrl": "https://app.gcash.com/api/v2/cash-in-cash-out/transaction?pageSize=20&pageNumber=0",
+    "metadataUrlMethod": "GET",
+    "metadataUrlBody": "",
+    "transactionsExtraction": {
+      "transactionJsonPathListSelector": "$.data.transactions",
+      "transactionJsonPathSelectors": {
+        "paymentId": "$.referenceNo",
+        "recipient": "$.receiverMobile",
+        "recipientName": "$.receiverName",
+        "amount": "$.amount",
+        "date": "$.transactionDate",
+        "currency": "$.currency",
+        "status": "$.status"
+      }
+    },
+    "proofMetadataSelectors": [
+      { "type": "jsonPath", "value": "$.data.transactions[{{INDEX}}].referenceNo" },
+      { "type": "jsonPath", "value": "$.data.transactions[{{INDEX}}].receiverMobile" },
+      { "type": "jsonPath", "value": "$.data.transactions[{{INDEX}}].amount" }
+    ]
+  },
+  "paramNames": ["TRANSACTION_REF"],
+  "paramSelectors": [
+    {
+      "type": "jsonPath",
+      "value": "$.data.transactions[{{INDEX}}].referenceNo",
+      "source": "responseBody"
+    }
+  ],
+  "secretHeaders": ["Authorization", "Cookie", "x-gcash-token", "X-Auth-Token"],
+  "responseMatches": [
+    {
+      "type": "regex",
+      "value": "\"referenceNo\":\"(?<referenceNo>[A-Z0-9]{10,20})\""
+    },
+    {
+      "type": "regex",
+      "value": "\"amount\":(?<amount>[0-9]+\\.?[0-9]*)"
+    },
+    {
+      "type": "regex",
+      "value": "\"senderMobile\":\"(?<senderMobile>\\+63[0-9]{10}|09[0-9]{9})\""
+    },
+    {
+      "type": "regex",
+      "value": "\"receiverMobile\":\"(?<receiverMobile>\\+63[0-9]{10}|09[0-9]{9})\""
+    },
+    {
+      "type": "regex",
+      "value": "\"status\":\"(?<status>SUCCESS|COMPLETED)\""
+    }
+  ],
+  "responseRedactions": [
+    { "jsonPath": "$.data.referenceNo" },
+    { "jsonPath": "$.data.amount" },
+    { "jsonPath": "$.data.senderMobile" },
+    { "jsonPath": "$.data.receiverMobile" },
+    { "jsonPath": "$.data.status" },
+    { "jsonPath": "$.data.transactionDate" }
+  ],
+  "additionalProofs": [],
+  "mobile": {
+    "includeAdditionalCookieDomains": ["app.gcash.com", "gcash.com"],
+    "useExternalAction": true,
+    "userAgent": {
+      "android": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.207 Mobile Safari/537.36",
+      "ios": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+    },
+    "external": {
+      "actionLink": "gcash://transfer",
+      "appStoreLink": "https://apps.apple.com/ph/app/gcash/id520020791",
+      "playStoreLink": "https://play.google.com/store/apps/details?id=com.mynt.paying"
+    },
+    "login": {
+      "usernameSelector": "input[type='tel'], input[name='mobile'], input[placeholder*='mobile'], input[placeholder*='number']",
+      "passwordSelector": "input[type='password'], input[name='pin'], input[placeholder*='PIN']",
+      "submitSelector": "button[type='submit'], button[class*='submit'], a[class*='login-btn']",
+      "revealTimeoutMs": 6000
+    },
+    "additionalClientOptions": {
+      "cipherSuites": ["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384"],
+      "supportedProtocolVersions": ["TLSv1.3", "TLSv1.2"]
+    }
+  }
+}

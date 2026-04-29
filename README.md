@@ -10,6 +10,85 @@ upstream Zcash wallet it adds:
 - Balance history chart on the Wallet home
 - Testnet toggle consolidated into the build flavor
 - Zapp rebrand (`ZappPalette`, app name, version 4.x)
+- Swiss-minimalist UI system (`ZappTheme`) with full design-token migration across all screens
+
+## peer.xyz Integration
+
+Zapp integrates [peer.xyz](https://peer.xyz) as the primary fiat on/off-ramp, with [justzappit.xyz](https://justzappit.xyz/directory) as a fallback in unsupported regions.
+
+### Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| **A — Onramp** | Get ZEC button on Home, Buy CTA on zero-balance widget and insufficient-funds sheet, branded Chrome Custom Tabs, region detection | ✅ Complete |
+| **B — Offramp** | "Cash out" in More screen, "Convert" on received transaction detail, offramp bottom sheet with ZEC → fiat conversion, local ZEC-arrived notification | ✅ Complete |
+| **C — Provider builds** | ZKP2P provider templates for PIX (BR), UPI (IN), GCash (PH) — drafts in `zkp2p-providers/`; M-Pesa deferred pending Q6 | 🔄 Needs live capture |
+| **D — Facilitator mode** | Earnings dashboard, "Settle via peer.xyz" button, facilitator preference toggle | ⏳ Not started |
+
+### Phase C — What's needed before PR submission
+
+Provider drafts are in `zkp2p-providers/`. Each needs live validation using the `create-zkp2p-provider` skill with Chrome DevTools MCP:
+
+1. Attach to an authenticated Chrome session on the target platform (Nubank / Google Pay / GCash)
+2. Navigate transaction history → capture the exact API endpoint with `list_network_requests` + `get_network_request`
+3. Verify JSONPath selectors match the live response shape
+4. Test end-to-end at `https://developer.peer.xyz` with PeerAuth — run `AUTHENTICATE` → `PROVE`
+5. On success: set `"status": "live"` in `zkp2p-providers/providers.json`, remove the country code from `PeerXyzUtil.UNSUPPORTED_REGIONS`
+
+M-Pesa (KE/TZ/UG/GH) is blocked on Q6: whether M-Pesa confirmation is accessible via HTTPS or SMS-only. See `zkp2p-providers/mpesa/PENDING.md`.
+
+### Open questions (peer.xyz team)
+
+| # | Question | Blocks |
+|---|----------|--------|
+| Q4 | Exact offramp URL format and amount unit | Phase B going live |
+| Q5 | Does `referrer=Zapp` appear in analytics? Partner registration needed? | Attribution |
+| Q6 | M-Pesa confirmation: HTTPS or SMS-only? | Phase C M-Pesa |
+| Q7 | Provider review process + staging validator URL | Phase C all providers |
+
+### Phase D — Facilitator mode (not started)
+
+Facilitators pay local fiat to merchants and accumulate ZEC. Phase D adds:
+- `FacilitatorRepository` — DataStore-backed `isFacilitatorMode: Flow<Boolean>`
+- `GetTodayEarningsUseCase` — sums today's received ZEC
+- Facilitator dashboard screen (today's earnings + "Settle via peer.xyz" → reuses Phase B offramp sheet)
+- Conditional "Facilitator Dashboard" item in More screen
+- Gated on Phase C: useful only once PIX/UPI/GCash providers are live
+
+---
+
+## UI Design System (`feat/newUI`)
+
+A new Swiss-minimalist design system (`ZappTheme`) has been introduced and applied across all screens. Key changes:
+
+### Design Standards
+- **Colors** — all screens now use `ZappTheme.colors.*` tokens (warm off-white backgrounds, `#FF9417` orange accent). Legacy `ZashiColors`, `ZcashTheme.colors`, and raw `MaterialTheme.colorScheme` references have been replaced.
+- **Typography** — all screens use `ZappTheme.typography.*` tokens. `ZashiTypography`, `RobotoMonoFontFamily`, and `MaterialTheme.typography` references have been replaced.
+- **Shapes** — no rounded corners anywhere. All `RoundedCornerShape` and `CircleShape` usage has been replaced with `RectangleShape` (flat Swiss geometry).
+- **Back button placement** — back buttons have moved from the top-left app bar to a `ZappBottomActionBar` at the bottom-left, horizontally aligned with the primary CTA so the thumb can reach both without stretching.
+
+### New Component: `ZappBottomActionBar`
+Added to `ui-design-lib/.../component/zapp/ZappComponents.kt`. Renders `ZappBackButton` on the left and an optional primary action composable on the right, with `windowInsetsPadding(WindowInsets.navigationBars)` for edge-to-edge correctness.
+
+### Migrated Screens
+| Screen | Changes |
+|--------|---------|
+| `ChatRoomView` | Replaced `MaterialTheme` + Material3 `TopAppBar` with `ZappScreenHeader` + `ZappBottomActionBar`; message bubbles use `RectangleShape` |
+| `ChatProfileView` | Replaced `MaterialTheme`, `Card`, `CircleShape` with Zapp tokens; square avatar with accent background |
+| `ChatSettingsView` | Replaced `MaterialTheme`, `Surface`, `HorizontalDivider` with `ZappGroupHeader`/`ZappRow`/`ZappRowDivider` |
+| `ContactEditView` | Replaced Material3 `TopAppBar` + `Button` with `ZappScreenHeader` + `ZappBottomActionBar` |
+| `NewConversationView` | Replaced Material3 scaffold with `ZappScreenHeader` + `ZappBottomActionBar`; contact chips use Zapp surface tokens |
+| `ChatListView` | Back button moved from `ZappScreenHeader.left` to bottom-left (aligned with FAB) |
+| `ChatContactsView` | Same as `ChatListView` |
+| `MoreView` | Replaced `ZashiSmallTopAppBar` with `ZappScreenHeader`; `ZappBottomActionBar` added |
+| `AddressBookView` | Back button moved to `ZappBottomActionBar` |
+| `SendView` | Replaced `ZashiTopAppbar`/`BlankBgScaffold` with `ZappScreenHeader`+`ZappBottomActionBar`; all `ZashiColors`/`ZashiTypography`/`RobotoMonoFontFamily`/`ZashiDimensions` replaced with Zapp tokens |
+| `ReceiveView` | Replaced `ZashiTopAppbar`/`BlankBgScaffold`; address panel color-mode theming replaced with flat Zapp surface tokens; `RoundedCornerShape` → `RectangleShape` |
+| `SwapView` | Replaced `ZashiSmallTopAppBar`+back with `ZappScreenHeader`+`ZappBottomActionBar`; all color/typography tokens migrated |
+| `TransactionDetailView` | Replaced `GradientBgScaffold`+`ZashiSmallTopAppBar` with flat `Scaffold`+`ZappScreenHeader`; `ZappBackButton` added to bottom action row |
+| `ScanView` | Removed `ScanTopAppBar`; back button moved into `ScanBottomItems` using `ZappBackButton` |
+| `RequestView` | Replaced `RequestTopAppBar`+`OldZashiBottomBar` with `ZappScreenHeader`+`ZappBottomActionBar` |
+| `HomeView` | Legacy spacing tokens (`ZashiDimensions`, `ZcashTheme.dimens`) replaced with direct dp values |
 
 See [`ZAPP_CHANGES.md`](ZAPP_CHANGES.md) for the full patch series and
 [`ZAPP_CHANGES.md#merge-procedure`](ZAPP_CHANGES.md#merge-procedure) for how
@@ -198,6 +277,28 @@ If this fails, verify in order:
    siblings. Check `.zapp-deps` for the expected commit SHAs.
 4. `gradle.properties` has not been locally modified.
 
+### Zapp-specific build gotchas
+
+- **`WhileSubscribed(Duration)` — unresolved overload.** When using `SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT)` (where the timeout is a `kotlin.time.Duration`), you must import the Duration extension: `import kotlinx.coroutines.flow.WhileSubscribed`. Without this import the compiler resolves the call to the `Long` overload and fails with _"actual type is Duration, but Long was expected"_.
+
+- **`MaterialColors` not available in `ui-lib`.** `com.google.android.material` is not a declared dependency of `ui-lib`. Do not use `MaterialColors.getColor`. For branded UI colors (e.g., Custom Tab toolbar), use `Color.parseColor("#FF9417")` or a color resource directly.
+
+- **`NavigateToPeerOnrampUseCase.invoke()` is suspend.** All call sites must use `viewModelScope.launch { navigateToPeerOnramp() }`. A bare `navigateToPeerOnramp()` from a non-coroutine function will fail to compile.
+
+- **Shared Gradle build cache poisons the precompiled-script-plugin compile.** Gradle's local build cache (`~/.gradle/caches/build-cache-1`) is per-machine, not per-project. The fork's `settings.gradle.kts` includes two extra projects (`:zappmessaging`, `:bare-kit`) that aren't in upstream `zodl-android` / `zodl-android-real`, so the fork's `:build-conventions-secant` produces a different plugin-spec hash. If you build upstream and the fork on the same machine without isolation, kotlinc fails with `Source file or directory not found: …/_<hash>/PluginSpecBuilders.kt` because tasks pull mismatched outputs `FROM-CACHE`. To recover:
+
+  ```
+  ./gradlew --stop
+  rm -rf ~/.gradle/caches/build-cache-1 \
+         build-conventions-secant/{build,.gradle,.kotlin} \
+         .gradle
+  ./gradlew :app:installZcashmainnetFossDebug --no-build-cache
+  ```
+
+  Long-term, either always pass `--no-build-cache` when switching between this fork and the upstream repo on the same machine, or set a per-project `GRADLE_USER_HOME` (e.g. `export GRADLE_USER_HOME="$PWD/.gradle-home"`) so each repo has its own cache. Android Studio doesn't hit this because its daemon stays warm and re-uses the same build cache entries it just wrote.
+
+- **JDK 21 required for Gradle, JDK 17 toolchain for project source.** Set `JAVA_HOME` to a JDK 21 install (Android Studio's bundled JBR at `/Applications/Android Studio.app/Contents/jbr/Contents/Home` is verified) for the Gradle launcher. Gradle 8.14.4 ships with Kotlin 2.0.21 and that compiler emits Java 21 bytecode for precompiled-script-plugins; running the launcher on JDK 17 surfaces as `class file version 65.0, this version of the Java Runtime only recognizes class file versions up to 61.0`. The project's own source is still pinned to `JVM_TOOLCHAIN=17` and Gradle auto-provisions a JDK 17 for it.
+
 # Forking
 
 If you plan to fork the project to create a new app of your own, please make
@@ -215,6 +316,15 @@ the project, these steps are not necessary.)
 1. Optional
     1. Configure secrets and variables for [Continuous Integration](docs/CI.md)
     1. Configure Firebase API keys and place them under `app/src/debug/google-services.json` and `app/src/release/google-services.json`
+
+## Code quality — recent cleanup (`feat/newUI`)
+
+The following improvements were made during the peer.xyz integration review pass:
+
+- **`PeerXyzUtil`** — removed the intermediate `buildOnrampUrl`/`buildOfframpUrl` helpers; URLs are inlined directly into the `get*` functions. Comment trimmed to a single line pointing to `zkp2p-providers/`.
+- **`TransactionDetailVM`** — `PeerXyzUtil.isPeerAvailable()` is now cached as a `private val` at VM construction (locale is immutable at runtime). The duplicate `ReceiveTransaction.Success → Convert button` block extracted into `createConvertButtonState(Transaction): ButtonState?`.
+
+---
 
 # Known Issues
 

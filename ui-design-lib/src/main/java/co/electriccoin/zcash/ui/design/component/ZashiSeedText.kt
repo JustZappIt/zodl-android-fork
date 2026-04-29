@@ -52,7 +52,7 @@ fun ZashiSeedText(
         label = ""
     )
     Box(
-        modifier = modifier.background(color, RoundedCornerShape(10.dp)),
+        modifier = modifier.background(color, RoundedCornerShape(0.dp)),
     ) {
         val rowItems =
             remember(state) {

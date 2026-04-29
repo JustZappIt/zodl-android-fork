@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiButton
+import co.electriccoin.zcash.ui.design.component.ZashiButtonDefaults
 import co.electriccoin.zcash.ui.design.component.ZashiScreenModalBottomSheet
 import co.electriccoin.zcash.ui.design.component.rememberScreenModalBottomSheetState
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
@@ -75,10 +76,19 @@ private fun Content(
             style = ZashiTypography.textMd
         )
         Spacer(28.dp)
+        state.onAddZec?.let { onAddZec ->
+            ZashiButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onAddZec,
+                text = stringResource(R.string.insufficient_funds_add_zec_button)
+            )
+            Spacer(8.dp)
+        }
         ZashiButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = state.onBack,
-            text = stringResource(co.electriccoin.zcash.ui.design.R.string.general_ok)
+            text = stringResource(R.string.insufficient_funds_cancel),
+            colors = ZashiButtonDefaults.secondaryColors(),
         )
     }
 }

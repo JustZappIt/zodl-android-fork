@@ -8,35 +8,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Badge
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,10 +36,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappChipVariant
+import co.electriccoin.zcash.ui.design.component.zapp.ZappFab
+import co.electriccoin.zcash.ui.design.component.zapp.ZappRowDivider
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
+import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
+import co.electriccoin.zcash.ui.design.component.zapp.initialsOf
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
+import co.electriccoin.zcash.ui.design.theme.colors.ZappNavBar
 import co.electriccoin.zcash.ui.screen.chat.model.ChatConversation
 import co.electriccoin.zcash.ui.screen.chat.model.ConversationType
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
@@ -56,7 +55,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatListView(
     onConversationClick: (ChatConversation) -> Unit,
@@ -66,8 +64,9 @@ fun ChatListView(
     onNavigateBack: () -> Unit = {},
     showBackButton: Boolean = true,
     modifier: Modifier = Modifier,
-    viewModel: ChatViewModel
+    viewModel: ChatViewModel,
 ) {
+    val c = ZappTheme.colors
     val conversations by viewModel.conversations.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState()
     val peerCount by viewModel.peerCount.collectAsState()
@@ -75,104 +74,125 @@ fun ChatListView(
     val connectionDetails by viewModel.connectionDetails.collectAsState()
     var showNetworkSheet by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Chats", style = MaterialTheme.typography.headlineSmall)
-                },
-                navigationIcon = {
-                    if (showBackButton) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    val sortedConversations =
+        remember(conversations) {
+            conversations.sortedByDescending { it.lastMessageTimestamp ?: 0L }
+        }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(WindowInsets.statusBars),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            ZappScreenHeader(
+                title = "Chats",
+                right = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        NetworkChip(
+                            connectionStatus = connectionStatus,
+                            peerCount = peerCount,
+                            onClick = {
+                                viewModel.fetchConnectionDetails()
+                                showNetworkSheet = true
+                            },
+                        )
+                        IconButton(onClick = onNavigateToContacts, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                Icons.Default.Contacts,
+                                contentDescription = "Contacts",
+                                tint = c.text,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                        IconButton(onClick = onNavigateToSettings, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = "Settings",
+                                tint = c.text,
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                     }
                 },
-                actions = {
-                    ConnectionPill(
-                        connectionStatus = connectionStatus,
-                        peerCount = peerCount,
-                        dhtHealth = dhtHealth,
-                        onClick = {
-                            viewModel.fetchConnectionDetails()
-                            showNetworkSheet = true
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(onClick = onNavigateToContacts) {
-                        Icon(Icons.Default.Contacts, contentDescription = "Contacts", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNewMessage,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "New conversation")
+
+            if (conversations.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp),
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Chat,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = c.textSubtle,
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        BasicText(
+                            "No conversations yet",
+                            style = ZappTheme.typography.sectionTitle.copy(color = c.text),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        BasicText(
+                            "Tap + to start a new P2P chat",
+                            style = ZappTheme.typography.body.copy(color = c.textMuted),
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = 4.dp,
+                        bottom = ZappNavBar.CLEARANCE_DP.dp,
+                    ),
+                ) {
+                    items(
+                        items = sortedConversations,
+                        key = { it.id },
+                    ) { conversation ->
+                        ConversationItem(
+                            conversation = conversation,
+                            onClick = { onConversationClick(conversation) },
+                        )
+                        ZappRowDivider(inset = true)
+                    }
+                }
             }
         }
-    ) { paddingValues ->
-        if (conversations.isEmpty()) {
-            Box(
+
+        ZappFab(
+            icon = Icons.Default.Add,
+            contentDescription = "New conversation",
+            onClick = onNewMessage,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = 20.dp,
+                    bottom = (ZappNavBar.CLEARANCE_DP + 12).dp,
+                ),
+        )
+
+        // Back button floats bottom-left, horizontally aligned with the FAB.
+        if (showBackButton) {
+            ZappBackButton(
+                onClick = onNavigateBack,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Chat,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "No conversations yet",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Tap + to start a new P2P chat",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(
-                    items = conversations.sortedByDescending { it.lastMessageTimestamp ?: 0L },
-                    key = { it.id }
-                ) { conversation ->
-                    ConversationItem(
-                        conversation = conversation,
-                        onClick = { onConversationClick(conversation) }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 72.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                }
-            }
+                    .align(Alignment.BottomStart)
+                    .padding(
+                        start = 20.dp,
+                        bottom = (ZappNavBar.CLEARANCE_DP + 12).dp,
+                    ),
+            )
         }
     }
 
@@ -182,93 +202,133 @@ fun ChatListView(
             peerCount = peerCount,
             dhtHealth = dhtHealth,
             connectionDetails = connectionDetails,
-            onDismiss = { showNetworkSheet = false }
+            onDismiss = { showNetworkSheet = false },
         )
     }
 }
 
 @Composable
+private fun NetworkChip(
+    connectionStatus: ChatViewModel.ConnectionStatus,
+    peerCount: Int,
+    onClick: () -> Unit,
+) {
+    val c = ZappTheme.colors
+    val (variant, dotColor, text) =
+        when (connectionStatus) {
+            ChatViewModel.ConnectionStatus.CONNECTED ->
+                Triple(ZappChipVariant.Success, c.success, "$peerCount")
+            ChatViewModel.ConnectionStatus.CONNECTING ->
+                Triple(ZappChipVariant.Accent, c.accent, "...")
+            ChatViewModel.ConnectionStatus.DISCONNECTED ->
+                Triple(ZappChipVariant.Danger, c.danger, "off")
+            ChatViewModel.ConnectionStatus.ERROR ->
+                Triple(ZappChipVariant.Danger, c.danger, "err")
+        }
+    ZappStatusChip(
+        text = text,
+        variant = variant,
+        dotColor = dotColor,
+        onClick = onClick,
+    )
+}
+
+@Composable
 private fun ConversationItem(
     conversation: ChatConversation,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val c = ZappTheme.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Avatar
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                if (conversation.type == ConversationType.GROUP) Icons.Default.Group
-                else Icons.Default.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        ConversationAvatar(
+            name = conversation.displayName,
+            group = conversation.type == ConversationType.GROUP,
+        )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(Modifier.size(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    conversation.displayName,
-                    style = MaterialTheme.typography.titleSmall,
+                BasicText(
+                    text = conversation.displayName,
+                    style = ZappTheme.typography.rowTitle.copy(color = c.text),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 conversation.lastMessageTimestamp?.let { ts ->
-                    Text(
+                    BasicText(
                         formatRelativeTime(ts),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = ZappTheme.typography.caption.copy(color = c.textSubtle),
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(Modifier.height(2.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    conversation.lastMessage ?: "No messages yet",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                BasicText(
+                    text = conversation.lastMessage ?: "No messages yet",
+                    style = ZappTheme.typography.rowSubtitle.copy(color = c.textMuted),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 if (conversation.unreadCount > 0) {
-                    Badge(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .background(c.accent, RectangleShape)
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
-                        Text("${conversation.unreadCount}")
+                        BasicText(
+                            text = "${conversation.unreadCount}",
+                            style = ZappTheme.typography.chip.copy(color = c.onAccent),
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ConversationAvatar(
+    name: String,
+    group: Boolean,
+) {
+    val c = ZappTheme.colors
+    val initials = remember(name) { initialsOf(name) }
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .background(c.accent, RectangleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (group || initials.isBlank()) {
+            Icon(
+                imageVector = if (group) Icons.Default.Group else Icons.Default.Person,
+                contentDescription = null,
+                tint = c.onAccent,
+                modifier = Modifier.size(20.dp),
+            )
+        } else {
+            BasicText(
+                text = initials,
+                style = ZappTheme.typography.rowTitle.copy(color = c.onAccent),
+            )
         }
     }
 }

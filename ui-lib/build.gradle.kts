@@ -88,6 +88,8 @@ android {
                     "src/main/res/ui/whats_new",
                     "src/main/res/ui/exchange_rate",
                     "src/main/res/ui/tor",
+                    "src/main/res/ui/peer_onramp",
+                    "src/main/res/ui/offramp",
                 )
             )
         }

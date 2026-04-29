@@ -8,4 +8,5 @@ data class BalanceWidgetState(
     val totalBalance: Zatoshi,
     val button: BalanceButtonState?,
     val exchangeRate: ExchangeRateState?,
+    val onAddZec: (() -> Unit)? = null,
 )

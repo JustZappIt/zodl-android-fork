@@ -94,10 +94,7 @@ fun HomeMessage(
                     .bottomOnlyShadow(
                         elevation = elevation,
                         shape =
-                            RoundedCornerShape(
-                                bottomStart = TOP_CUTOUT_HEIGHT_DP.dp,
-                                bottomEnd = TOP_CUTOUT_HEIGHT_DP.dp
-                            ),
+                            RoundedCornerShape(0.dp),
                         backgroundColor = ZashiColors.Surfaces.bgPrimary
                     ),
         )
@@ -224,7 +221,7 @@ fun HomeMessage(
                     .align(Alignment.BottomCenter)
                     .topOnlyShadow(
                         elevation = elevation,
-                        shape = RoundedCornerShape(topStart = bottomCornerSize, topEnd = bottomCornerSize),
+                        shape = RoundedCornerShape(0.dp),
                         backgroundColor = ZashiColors.Surfaces.bgPrimary
                     ),
         )

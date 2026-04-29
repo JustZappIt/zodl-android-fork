@@ -122,7 +122,11 @@ class NavigatorImpl(
                     }
 
                     applicationStateProvider.onThirdPartyUiShown()
-                    WebBrowserUtil.startActivity(activity, route.url)
+                    if (route.branded) {
+                        WebBrowserUtil.openBrandedUrl(activity, route.url)
+                    } else {
+                        WebBrowserUtil.startActivity(activity, route.url)
+                    }
                 }
 
                 else -> {
@@ -165,7 +169,11 @@ class NavigatorImpl(
                     }
 
                     applicationStateProvider.onThirdPartyUiShown()
-                    WebBrowserUtil.startActivity(activity, route.url)
+                    if (route.branded) {
+                        WebBrowserUtil.openBrandedUrl(activity, route.url)
+                    } else {
+                        WebBrowserUtil.startActivity(activity, route.url)
+                    }
                 }
 
                 else -> {
@@ -185,12 +193,18 @@ class NavigatorImpl(
         command.routes.forEach { route ->
             when (route) {
                 co.electriccoin.zcash.ui.screen.flexa.Flexa -> createFlexaFlow(flexaViewModel)
-                is ExternalUrl -> WebBrowserUtil.startActivity(activity, route.url)
+                is ExternalUrl ->
+                    if (route.branded) {
+                        WebBrowserUtil.openBrandedUrl(activity, route.url)
+                    } else {
+                        WebBrowserUtil.startActivity(activity, route.url)
+                    }
                 else -> navController.executeNavigation(route = route)
             }
         }
 
-        if (command.routes.lastOrNull() in listOf(ExternalUrl, co.electriccoin.zcash.ui.screen.flexa.Flexa)) {
+        val lastRoute = command.routes.lastOrNull()
+        if (lastRoute is ExternalUrl || lastRoute == co.electriccoin.zcash.ui.screen.flexa.Flexa) {
             applicationStateProvider.onThirdPartyUiShown()
         }
     }

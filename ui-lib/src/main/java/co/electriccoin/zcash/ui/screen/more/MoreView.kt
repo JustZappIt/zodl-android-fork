@@ -8,21 +8,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
-import co.electriccoin.zcash.ui.design.component.BlankBgScaffold
 import co.electriccoin.zcash.ui.design.component.ZashiHorizontalDivider
-import co.electriccoin.zcash.ui.design.component.ZashiSmallTopAppBar
-import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarBackNavigation
 import co.electriccoin.zcash.ui.design.component.ZashiVersion
 import co.electriccoin.zcash.ui.design.component.listitem.ListItemState
 import co.electriccoin.zcash.ui.design.component.listitem.ZashiListItem
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
 import co.electriccoin.zcash.ui.design.util.imageRes
 import co.electriccoin.zcash.ui.design.util.scaffoldScrollPadding
@@ -31,12 +31,15 @@ import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun MoreView(state: MoreState) {
-    BlankBgScaffold(
+    val c = ZappTheme.colors
+    Scaffold(
         topBar = {
-            SettingsTopAppBar(
-                onBack = state.onBack
-            )
-        }
+            ZappScreenHeader(title = stringResource(id = R.string.settings_title))
+        },
+        bottomBar = {
+            ZappBottomActionBar(onBack = state.onBack)
+        },
+        containerColor = c.bg,
     ) { paddingValues ->
         Column(
             modifier =
@@ -68,17 +71,6 @@ fun MoreView(state: MoreState) {
     }
 }
 
-@Composable
-private fun SettingsTopAppBar(onBack: () -> Unit) {
-    ZashiSmallTopAppBar(
-        title = stringResource(id = R.string.settings_title),
-        modifier = Modifier.testTag(MoreTags.SETTINGS_TOP_APP_BAR),
-        showTitleLogo = true,
-        navigationAction = {
-            ZashiTopAppBarBackNavigation(onBack = onBack)
-        }
-    )
-}
 
 @PreviewScreens
 @Composable

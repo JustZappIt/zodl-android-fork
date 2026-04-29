@@ -32,10 +32,10 @@ fun FileBubble(message: ChatMessage, isFromMe: Boolean) {
 
     Surface(
         shape = RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-            bottomStart = if (isFromMe) 16.dp else 4.dp,
-            bottomEnd = if (isFromMe) 4.dp else 16.dp
+            topStart = 0.dp,
+            topEnd = 0.dp,
+            bottomStart = if (isFromMe) 0.dp else 4.dp,
+            bottomEnd = if (isFromMe) 4.dp else 0.dp
         ),
         color = if (isFromMe) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.surfaceVariant,

@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Zapp — design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  html, body, #root { margin: 0; height: 100%; background: #f0eee9; font-family: 'Inter', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit }
+  input, textarea { font-family: inherit }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/design-canvas.jsx"></script>
+<script type="text/babel" src="components/tokens.jsx"></script>
+<script type="text/babel" src="components/shell.jsx"></script>
+<script type="text/babel" src="components/onboarding.jsx"></script>
+<script type="text/babel" src="components/screens.jsx"></script>
+<script type="text/babel" src="components/sheets.jsx"></script>
+<script type="text/babel" src="components/app.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+// ── Tweaks defaults ──────────────────────────────────────────
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "dark": false,
+  "navStyle": "floating",
+  "navSide": "right"
+}/*EDITMODE-END*/;
+
+const LS_KEY = 'zapp-state-v1';
+
+function App() {
+  const [dark, setDark] = React.useState(TWEAKS.dark);
+  const [navStyle, setNavStyle] = React.useState(TWEAKS.navStyle);
+  const [navSide, setNavSide] = React.useState(TWEAKS.navSide);
+
+  const [tweakOpen, setTweakOpen] = React.useState(false);
+
+  // persistence for playback position
+  const [loaded, setLoaded] = React.useState(false);
+  const [stage, setStage] = React.useState('canvas'); // 'canvas' | 'onboarding' | 'app'
+  const [username, setUsername] = React.useState('zapp_user');
+
+  React.useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+      if (s.stage) setStage(s.stage);
+      if (s.username) setUsername(s.username);
+    } catch {}
+    setLoaded(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem(LS_KEY, JSON.stringify({ stage, username }));
+  }, [stage, username, loaded]);
+
+  // Tweaks mode protocol
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweakOpen(true);
+      else if (e.data?.type === '__deactivate_edit_mode') setTweakOpen(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const pushKey = (k, v) => {
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  const t = dark ? ZAPP_DARK : ZAPP_LIGHT;
+
+  if (!loaded) return null;
+
+  return (
+    <>
+      <ZappKeyframes/>
+
+      {stage === 'canvas' && (
+        <CanvasView
+          t={t} dark={dark}
+          onEnterOnboarding={() => setStage('onboarding')}
+          onEnterApp={() => setStage('app')}
+          navStyle={navStyle} navSide={navSide}
+        />
+      )}
+
+      {stage === 'onboarding' && (
+        <SinglePhoneView t={t} back={() => setStage('canvas')} title="Onboarding flow">
+          <ZappOnboarding t={t} onComplete={(uname) => { setUsername(uname); setStage('app'); }}/>
+        </SinglePhoneView>
+      )}
+
+      {stage === 'app' && (
+        <SinglePhoneView t={t} back={() => setStage('canvas')} title={`@${username} — live`}>
+          <ZappApp t={t} username={username} navStyle={navStyle} navSide={navSide}
+            dark={dark} onDark={() => { setDark(!dark); pushKey('dark', !dark); }}/>
+        </SinglePhoneView>
+      )}
+
+      {tweakOpen && (
+        <TweaksPanel
+          t={t}
+          dark={dark} setDark={(v) => { setDark(v); pushKey('dark', v); }}
+          navStyle={navStyle} setNavStyle={(v) => { setNavStyle(v); pushKey('navStyle', v); }}
+          navSide={navSide} setNavSide={(v) => { setNavSide(v); pushKey('navSide', v); }}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Single phone live view ────────────────────────────────────
+function SinglePhoneView({ t, back, title, children }) {
+  return (
+    <div style={{
+      minHeight: '100vh', width: '100%',
+      background: `radial-gradient(ellipse at top, ${t === ZAPP_DARK ? '#18150f' : '#f7f3ec'} 0%, ${t === ZAPP_DARK ? '#0a0906' : '#e8e4db'} 100%)`,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px',
+    }}>
+      <div style={{ width: '100%', maxWidth: 880, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={back} style={{
+          border: `1px solid ${t === ZAPP_DARK ? '#2a2622' : '#d9d4ca'}`,
+          background: t === ZAPP_DARK ? '#17151280' : '#fff',
+          color: t === ZAPP_DARK ? '#f6f2ea' : '#15120d',
+          borderRadius: 999, padding: '8px 14px', fontSize: 13, fontWeight: 600,
+          display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+        }}>← Back to canvas</button>
+        <div style={{ fontSize: 13, fontWeight: 600, color: t === ZAPP_DARK ? '#a59c90' : '#6b645a' }}>{title}</div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0' }}>
+        <Phone t={t} width={380} height={780}>{children}</Phone>
+      </div>
+    </div>
+  );
+}
+
+// ── Tweaks panel ──────────────────────────────────────────────
+function TweaksPanel({ t, dark, setDark, navStyle, setNavStyle, navSide, setNavSide }) {
+  const pd = dark;
+  const bg = pd ? '#1b1916' : '#fff';
+  const fg = pd ? '#f6f2ea' : '#15120d';
+  const mut = pd ? '#a59c90' : '#6b645a';
+  const br = pd ? '#2a2622' : '#ebe7e0';
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 20, right: 20, zIndex: 10000,
+      width: 280, background: bg, color: fg,
+      borderRadius: 16, padding: 16, border: `1px solid ${br}`,
+      boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+      fontFamily: 'Inter, system-ui, sans-serif', fontSize: 13,
+    }}>
+      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', justifyContent: 'space-between' }}>
+        <span>Tweaks</span>
+      </div>
+
+      <Section t={t} mut={mut} label="Theme">
+        <Seg t={t} fg={fg} br={br} value={dark ? 'dark' : 'light'} onChange={(v) => setDark(v === 'dark')}
+          options={[{ v: 'light', l: 'Light' }, { v: 'dark', l: 'Dark' }]}/>
+      </Section>
+
+      <Section t={t} mut={mut} label="Bottom nav style">
+        <Seg t={t} fg={fg} br={br} value={navStyle} onChange={setNavStyle}
+          options={[{ v: 'pill', l: 'Pill' }, { v: 'bar', l: 'Bar' }, { v: 'floating', l: 'Floating' }]}/>
+      </Section>
+
+      {navStyle === 'floating' && (
+        <Section t={t} mut={mut} label="Hand preference">
+          <Seg t={t} fg={fg} br={br} value={navSide} onChange={setNavSide}
+            options={[{ v: 'left', l: 'Left' }, { v: 'center', l: 'Center' }, { v: 'right', l: 'Right' }]}/>
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function Section({ label, mut, children }) {
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: mut, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
+      {children}
+    </div>
+  );
+}
+
+function Seg({ value, onChange, options, fg, br }) {
+  return (
+    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.04)', borderRadius: 10, padding: 3, border: `1px solid ${br}` }}>
+      {options.map(o => (
+        <button key={o.v} onClick={() => onChange(o.v)} style={{
+          flex: 1, border: 'none', cursor: 'pointer',
+          background: value === o.v ? '#ff9417' : 'transparent',
+          color: value === o.v ? '#fff' : fg,
+          padding: '7px 8px', borderRadius: 8,
+          fontSize: 12, fontWeight: 600,
+        }}>{o.l}</button>
+      ))}
+    </div>
+  );
+}
+
+// ── Design canvas (overview of all screens) ──────────────────
+function CanvasView({ t, dark, onEnterOnboarding, onEnterApp, navStyle, navSide }) {
+  const phone = (children, statusTime) => (
+    <Phone t={t} width={312} height={640} statusTime={statusTime}>{children}</Phone>
+  );
+  return (
+    <DesignCanvas>
+      {/* Header */}
+      <div style={{ padding: '0 60px 40px', maxWidth: 900 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <ZappLogo t={t} size={56}/>
+          <div>
+            <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.2, color: '#1a1612' }}>Zapp</div>
+            <div style={{ fontSize: 15, color: '#6b645a', marginTop: -2 }}>Private messages &amp; money — Android UI kit</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+          <button onClick={onEnterOnboarding} style={{
+            border: 'none', background: '#ff9417', color: '#fff', padding: '11px 18px',
+            borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            boxShadow: '0 6px 16px rgba(255,148,23,0.32)',
+          }}>▶ Try onboarding flow</button>
+          <button onClick={onEnterApp} style={{
+            border: '1px solid #d9d4ca', background: '#fff', color: '#1a1612',
+            padding: '11px 18px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+          }}>▶ Try the app</button>
+        </div>
+      </div>
+
+      {/* Onboarding row */}
+      <DCSection title="Onboarding" subtitle="Two separate 12‑word accounts: messaging identity, then wallet. Phase intros make the split clear.">
+        <DCArtboard label="01 · Welcome" width={312} height={640}>
+          {phone(<OnbWelcome t={t} onNew={() => {}} onRestore={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="02 · Part 1 intro" width={312} height={640}>
+          {phone(<OnbPhaseIntro t={t} step={1} total={6}
+            badge="Part 1 of 3 · Messaging account"
+            title="Create your messaging identity"
+            sub="Your identity is a username plus a 12‑word phrase that lets you restore your chats on a new device."
+            points={[
+              { icon: 'user', label: 'Pick a username', sub: 'How friends find and message you' },
+              { icon: 'key', label: 'Save a recovery phrase', sub: 'Restore your account if you lose this phone' },
+            ]}
+            onBack={() => {}} onNext={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="03 · Username" width={312} height={640}>
+          {phone(<OnbUsername t={t} username="sam_42" setUsername={() => {}} onNext={() => {}} onBack={() => {}}
+            step={2} total={6} badge="Part 1 · Username"/>)}
+        </DCArtboard>
+        <DCArtboard label="04 · Messaging phrase" width={312} height={640}>
+          {phone(<OnbSeedShow t={t} onNext={() => {}} onBack={() => {}}
+            step={3} total={6}
+            title="Messaging recovery phrase"
+            sub="These 12 words restore your chats. Different from your wallet phrase — save both safely."
+            seed={['river','anchor','willow','lantern','silver','harbor','maple','breeze','copper','quartz','canyon','ember']}/>)}
+        </DCArtboard>
+        <DCArtboard label="05 · Part 2 intro" width={312} height={640}>
+          {phone(<OnbPhaseIntro t={t} step={4} total={6}
+            badge="Part 2 of 3 · Wallet"
+            title="Now set up your wallet"
+            sub="Your wallet is separate from your messaging identity. It has its own 12‑word phrase so you can back up funds independently."
+            points={[
+              { icon: 'sparkle', label: 'Create a new wallet', sub: 'Or restore one you already have' },
+              { icon: 'shield', label: 'Save a second recovery phrase', sub: 'Different words — keep both safe' },
+            ]}
+            onBack={() => {}} onNext={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="06 · Wallet choice" width={312} height={640}>
+          {phone(<OnbWallet t={t} onNew={() => {}} onRestore={() => {}} onBack={() => {}} step={4} total={6}/>)}
+        </DCArtboard>
+        <DCArtboard label="07 · Wallet phrase" width={312} height={640}>
+          {phone(<OnbSeedShow t={t} onNext={() => {}} onBack={() => {}}
+            step={5} total={6}
+            title="Wallet recovery phrase"
+            sub="These 12 words restore your funds. Different from your messaging phrase."/>)}
+        </DCArtboard>
+        <DCArtboard label="08 · Restore" width={312} height={640}>
+          {phone(<OnbRestore t={t} onNext={() => {}} onBack={() => {}}
+            step={2} total={6}
+            title="Restore messaging account"
+            sub="Enter your 12‑word messaging phrase to recover your username and chats."/>)}
+        </DCArtboard>
+        <DCArtboard label="09 · 2FA choice" width={312} height={640}>
+          {phone(<Onb2FA t={t} onNext={() => {}} onBack={() => {}} step={6} total={6} badge="Part 3 of 3 · Secure Zapp"/>)}
+        </DCArtboard>
+        <DCArtboard label="10 · Biometric scan" width={312} height={640}>
+          {phone(<CanvasBio t={t}/>)}
+        </DCArtboard>
+        <DCArtboard label="11 · Done" width={312} height={640}>
+          {phone(<OnbDone t={t} mode="bio" onNext={() => {}}/>)}
+        </DCArtboard>
+        <DCPostIt top={-50} left={-40} rotate={-4}>
+          Two 12‑word accounts: messaging identity + wallet. Phase intros set expectations so users don't confuse the phrases.
+        </DCPostIt>
+      </DCSection>
+
+      {/* Main tabs row */}
+      <DCSection title="Main tabs" subtitle="Four primary tabs — Wallet, Chats, Contacts, Settings. Bottom nav is tweakable (pill / bar / floating).">
+        <DCArtboard label="Wallet" width={312} height={640}>
+          {phone(
+            <>
+              <WalletScreen t={t} floatingOffset={90}
+                onSend={() => {}} onReceive={() => {}} onScan={() => {}} onTx={() => {}}/>
+              <BottomNav t={t} style={navStyle} side={navSide} active="wallet" onTab={() => {}}/>
+              <div style={{ position: 'absolute', bottom: navStyle === 'floating' ? 82 : 88, [navSide === 'left' ? 'left' : 'right']: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Fab t={t} icon="send"/>
+                <Fab t={t} icon="receive"/>
+                <Fab t={t} icon="scan"/>
+              </div>
+            </>
+          )}
+        </DCArtboard>
+        <DCArtboard label="Chats" width={312} height={640}>
+          {phone(
+            <>
+              <ChatsScreen t={t} floatingOffset={90} onOpenChat={() => {}}/>
+              <BottomNav t={t} style={navStyle} side={navSide} active="chats" onTab={() => {}}/>
+              <div style={{ position: 'absolute', bottom: navStyle === 'floating' ? 82 : 88, [navSide === 'left' ? 'left' : 'right']: 18 }}>
+                <Fab t={t} icon="plus"/>
+              </div>
+            </>
+          )}
+        </DCArtboard>
+        <DCArtboard label="Chat thread" width={312} height={640}>
+          {phone(<ChatThreadScreen t={t} chat={MOCK_CHATS[1]} onBack={() => {}} onPlus={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="Contacts" width={312} height={640}>
+          {phone(
+            <>
+              <ContactsScreen t={t} floatingOffset={90} onAdd={() => {}} onEdit={() => {}}/>
+              <BottomNav t={t} style={navStyle} side={navSide} active="contacts" onTab={() => {}}/>
+              <div style={{ position: 'absolute', bottom: navStyle === 'floating' ? 82 : 88, [navSide === 'left' ? 'left' : 'right']: 18 }}>
+                <Fab t={t} icon="user-plus"/>
+              </div>
+            </>
+          )}
+        </DCArtboard>
+        <DCArtboard label="Settings" width={312} height={640}>
+          {phone(
+            <>
+              <SettingsScreen t={t} username="zapp_user" dark={dark} onDark={() => {}} floatingOffset={90}/>
+              <BottomNav t={t} style={navStyle} side={navSide} active="settings" onTab={() => {}}/>
+            </>
+          )}
+        </DCArtboard>
+        <DCPostIt top={-50} left={-40} rotate={-3}>
+          Bottom nav adapts: pill matches the style reference; floating is thumb‑friendly and can flip L/R for hand preference.
+        </DCPostIt>
+      </DCSection>
+
+      {/* Money flows row */}
+      <DCSection title="Money flows" subtitle="Send, Receive, and transaction detail. All reachable from Wallet FABs or in‑chat.">
+        <DCArtboard label="Send — amount" width={312} height={640}>
+          {phone(<SendScreen t={t} onBack={() => {}} contact={MOCK_CONTACTS[1]} onSent={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="Send — no contact" width={312} height={640}>
+          {phone(<SendScreen t={t} onBack={() => {}} onSent={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="Receive (QR)" width={312} height={640}>
+          {phone(<ReceiveScreen t={t} username="zapp_user" onBack={() => {}}/>)}
+        </DCArtboard>
+        <DCArtboard label="Transaction detail" width={312} height={640}>
+          {phone(
+            <div style={{ flex: 1, position: 'relative' }}>
+              <WalletScreen t={t} floatingOffset={90} onSend={() => {}} onReceive={() => {}} onScan={() => {}} onTx={() => {}}/>
+              <TxDetailSheet t={t} open={true} onClose={() => {}} tx={MOCK_TX[0]}/>
+            </div>
+          )}
+        </DCArtboard>
+      </DCSection>
+
+      {/* Sheets row */}
+      <DCSection title="Sheets" subtitle="Bottom sheets keep actions near the thumb.">
+        <DCArtboard label="Attach / share" width={312} height={640}>
+          {phone(
+            <div style={{ flex: 1, position: 'relative' }}>
+              <ChatThreadScreen t={t} chat={MOCK_CHATS[1]} onBack={() => {}} onPlus={() => {}}/>
+              <AttachSheet t={t} open={true} onClose={() => {}} onShareAddr={() => {}} onSend={() => {}}/>
+            </div>
+          )}
+        </DCArtboard>
+        <DCArtboard label="Add contact" width={312} height={640}>
+          {phone(
+            <div style={{ flex: 1, position: 'relative' }}>
+              <ContactsEmpty t={t}/>
+              <AddContactSheet t={t} open={true} onClose={() => {}} onSave={() => {}}/>
+            </div>
+          )}
+        </DCArtboard>
+        <DCArtboard label="Edit contact" width={312} height={640}>
+          {phone(
+            <div style={{ flex: 1, position: 'relative' }}>
+              <ContactsScreen t={t} floatingOffset={90} onAdd={() => {}} onEdit={() => {}}/>
+              <AddContactSheet t={t} open={true} initial={MOCK_CONTACTS[0]} onClose={() => {}} onSave={() => {}}/>
+            </div>
+          )}
+        </DCArtboard>
+        <DCArtboard label="Contacts — empty" width={312} height={640}>
+          {phone(
+            <>
+              <ScreenHeader t={t} title="Contacts"/>
+              <ContactsEmpty t={t}/>
+              <BottomNav t={t} style={navStyle} side={navSide} active="contacts" onTab={() => {}}/>
+              <div style={{ position: 'absolute', bottom: navStyle === 'floating' ? 82 : 88, [navSide === 'left' ? 'left' : 'right']: 18 }}>
+                <Fab t={t} icon="user-plus"/>
+              </div>
+            </>
+          )}
+        </DCArtboard>
+      </DCSection>
+
+      <div style={{ height: 40 }}/>
+    </DesignCanvas>
+  );
+}
+
+function CanvasBio({ t }) {
+  const r = 68, circ = 2 * Math.PI * r;
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: t.bg, color: t.text, alignItems: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+        <div style={{ position: 'relative', width: 160, height: 160 }}>
+          <svg width="160" height="160" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+            <circle cx="80" cy="80" r={r} fill="none" stroke={t.border} strokeWidth="3"/>
+            <circle cx="80" cy="80" r={r} fill="none" stroke={t.accent} strokeWidth="3"
+              strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * 0.35}/>
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.accent }}>
+            <Icon name="fingerprint" size={72} stroke={1.4}/>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4 }}>Scanning</div>
+          <div style={{ fontSize: 13, color: t.textMuted, marginTop: 6 }}>Hold your finger on the sensor</div>
+        </div>
+      </div>
+      <BottomDock t={t} cta="Cancel" onCta={() => {}}/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

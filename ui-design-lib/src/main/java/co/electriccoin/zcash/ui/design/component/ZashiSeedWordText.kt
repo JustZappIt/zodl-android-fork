@@ -28,7 +28,7 @@ fun ZashiSeedWordText(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(0.dp),
         color = ZashiColors.Surfaces.bgSecondary,
     ) {
         Box(

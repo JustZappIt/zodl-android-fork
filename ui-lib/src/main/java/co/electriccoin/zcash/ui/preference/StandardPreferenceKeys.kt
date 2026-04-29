@@ -19,6 +19,29 @@ object StandardPreferenceKeys {
     val IS_BACKGROUND_SYNC_ENABLED = BooleanPreferenceDefault(PreferenceKey("is_background_sync_enabled"), true)
 
     /**
+     * True once the first-launch welcome gate has been dismissed (the user tapped
+     * "Get started" or "I already use Zapp"). Drives whether `WelcomeGateView` or
+     * the tabs scaffold is shown.
+     */
+    val IS_WELCOME_DISMISSED =
+        BooleanPreferenceDefault(
+            PreferenceKey("is_welcome_dismissed"),
+            false
+        )
+
+    /**
+     * True once the user has finished the Swiss-design onboarding flow (Phase
+     * intro → username → seed phrases → 2FA → Done). Independent of the Zashi
+     * `ONBOARDING_STATE` so that "skip wallet" users can complete onboarding
+     * without ever creating a wallet.
+     */
+    val IS_ONBOARDING_COMPLETED =
+        BooleanPreferenceDefault(
+            PreferenceKey("is_onboarding_completed"),
+            false
+        )
+
+    /**
      * Screens or flows protected by required authentication
      */
     val IS_APP_ACCESS_AUTHENTICATION =

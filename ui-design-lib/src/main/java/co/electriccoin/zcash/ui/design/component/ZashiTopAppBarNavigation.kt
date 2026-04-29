@@ -65,7 +65,7 @@ fun ZashiTopAppBarBigCloseNavigation(onBack: () -> Unit, modifier: Modifier = Mo
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier.size(40.dp),
             onClick = onBack,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(0.dp),
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = ZashiColors.Btns.Tertiary.btnTertiaryBg

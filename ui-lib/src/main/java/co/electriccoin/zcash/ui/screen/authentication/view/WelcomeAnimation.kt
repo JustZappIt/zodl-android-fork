@@ -6,7 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,25 +29,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ProvideZappTheme
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.dimensions.ZashiDimensions
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.screen.authentication.view.AnimationConstants.ANIMATION_DURATION
 import co.electriccoin.zcash.ui.screen.authentication.view.AnimationConstants.INITIAL_DELAY
 import co.electriccoin.zcash.ui.screen.authentication.view.AnimationConstants.WELCOME_ANIM_TEST_TAG
-import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -58,9 +59,6 @@ object AnimationConstants {
 
     fun durationOnly() = (ANIMATION_DURATION).toLong()
 }
-
-// TODO [#1002]: Welcome screen animation masking
-// TODO [#1002]: https://github.com/Electric-Coin-Company/zashi-android/issues/1002
 
 @Composable
 fun WelcomeAnimationAutostart(
@@ -80,7 +78,7 @@ fun WelcomeAnimationAutostart(
 
     // Let's start the animation automatically in case e.g. authentication is not involved
     LaunchedEffect(key1 = currentAnimationState) {
-        delay(delay)
+        kotlinx.coroutines.delay(delay)
         currentAnimationState = false
     }
 }
@@ -95,117 +93,139 @@ fun WelcomeScreenView(
 ) {
     val revealProgress by animateFloatAsState(
         targetValue = if (!animationState) 1f else 0f,
-        animationSpec =
-            tween(
-                durationMillis = ANIMATION_DURATION,
-                easing = FastOutLinearInEasing
-            ),
+        animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = FastOutLinearInEasing),
         label = "revealProgress"
     )
 
     val points = remember { generateChartPoints() }
     val chartHeightDp = CHART_HEIGHT.dp
 
-    // Splash screen content
+    ProvideZappTheme {
+        WelcomeContent(
+            modifier = modifier,
+            revealProgress = revealProgress,
+            points = points,
+            chartHeightDp = chartHeightDp,
+            showAuthLogo = showAuthLogo,
+            onRetry = onRetry,
+        )
+    }
+}
+
+@Composable
+@Suppress("MagicNumber")
+private fun WelcomeContent(
+    modifier: Modifier,
+    revealProgress: Float,
+    points: List<ChartPoint>,
+    chartHeightDp: androidx.compose.ui.unit.Dp,
+    showAuthLogo: Boolean,
+    onRetry: () -> Unit,
+) {
+    val c = ZappTheme.colors
+
     Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .drawWithContent {
-                    if (revealProgress < 1f) {
-                        val wavePath =
-                            Path().apply {
-                                val chartHeightPx = chartHeightDp.toPx()
-                                // Pri revealProgress=0 (štart): waveTopY je mimo obrazovky (dole).
-                                // Vypočítame pozíciu tak, aby celá vlna začínala pod spodným okrajom obrazovky.
-                                // Pre úplné skrytie pred animáciou zväčšíme rozsah pohybu.
-                                val waveTopY = (size.height + chartHeightPx) * (1f - revealProgress) - chartHeightPx
-
-                                // Začíname od ľavého horného rohu — celá horná plocha splasha je zahrnutá
-                                moveTo(0f, 0f)
-                                lineTo(size.width, 0f)
-
-                                // Vlnová hranica zľava doprava (right-to-left v poli = left-to-right na obrazovke)
-                                for (i in points.size - 1 downTo 0) {
-                                    lineTo(size.width * points[i].x, waveTopY + chartHeightPx * points[i].y)
-                                }
-                                // close() uzatvorí cestu späť do (0,0) cez ľavú stranu
-                                close()
-                            }
-
-                        clipPath(wavePath) {
-                            this@drawWithContent.drawContent()
+        modifier = modifier
+            .fillMaxSize()
+            .background(c.accent) // Zapp brand yellow/orange — the splash colour
+            .drawWithContent {
+                if (revealProgress < 1f) {
+                    val wavePath = Path().apply {
+                        val chartHeightPx = chartHeightDp.toPx()
+                        val waveTopY = (size.height + chartHeightPx) * (1f - revealProgress) - chartHeightPx
+                        moveTo(0f, 0f)
+                        lineTo(size.width, 0f)
+                        for (i in points.size - 1 downTo 0) {
+                            lineTo(size.width * points[i].x, waveTopY + chartHeightPx * points[i].y)
                         }
+                        close()
+                    }
+                    clipPath(wavePath) {
+                        this@drawWithContent.drawContent()
                     }
                 }
+            }
     ) {
-        // Background
-        Image(
-            painter = ColorPainter(ZcashTheme.colors.welcomeAnimationColor),
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.fillMaxSize(),
-            contentDescription = null
-        )
-
-        // Foreground centered content
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
-            Image(
-                modifier = Modifier.height(60.dp),
-                painter = painterResource(id = co.electriccoin.zcash.ui.design.R.drawable.logo_with_hi),
-                contentDescription = null,
+            // Big Swiss "Hi." — Black weight, tight letter spacing, near-black on yellow.
+            BasicText(
+                text = "Hi.",
+                style = ZappTheme.typography.display.copy(
+                    color = c.text,
+                    fontSize = 140.sp,
+                    lineHeight = 130.sp,
+                    letterSpacing = (-6).sp,
+                    fontWeight = FontWeight.Black,
+                ),
             )
-            Spacer(modifier = Modifier.height(ZashiDimensions.Spacing.spacing10xl))
+            Spacer(Modifier.height(20.dp))
+            // 36×3 horizontal rule — same accent device used on WelcomeGate.
+            Box(
+                modifier = Modifier
+                    .width(36.dp)
+                    .height(3.dp)
+                    .background(c.text, RectangleShape),
+            )
 
             AnimatedVisibility(visible = showAuthLogo) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .padding(horizontal = ZashiDimensions.Spacing.spacing3xl),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    // Sharp-edged tap-target instead of the rounded auth-key icon.
+                    val unlockDesc = stringResource(
+                        id = R.string.authentication_failed_welcome_icon_cont_desc,
+                        stringResource(R.string.app_name),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(c.text, RectangleShape)
+                            .clickable(onClick = onRetry)
+                            .semantics { contentDescription = unlockDesc },
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_auth_key),
-                            contentDescription =
-                                stringResource(
-                                    id = R.string.authentication_failed_welcome_icon_cont_desc,
-                                    stringResource(R.string.app_name)
-                                ),
-                            modifier =
-                                Modifier.clickable {
-                                    onRetry()
-                                }
-                        )
-
-                        Spacer(modifier = Modifier.height(ZashiDimensions.Spacing.spacingXl))
-
-                        Text(
-                            stringResource(id = R.string.authentication_failed_welcome_title),
-                            style = ZashiTypography.textXl,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ZashiColors.NoTheme.welcomeText,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(ZashiDimensions.Spacing.spacingXl))
-
-                        Text(
-                            stringResource(id = R.string.authentication_failed_welcome_subtitle),
-                            style = ZashiTypography.textSm,
-                            color = ZashiColors.NoTheme.welcomeText,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                        BasicText(
+                            text = "🔒",
+                            style = ZappTheme.typography.display.copy(
+                                color = c.accent,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Black,
+                            ),
                         )
                     }
-                    Spacer(modifier = Modifier.height(ZashiDimensions.Spacing.spacingXl))
+
+                    Spacer(Modifier.height(20.dp))
+
+                    BasicText(
+                        text = stringResource(id = R.string.authentication_failed_welcome_title),
+                        style = ZappTheme.typography.display.copy(
+                            color = c.text,
+                            fontSize = 18.sp,
+                            lineHeight = 24.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.4).sp,
+                            textAlign = TextAlign.Center,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    BasicText(
+                        text = stringResource(id = R.string.authentication_failed_welcome_subtitle),
+                        style = ZappTheme.typography.body.copy(
+                            color = c.text,
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp,
+                            textAlign = TextAlign.Center,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }

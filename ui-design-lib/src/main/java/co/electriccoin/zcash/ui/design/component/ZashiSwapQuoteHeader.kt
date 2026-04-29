@@ -41,7 +41,7 @@ fun ZashiSwapQuoteHeader(
             )
             Surface(
                 modifier = Modifier.size(32.dp),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(0.dp),
                 color = ZashiColors.Btns.Secondary.btnSecondaryBg
             ) {
                 Box(

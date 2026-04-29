@@ -66,7 +66,7 @@ fun WalletAddressBubble(message: ChatMessage, isFromMe: Boolean) {
     }
 
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0.dp),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
         modifier = Modifier.widthIn(min = 200.dp, max = 280.dp)
     ) {
@@ -95,7 +95,7 @@ fun WalletAddressBubble(message: ChatMessage, isFromMe: Boolean) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(0.dp),
                 color = Color.White,
             ) {
                 Image(

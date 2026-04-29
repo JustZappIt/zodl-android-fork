@@ -7,6 +7,7 @@ import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.datasource.AccountDataSource
+import co.electriccoin.zcash.ui.common.usecase.NavigateToPeerOnrampUseCase
 import co.electriccoin.zcash.ui.common.model.WalletAccount
 import co.electriccoin.zcash.ui.common.repository.ExchangeRateRepository
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
@@ -18,12 +19,14 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class BalanceWidgetVM(
     private val args: BalanceWidgetArgs,
     accountDataSource: AccountDataSource,
     exchangeRateRepository: ExchangeRateRepository,
     private val navigationRouter: NavigationRouter,
+    private val navigateToPeerOnramp: NavigateToPeerOnrampUseCase,
 ) : ViewModel() {
     val state: StateFlow<BalanceWidgetState> =
         combine(
@@ -98,8 +101,11 @@ class BalanceWidgetVM(
                         null
                     }
                 },
-            showDust = args.showDust
+            showDust = args.showDust,
+            onAddZec = if (account?.totalBalance == Zatoshi(0)) ::onAddZecClick else null,
         )
+
+    private fun onAddZecClick() { viewModelScope.launch { navigateToPeerOnramp() } }
 
     private fun onBalanceButtonClick() = navigationRouter.forward(SpendableBalanceArgs)
 }

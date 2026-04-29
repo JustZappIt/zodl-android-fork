@@ -10,6 +10,7 @@ import co.electriccoin.zcash.ui.common.repository.HomeMessageData
 import co.electriccoin.zcash.ui.common.usecase.GetHomeMessageUseCase
 import co.electriccoin.zcash.ui.common.usecase.IsRestoreSuccessDialogVisibleUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToNearPayUseCase
+import co.electriccoin.zcash.ui.common.usecase.NavigateToPeerOnrampUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToReceiveUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToSwapUseCase
 import co.electriccoin.zcash.ui.common.usecase.ShieldFundsFromMessageUseCase
@@ -64,7 +65,8 @@ class HomeVM(
     private val navigateToError: NavigateToErrorUseCase,
     private val navigateToReceive: NavigateToReceiveUseCase,
     private val navigateToNearPay: NavigateToNearPayUseCase,
-    private val navigateToSwap: NavigateToSwapUseCase
+    private val navigateToSwap: NavigateToSwapUseCase,
+    private val navigateToPeerOnramp: NavigateToPeerOnrampUseCase,
 ) : ViewModel() {
     private var hasSyncErrorBeenShown = false
     private var hasRestoreSuccessBeenShown = false
@@ -164,6 +166,12 @@ class HomeVM(
                     icon = R.drawable.ic_home_swap,
                     onClick = ::onSwapButtonClick,
                 ),
+            fifthButton =
+                BigIconButtonState(
+                    text = stringRes(R.string.home_button_buy),
+                    icon = R.drawable.ic_home_buy,
+                    onClick = ::onBuyButtonClick,
+                ),
             message = messageState
         )
 
@@ -259,6 +267,8 @@ class HomeVM(
         if (onSwapButtonClick?.isActive == true) return
         onSwapButtonClick = viewModelScope.launch { navigateToSwap() }
     }
+
+    private fun onBuyButtonClick() = viewModelScope.launch { navigateToPeerOnramp() }
 
     private fun onSendButtonClick() = navigationRouter.forward(Send())
 

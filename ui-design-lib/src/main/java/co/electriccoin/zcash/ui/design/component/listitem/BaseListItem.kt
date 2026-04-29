@@ -32,7 +32,7 @@ fun BaseListItem(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     below: @Composable ColumnScope.(Modifier) -> Unit = {},
-    shape: Shape = RoundedCornerShape(16.dp),
+    shape: Shape = RoundedCornerShape(0.dp),
     border: BorderStroke? = null,
     color: Color = Color.Transparent,
     content: @Composable (Modifier) -> Unit,

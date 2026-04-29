@@ -6,26 +6,32 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Done
@@ -33,20 +39,11 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,10 +55,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
+import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
+import co.electriccoin.zcash.ui.design.component.zapp.ZappChipVariant
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.screen.chat.media.rememberCameraCaptureState
 import co.electriccoin.zcash.ui.screen.chat.model.ChatMessage
 import co.electriccoin.zcash.ui.screen.chat.model.MessageStatus
@@ -84,7 +87,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatRoomView(
     conversationId: String,
@@ -93,6 +95,7 @@ fun ChatRoomView(
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel
 ) {
+    val c = ZappTheme.colors
     val context = LocalContext.current
     val messages by viewModel.messages.collectAsState()
     val currentConversation by viewModel.currentConversation.collectAsState()
@@ -111,7 +114,6 @@ fun ChatRoomView(
     var showNetworkSheet by remember { mutableStateOf(false) }
     val connectionDetails by viewModel.connectionDetails.collectAsState()
 
-    // Activity result launchers
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -155,69 +157,56 @@ fun ChatRoomView(
         }
     }
 
+    // Map connection status to Zapp chip variants
+    val (chipVariant, chipDot, chipText) = when (connectionStatus) {
+        ChatViewModel.ConnectionStatus.CONNECTED -> when {
+            conversationPeerOnline == true -> Triple(ZappChipVariant.Success, c.success, "Online")
+            dhtHealth == ChatViewModel.DhtHealth.CRITICAL -> Triple(ZappChipVariant.Danger, c.danger, "DHT")
+            peerCount > 0 -> Triple(ZappChipVariant.Success, c.success, "$peerCount")
+            else -> Triple(ZappChipVariant.Accent, c.accent, "...")
+        }
+        ChatViewModel.ConnectionStatus.CONNECTING -> Triple(ZappChipVariant.Accent, c.accent, "...")
+        ChatViewModel.ConnectionStatus.DISCONNECTED -> Triple(ZappChipVariant.Danger, c.danger, "Off")
+        ChatViewModel.ConnectionStatus.ERROR -> Triple(ZappChipVariant.Danger, c.danger, "Err")
+    }
+
+    val subtitleText = when (connectionStatus) {
+        ChatViewModel.ConnectionStatus.CONNECTED -> when {
+            conversationPeerOnline == true -> "Peer online"
+            dhtHealth == ChatViewModel.DhtHealth.CRITICAL -> "DHT unreachable"
+            conversationPeerOnline == false -> "Peer offline — messages queued"
+            peerCount > 0 -> "P2P connected"
+            dhtHealth == ChatViewModel.DhtHealth.DEGRADED -> "DHT degraded"
+            else -> "Waiting for peer..."
+        }
+        ChatViewModel.ConnectionStatus.CONNECTING -> "Connecting..."
+        ChatViewModel.ConnectionStatus.DISCONNECTED -> "Offline"
+        ChatViewModel.ConnectionStatus.ERROR -> "Connection error"
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            currentConversation?.displayName ?: "Chat",
-                            maxLines = 1,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        val subtitleColor = when (connectionStatus) {
-                            ChatViewModel.ConnectionStatus.CONNECTED -> when {
-                                conversationPeerOnline == true -> MaterialTheme.colorScheme.primary
-                                dhtHealth == ChatViewModel.DhtHealth.CRITICAL -> MaterialTheme.colorScheme.error
-                                peerCount > 0 -> MaterialTheme.colorScheme.primary
-                                else -> MaterialTheme.colorScheme.tertiary
-                            }
-                            ChatViewModel.ConnectionStatus.CONNECTING -> MaterialTheme.colorScheme.tertiary
-                            else -> MaterialTheme.colorScheme.error
-                        }
-                        val subtitle = when (connectionStatus) {
-                            ChatViewModel.ConnectionStatus.CONNECTED -> when {
-                                conversationPeerOnline == true -> "Peer online"
-                                dhtHealth == ChatViewModel.DhtHealth.CRITICAL -> "DHT unreachable"
-                                conversationPeerOnline == false -> "Peer offline - messages will queue"
-                                peerCount > 0 -> "P2P connected"
-                                dhtHealth == ChatViewModel.DhtHealth.DEGRADED -> "DHT degraded - no peers"
-                                else -> "Waiting for peer..."
-                            }
-                            ChatViewModel.ConnectionStatus.CONNECTING -> "Connecting..."
-                            ChatViewModel.ConnectionStatus.DISCONNECTED -> "Offline"
-                            ChatViewModel.ConnectionStatus.ERROR -> "Connection error"
-                        }
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = subtitleColor
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    ConnectionPill(
-                        connectionStatus = connectionStatus,
-                        peerCount = peerCount,
-                        dhtHealth = dhtHealth,
+            ZappScreenHeader(
+                title = currentConversation?.displayName ?: "Chat",
+                subtitle = subtitleText,
+                left = { ZappBackButton(onClick = onNavigateBack) },
+                right = {
+                    ZappStatusChip(
+                        text = chipText,
+                        variant = chipVariant,
+                        dotColor = chipDot,
                         onClick = {
                             viewModel.fetchConnectionDetails()
                             showNetworkSheet = true
-                        }
+                        },
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
+                },
             )
         },
+        containerColor = c.bg,
         modifier = modifier
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .windowInsetsPadding(WindowInsets.navigationBars),
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -230,7 +219,7 @@ fun ChatRoomView(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (isLoading && messages.isEmpty()) {
                     item {
@@ -238,35 +227,52 @@ fun ChatRoomView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(24.dp),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            CircularProgressIndicator(color = c.accent)
                         }
                     }
                 }
-
                 items(items = messages, key = { it.id }) { message ->
                     MessageBubble(message = message)
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            // Hairline divider above input row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(c.border),
+            )
+
+            // Message input row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(c.surface)
                     .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                FilledIconButton(
-                    onClick = { showAttachmentSheet = true },
-                    modifier = Modifier.size(36.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = CircleShape
+                // Attach button
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(c.surfaceAlt, RectangleShape)
+                        .border(androidx.compose.foundation.BorderStroke(1.dp, c.border), RectangleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(color = c.accent),
+                            onClick = { showAttachmentSheet = true },
+                        ),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Attach", modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Attach",
+                        tint = c.accent,
+                        modifier = Modifier.size(18.dp),
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -277,41 +283,53 @@ fun ChatRoomView(
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = 36.dp),
-                    placeholder = { Text("Message") },
+                    placeholder = {
+                        BasicText(
+                            "Message",
+                            style = ZappTheme.typography.body.copy(color = c.textSubtle),
+                        )
+                    },
                     maxLines = 4,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RectangleShape,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedContainerColor = c.surfaceInput,
+                        unfocusedContainerColor = c.surfaceInput,
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = c.text,
+                        unfocusedTextColor = c.text,
+                        cursorColor = c.accent,
+                    ),
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                FilledIconButton(
-                    onClick = {
-                        val text = messageInput.text.trim()
-                        if (text.isNotEmpty()) {
-                            viewModel.sendMessage(conversationId, text)
-                            messageInput = TextFieldValue("")
-                        }
-                    },
-                    enabled = messageInput.text.isNotBlank(),
-                    modifier = Modifier.size(36.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    shape = CircleShape
+                // Send button
+                val canSend = messageInput.text.isNotBlank()
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(if (canSend) c.accent else c.surfaceAlt, RectangleShape)
+                        .border(androidx.compose.foundation.BorderStroke(1.dp, c.border), RectangleShape)
+                        .clickable(
+                            enabled = canSend,
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(color = c.onAccent),
+                            onClick = {
+                                val text = messageInput.text.trim()
+                                if (text.isNotEmpty()) {
+                                    viewModel.sendMessage(conversationId, text)
+                                    messageInput = TextFieldValue("")
+                                }
+                            },
+                        ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Default.ArrowUpward,
                         contentDescription = "Send",
-                        modifier = Modifier.size(18.dp)
+                        tint = if (canSend) c.onAccent else c.textSubtle,
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -332,7 +350,7 @@ fun ChatRoomView(
                 showAttachmentSheet = false
                 showMediaSheet = true
             },
-            onDismiss = { showAttachmentSheet = false }
+            onDismiss = { showAttachmentSheet = false },
         )
     }
 
@@ -342,7 +360,7 @@ fun ChatRoomView(
             peerCount = peerCount,
             dhtHealth = dhtHealth,
             connectionDetails = connectionDetails,
-            onDismiss = { showNetworkSheet = false }
+            onDismiss = { showNetworkSheet = false },
         )
     }
 
@@ -377,12 +395,12 @@ fun ChatRoomView(
                     locationPermissionLauncher.launch(
                         arrayOf(
                             Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
                         )
                     )
                 }
             },
-            onDismiss = { showMediaSheet = false }
+            onDismiss = { showMediaSheet = false },
         )
     }
 }
@@ -420,6 +438,7 @@ private suspend fun shareLocation(
 @Composable
 private fun MessageBubble(message: ChatMessage) {
     val isFromMe = message.isFromMe
+    val c = ZappTheme.colors
     val contentType = run {
         val declared = message.contentType
         if (!declared.isNullOrEmpty() && declared != "text/plain") {
@@ -432,14 +451,13 @@ private fun MessageBubble(message: ChatMessage) {
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
+        horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start,
     ) {
         if (!isFromMe && message.senderName != null) {
-            Text(
+            BasicText(
                 text = message.senderName,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                style = ZappTheme.typography.chip.copy(color = c.accent),
+                modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
             )
         }
 
@@ -466,39 +484,35 @@ private fun MessageBubble(message: ChatMessage) {
 
 @Composable
 private fun TextMessageBubble(message: ChatMessage, isFromMe: Boolean) {
-    Surface(
-        shape = RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-            bottomStart = if (isFromMe) 16.dp else 4.dp,
-            bottomEnd = if (isFromMe) 4.dp else 16.dp
-        ),
-        color = if (isFromMe) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.widthIn(max = 280.dp)
+    val c = ZappTheme.colors
+    Box(
+        modifier = Modifier
+            .widthIn(max = 280.dp)
+            .background(if (isFromMe) c.accent else c.surfaceAlt, RectangleShape)
+            .padding(12.dp),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
+        Column {
+            BasicText(
                 text = message.content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isFromMe) MaterialTheme.colorScheme.onPrimary
-                else MaterialTheme.colorScheme.onSurface
+                style = ZappTheme.typography.body.copy(
+                    color = if (isFromMe) c.onAccent else c.text,
+                ),
             )
             Spacer(modifier = Modifier.height(2.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
+                BasicText(
                     text = formatMessageTime(message.timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isFromMe) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-                    else MaterialTheme.colorScheme.onSurfaceVariant
+                    style = ZappTheme.typography.caption.copy(
+                        color = if (isFromMe) c.onAccent.copy(alpha = 0.7f) else c.textMuted,
+                    ),
                 )
                 if (isFromMe) {
                     DeliveryIndicator(
                         status = message.status,
-                        tintColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                        tintColor = c.onAccent.copy(alpha = 0.7f),
                     )
                 }
             }
@@ -508,30 +522,31 @@ private fun TextMessageBubble(message: ChatMessage, isFromMe: Boolean) {
 
 @Composable
 private fun DeliveryIndicator(status: MessageStatus?, tintColor: Color) {
+    val c = ZappTheme.colors
     when (status) {
         MessageStatus.SENT -> Icon(
             Icons.Default.Done,
             contentDescription = "Sent",
             modifier = Modifier.size(13.dp),
-            tint = tintColor
+            tint = tintColor,
         )
         MessageStatus.QUEUED -> Icon(
             Icons.Default.Schedule,
             contentDescription = "Queued",
             modifier = Modifier.size(13.dp),
-            tint = tintColor
+            tint = tintColor,
         )
         MessageStatus.FAILED -> Icon(
             Icons.Default.ErrorOutline,
             contentDescription = "Failed",
             modifier = Modifier.size(13.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = c.danger,
         )
         MessageStatus.SENDING -> Icon(
             Icons.Default.MoreHoriz,
             contentDescription = "Sending",
             modifier = Modifier.size(13.dp),
-            tint = tintColor
+            tint = tintColor,
         )
         null -> {}
     }
