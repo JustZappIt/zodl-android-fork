@@ -20,7 +20,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import cash.z.ecc.android.sdk.ext.ZcashDecimalFormatSymbols
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.StringResource
@@ -217,7 +216,7 @@ object ZashiNumberTextFieldDefaults {
 
 object ZashiNumberTextFieldParser {
     fun normalizeInput(input: String, locale: Locale): String {
-        val symbols = ZcashDecimalFormatSymbols(locale)
+        val symbols = DecimalFormatSymbols(locale)
 
         val withoutGrouping =
             input
@@ -246,7 +245,7 @@ object ZashiNumberTextFieldParser {
      */
     @Suppress("ReturnCount")
     fun toBigDecimalOrNull(input: String, locale: Locale): BigDecimal? {
-        val symbols = ZcashDecimalFormatSymbols(locale)
+        val symbols = DecimalFormatSymbols(locale)
         if (!isValidNumericWithOptionalDecimalSeparator(input = input, symbols = symbols)) return null
         val pattern = (DecimalFormat.getInstance(locale) as? DecimalFormat)?.toPattern()
 
@@ -303,7 +302,7 @@ object ZashiNumberTextFieldParser {
      */
     private fun isValidNumericWithOptionalDecimalSeparator(
         input: String,
-        symbols: ZcashDecimalFormatSymbols
+        symbols: DecimalFormatSymbols
     ): Boolean {
         if (input.isEmpty()) return false
 

@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cash.z.ecc.android.sdk.model.WalletAddress
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
+import co.electriccoin.zcash.preference.EncryptedPreferenceProvider
+import co.electriccoin.zcash.preference.StandardPreferenceProvider
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.datasource.ExactOutputSwapTransactionProposal
@@ -12,6 +14,10 @@ import co.electriccoin.zcash.ui.common.datasource.Zip321TransactionProposal
 import co.electriccoin.zcash.ui.common.model.KeystoneAccount
 import co.electriccoin.zcash.ui.common.model.WalletAccount
 import co.electriccoin.zcash.ui.common.model.ZashiAccount
+import co.electriccoin.zcash.ui.common.repository.BiometricRepository
+import co.electriccoin.zcash.ui.common.repository.BiometricRequest
+import co.electriccoin.zcash.ui.common.repository.BiometricsCancelledException
+import co.electriccoin.zcash.ui.common.repository.BiometricsFailureException
 import co.electriccoin.zcash.ui.common.repository.EnhancedABContact
 import co.electriccoin.zcash.ui.common.usecase.CancelProposalFlowUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetExchangeRateUseCase
@@ -27,14 +33,19 @@ import co.electriccoin.zcash.ui.design.util.Ellipsize
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.design.util.stringResByAddress
 import co.electriccoin.zcash.ui.design.util.styleAsAddress
+import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
+import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.addressbook.ADDRESS_MAX_LENGTH
 import co.electriccoin.zcash.ui.screen.contact.AddZashiABContactArgs
 import co.electriccoin.zcash.ui.util.Quintuple
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -53,7 +64,21 @@ class ReviewTransactionVM(
     private val getExchangeRate: GetExchangeRateUseCase,
     private val navigationRouter: NavigationRouter,
     private val submitProposal: SubmitProposalUseCase,
+    private val biometricRepository: BiometricRepository,
+    private val standardPreferenceProvider: StandardPreferenceProvider,
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
 ) : ViewModel() {
+
+    /** Drives the PIN entry overlay shown before a transaction is submitted. */
+    sealed class SendAuthState {
+        object Idle : SendAuthState()
+        object PinRequired : SendAuthState()
+        object PinError : SendAuthState()
+    }
+
+    private val _sendAuthState = MutableStateFlow<SendAuthState>(SendAuthState.Idle)
+    val sendAuthState: StateFlow<SendAuthState> = _sendAuthState.asStateFlow()
+
     private val isReceiverExpanded = MutableStateFlow(false)
 
     private val exchangeRate =
@@ -252,7 +277,56 @@ class ReviewTransactionVM(
 
     private fun onConfirmClick() {
         if (onConfirmClickJob?.isActive == true) return
-        onConfirmClickJob = viewModelScope.launch { submitProposal() }
+        onConfirmClickJob = viewModelScope.launch {
+            val authMethod = StandardPreferenceKeys.AUTH_METHOD.getValue(standardPreferenceProvider())
+            when (authMethod) {
+                "biometric" -> {
+                    try {
+                        biometricRepository.requestBiometrics(
+                            BiometricRequest(
+                                message = stringRes(
+                                    R.string.authentication_system_ui_subtitle,
+                                    stringRes(R.string.authentication_use_case_send_funds)
+                                )
+                            )
+                        )
+                        submitProposal()
+                    } catch (_: BiometricsCancelledException) {
+                        // User cancelled — stay on review screen
+                    } catch (_: BiometricsFailureException) {
+                        // Auth failed — stay on review screen
+                    }
+                }
+                "pin" -> {
+                    _sendAuthState.value = SendAuthState.PinRequired
+                    // Submission deferred to onSendPinSubmitted
+                }
+                else -> submitProposal()
+            }
+        }
+    }
+
+    /**
+     * Called by the UI when the user submits a PIN on the send-auth overlay.
+     * Verifies the PIN and, on success, submits the transaction proposal.
+     */
+    fun onSendPinSubmitted(pin: String) {
+        viewModelScope.launch {
+            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
+            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
+                _sendAuthState.value = SendAuthState.Idle
+                submitProposal()
+            } else {
+                _sendAuthState.value = SendAuthState.PinError
+                delay(1_500)
+                _sendAuthState.value = SendAuthState.PinRequired
+            }
+        }
+    }
+
+    /** Called by the UI when the user cancels out of the send PIN overlay. */
+    fun onSendAuthDismissed() {
+        _sendAuthState.value = SendAuthState.Idle
     }
 
     private fun onAddContactClick(address: String) = navigationRouter.forward(AddZashiABContactArgs(address))

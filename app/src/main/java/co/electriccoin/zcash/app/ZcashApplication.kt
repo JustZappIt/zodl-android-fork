@@ -1,7 +1,12 @@
 package co.electriccoin.zcash.app
 
+import android.content.Intent
+import android.os.Process
 import androidx.lifecycle.ProcessLifecycleOwner
 import cash.z.ecc.android.sdk.Synchronizer
+import cash.z.ecc.android.sdk.exception.InitializeException
+import cash.z.ecc.android.sdk.model.ZcashNetwork
+import cash.z.ecc.sdk.type.fromResources
 import co.electriccoin.zcash.crash.android.GlobalCrashReporter
 import co.electriccoin.zcash.crash.android.di.CrashReportersProvider
 import co.electriccoin.zcash.crash.android.di.crashProviderModule
@@ -27,6 +32,7 @@ import co.electriccoin.zcash.ui.screen.error.ErrorArgs
 import co.electriccoin.zcash.ui.screen.error.NavigateToErrorUseCase
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -47,6 +53,8 @@ class ZcashApplication : CoroutineApplication() {
 
     override fun onCreate() {
         super.onCreate()
+
+        installSeedMismatchHandler()
 
         configureLogging()
 
@@ -80,6 +88,49 @@ class ZcashApplication : CoroutineApplication() {
         applicationStateRepository.init()
         observeSynchronizerError()
     }
+
+    /**
+     * Installs a global uncaught-exception handler that recovers from [InitializeException.SeedNotRelevant].
+     *
+     * This exception is thrown by the Zcash SDK (v2.4.8) inside [WalletCoordinator.walletScope]
+     * (Dispatchers.Main, no SupervisorJob) when the seed stored in encrypted prefs doesn't match
+     * the existing on-disk database — typically after a reinstall or partial data wipe.  Because
+     * the SDK scope has no CoroutineExceptionHandler the exception escapes to the main thread's
+     * uncaught-exception handler and crashes the process before our UI can react.
+     *
+     * Recovery: erase the mismatched SDK databases via [Synchronizer.erase], then restart the
+     * app cleanly so the user lands on the onboarding flow.
+     */
+    private fun installSeedMismatchHandler() {
+        val upstream = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            if (throwable.isSeedNotRelevant()) {
+                Twig.error { "SeedNotRelevant — erasing mismatched SDK data and restarting" }
+                try {
+                    val network = ZcashNetwork.fromResources(applicationContext)
+                    runBlocking { Synchronizer.erase(applicationContext, network) }
+                } catch (e: Exception) {
+                    Twig.error(e) { "Failed to erase SDK data during seed-mismatch recovery" }
+                }
+                packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
+                    intent.addFlags(
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    )
+                    startActivity(intent)
+                }
+                Process.killProcess(Process.myPid())
+            } else {
+                upstream?.uncaughtException(thread, throwable)
+            }
+        }
+    }
+
+    private fun Throwable.isSeedNotRelevant(): Boolean =
+        this is InitializeException.SeedNotRelevant ||
+            cause?.isSeedNotRelevant() == true ||
+            suppressed.any { it.isSeedNotRelevant() }
 
     private fun observeSynchronizerError() {
         applicationScope.launch {

@@ -4,6 +4,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
+import co.electriccoin.zcash.preference.EncryptedPreferenceProvider
+import co.electriccoin.zcash.preference.StandardPreferenceProvider
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.repository.BiometricRepository
@@ -19,10 +21,15 @@ import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.component.SeedTextState
 import co.electriccoin.zcash.ui.design.util.stringRes
+import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
+import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.restore.info.SeedInfo
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
@@ -38,8 +45,21 @@ class WalletBackupViewModel(
     private val navigationRouter: NavigationRouter,
     private val onUserSavedWalletBackup: OnUserSavedWalletBackupUseCase,
     private val remindWalletBackupLater: RemindWalletBackupLaterUseCase,
-    private val biometricRepository: BiometricRepository
+    private val biometricRepository: BiometricRepository,
+    private val standardPreferenceProvider: StandardPreferenceProvider,
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
 ) : ViewModel() {
+
+    /** Drives the PIN entry overlay shown over the seed screen when auth method is PIN. */
+    sealed class PinVerifyState {
+        object Idle : PinVerifyState()
+        object Required : PinVerifyState()
+        object Error : PinVerifyState()
+    }
+
+    private val _pinVerifyState = MutableStateFlow<PinVerifyState>(PinVerifyState.Idle)
+    val pinVerifyState: StateFlow<PinVerifyState> = _pinVerifyState.asStateFlow()
+
     private val lockoutDuration =
         walletBackupMessageUseCase
             .observe()
@@ -153,26 +173,61 @@ class WalletBackupViewModel(
     private fun onRevealClick() =
         viewModelScope.launch {
             if (!isRevealed.value) {
-                try {
-                    biometricRepository.requestBiometrics(
-                        BiometricRequest(
-                            message =
-                                stringRes(
-                                    R.string.authentication_system_ui_subtitle,
-                                    stringRes(R.string.authentication_use_case_seed_recovery)
+                val authMethod = StandardPreferenceKeys.AUTH_METHOD.getValue(standardPreferenceProvider())
+                when (authMethod) {
+                    "biometric" -> {
+                        try {
+                            biometricRepository.requestBiometrics(
+                                BiometricRequest(
+                                    message =
+                                        stringRes(
+                                            R.string.authentication_system_ui_subtitle,
+                                            stringRes(R.string.authentication_use_case_seed_recovery)
+                                        )
                                 )
-                        )
-                    )
-                    isRevealed.update { !it }
-                } catch (_: BiometricsFailureException) {
-                    // do nothing
-                } catch (_: BiometricsCancelledException) {
-                    // do nothing
+                            )
+                            isRevealed.update { !it }
+                        } catch (_: BiometricsFailureException) {
+                            // User failed biometric — stay hidden
+                        } catch (_: BiometricsCancelledException) {
+                            // User cancelled — stay hidden
+                        }
+                    }
+                    "pin" -> {
+                        _pinVerifyState.value = PinVerifyState.Required
+                    }
+                    else -> {
+                        // No auth configured — reveal directly
+                        isRevealed.update { !it }
+                    }
                 }
             } else {
                 isRevealed.update { !it }
             }
         }
+
+    /**
+     * Called by the UI when the user submits a PIN on the [PinVerifyState.Required] overlay.
+     * Verifies against the stored hash; on success reveals the seed phrase.
+     */
+    fun onPinSubmitted(pin: String) {
+        viewModelScope.launch {
+            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
+            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
+                isRevealed.value = true
+                _pinVerifyState.value = PinVerifyState.Idle
+            } else {
+                _pinVerifyState.value = PinVerifyState.Error
+                delay(1_500)
+                _pinVerifyState.value = PinVerifyState.Required
+            }
+        }
+    }
+
+    /** Called by the UI when the user cancels out of the PIN overlay. */
+    fun onPinEntryDismissed() {
+        _pinVerifyState.value = PinVerifyState.Idle
+    }
 
     private fun onInfoClick() {
         navigationRouter.forward(SeedInfo)

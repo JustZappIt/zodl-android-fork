@@ -13,7 +13,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import cash.z.ecc.android.sdk.ext.ZcashDecimalFormatSymbols
 import cash.z.ecc.android.sdk.model.Zatoshi
 import co.electriccoin.zcash.ui.design.R
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
@@ -97,7 +96,7 @@ private fun splitBalance(zatoshi: Zatoshi): Pair<String, String> {
         balance
             .indexOf(
                 startIndex = 0,
-                char = ZcashDecimalFormatSymbols(locale).decimalSeparator,
+                char = DecimalFormatSymbols(locale).decimalSeparator,
                 ignoreCase = true
             ).let { separatorPosition ->
                 if (separatorPosition + CUT_POSITION_OFFSET < balance.length) {

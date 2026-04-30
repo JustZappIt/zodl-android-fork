@@ -34,7 +34,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cash.z.ecc.android.sdk.ext.ZcashDecimalFormatSymbols
 import cash.z.ecc.android.sdk.ext.convertZatoshiToZec
 import cash.z.ecc.android.sdk.model.Zatoshi
 import cash.z.ecc.android.sdk.model.fromZecString
@@ -341,9 +340,9 @@ private fun RequestAmountKeyboardView(
                 onClick = { state.onAmount(OnAmount.Number(KEYBOARD_SEVEN)) }
             )
             RequestAmountKeyboardTextButton(
-                text = ZcashDecimalFormatSymbols(locale).decimalSeparator.toString(),
+                text = DecimalFormatSymbols(locale).decimalSeparator.toString(),
                 onClick = {
-                    state.onAmount(OnAmount.Separator(ZcashDecimalFormatSymbols(locale).decimalSeparator.toString()))
+                    state.onAmount(OnAmount.Separator(DecimalFormatSymbols(locale).decimalSeparator.toString()))
                 }
             )
         }

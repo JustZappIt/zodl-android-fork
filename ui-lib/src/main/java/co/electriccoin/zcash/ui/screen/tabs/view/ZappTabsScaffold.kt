@@ -62,6 +62,7 @@ fun ZappTabsScaffold(
             )
             isOnboardingCompleted == false -> ZappOnboardingFlow(
                 onComplete = { welcomeGateVM.completeOnboarding() },
+                onBackToWelcome = { welcomeGateVM.undoDismissWelcome() },
                 walletViewModel = walletViewModel,
                 chatViewModel = koinViewModel(),
                 navigationRouter = navigationRouter,

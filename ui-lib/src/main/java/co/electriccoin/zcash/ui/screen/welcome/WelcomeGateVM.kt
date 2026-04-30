@@ -58,4 +58,14 @@ class WelcomeGateVM(
             )
         }
     }
+
+    /** Resets the welcome gate so it re-appears (used when backing out of onboarding). */
+    fun undoDismissWelcome() {
+        viewModelScope.launch {
+            StandardPreferenceKeys.IS_WELCOME_DISMISSED.putValue(
+                preferenceProvider = standardPreferenceProvider(),
+                newValue = false,
+            )
+        }
+    }
 }

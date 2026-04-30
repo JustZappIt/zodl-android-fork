@@ -160,7 +160,7 @@ internal fun WrapSend(
             // Default amount state
             mutableStateOf(
                 AmountState.newFromZec(
-                    value = zecSend?.amount?.toZecString(locale) ?: "",
+                    value = zecSend?.amount?.toZecString() ?: "",
                     fiatValue = "",
                     isTransparentOrTextRecipient =
                         recipientAddressState.type?.let { it == AddressType.Transparent }

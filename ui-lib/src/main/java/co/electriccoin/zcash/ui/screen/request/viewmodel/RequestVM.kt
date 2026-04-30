@@ -3,7 +3,6 @@ package co.electriccoin.zcash.ui.screen.request.viewmodel
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cash.z.ecc.android.sdk.ext.ZcashDecimalFormatSymbols
 import cash.z.ecc.android.sdk.model.FiatCurrencyConversion
 import cash.z.ecc.android.sdk.model.WalletAddress
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
@@ -58,8 +57,8 @@ class RequestVM(
         private const val DEFAULT_URI = ""
     }
 
-    private val decimalFormatSymbols: ZcashDecimalFormatSymbols
-        get() = ZcashDecimalFormatSymbols(application.resources.configuration.getPreferredLocale())
+    private val decimalFormatSymbols: DecimalFormatSymbols
+        get() = DecimalFormatSymbols(application.resources.configuration.getPreferredLocale())
 
     private val decimal: String
         get() = Regex.escape(decimalFormatSymbols.decimalSeparator.toString())

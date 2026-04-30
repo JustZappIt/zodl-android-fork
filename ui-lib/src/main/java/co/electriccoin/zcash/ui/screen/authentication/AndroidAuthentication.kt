@@ -16,6 +16,7 @@ import co.electriccoin.zcash.ui.common.viewmodel.AuthenticationResult
 import co.electriccoin.zcash.ui.common.viewmodel.AuthenticationViewModel
 import co.electriccoin.zcash.ui.screen.authentication.view.AppAccessAuthentication
 import co.electriccoin.zcash.ui.screen.authentication.view.AuthenticationErrorDialog
+import co.electriccoin.zcash.ui.screen.onboarding.view.PinVerifyScreen
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val APP_ACCESS_TRIGGER_DELAY = 0
@@ -85,6 +86,22 @@ private fun WrapSendFundsAuth(
 ) {
     val authenticationViewModel = koinActivityViewModel<AuthenticationViewModel>()
 
+    val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
+    val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
+
+    // PIN auth overlay — takes priority over the system biometric dialog.
+    if (showPinEntry) {
+        PinVerifyScreen(
+            hasError = pinEntryError,
+            onPinSubmit = { pin -> authenticationViewModel.submitPin(pin) },
+            onCancel = {
+                authenticationViewModel.cancelPinEntry()
+                onCancel()
+            }
+        )
+        return
+    }
+
     val authenticationResult =
         authenticationViewModel.authenticationResult
             .collectAsStateWithLifecycle(initialValue = AuthenticationResult.None)
@@ -123,7 +140,6 @@ private fun WrapSendFundsAuth(
             }
             AuthenticationErrorDialog(
                 onDismiss = {
-                    // Reset authentication states
                     authenticationViewModel.resetAuthenticationResult()
                     onCancel()
                 },
@@ -164,8 +180,21 @@ private fun WrapAppAccessAuth(
 ) {
     val authenticationViewModel = koinActivityViewModel<AuthenticationViewModel>()
 
-    val welcomeAnimVisibility = authenticationViewModel.showWelcomeAnimation.collectAsStateWithLifecycle().value
+    val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
+    val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
 
+    // PIN auth overlay — takes priority over the welcome animation.
+    // No back button: app-open auth is mandatory and cannot be dismissed.
+    if (showPinEntry) {
+        PinVerifyScreen(
+            hasError = pinEntryError,
+            showBack = false,
+            onPinSubmit = { pin -> authenticationViewModel.submitPin(pin) },
+        )
+        return
+    }
+
+    val welcomeAnimVisibility = authenticationViewModel.showWelcomeAnimation.collectAsStateWithLifecycle().value
     val authFailed = authenticationViewModel.authFailed.collectAsStateWithLifecycle().value
 
     AppAccessAuthentication(
