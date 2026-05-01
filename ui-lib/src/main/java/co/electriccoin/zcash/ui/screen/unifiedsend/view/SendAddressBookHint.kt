@@ -1,4 +1,4 @@
-package co.electriccoin.zcash.ui.screen.send.view
+package co.electriccoin.zcash.ui.screen.unifiedsend.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box

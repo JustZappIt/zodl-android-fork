@@ -19,7 +19,7 @@ import co.electriccoin.zcash.ui.screen.scan.ScanArgs
 import co.electriccoin.zcash.ui.screen.scan.ScanFlow.ADDRESS_BOOK
 import co.electriccoin.zcash.ui.screen.scan.ScanFlow.HOMEPAGE
 import co.electriccoin.zcash.ui.screen.scan.ScanFlow.SEND
-import co.electriccoin.zcash.ui.screen.send.Send
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
 import co.electriccoin.zcash.ui.screen.texunsupported.TEXUnsupportedArgs
 
 class OnZip321ScannedUseCase(
@@ -86,7 +86,7 @@ class OnZip321ScannedUseCase(
                             ?.let { listOf(it) }
                 )
             )
-            navigationRouter.replace(Send(), ReviewTransactionArgs)
+            navigationRouter.replace(UnifiedSendArgs(), ReviewTransactionArgs)
         } catch (_: TexUnsupportedOnKSException) {
             navigationRouter.forward(TEXUnsupportedArgs)
             keystoneProposalRepository.clear()
@@ -97,7 +97,7 @@ class OnZip321ScannedUseCase(
             navigationRouter.replace(InsufficientFundsArgs)
         } catch (_: TransactionProposalNotCreatedException) {
             prefillSend.requestFromZip321(zip321.payment)
-            navigationRouter.replace(Send())
+            navigationRouter.replace(UnifiedSendArgs())
             zashiProposalRepository.clear()
             keystoneProposalRepository.clear()
         } catch (e: Exception) {

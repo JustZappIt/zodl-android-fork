@@ -9,9 +9,8 @@ import co.electriccoin.zcash.ui.common.model.ZashiAccount
 import co.electriccoin.zcash.ui.common.repository.KeystoneProposalRepository
 import co.electriccoin.zcash.ui.common.repository.SwapRepository
 import co.electriccoin.zcash.ui.common.repository.ZashiProposalRepository
-import co.electriccoin.zcash.ui.screen.pay.PayArgs
-import co.electriccoin.zcash.ui.screen.send.Send
 import co.electriccoin.zcash.ui.screen.swap.SwapArgs
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
 
 class CancelProposalFlowUseCase(
     private val zashiProposalRepository: ZashiProposalRepository,
@@ -39,12 +38,12 @@ class CancelProposalFlowUseCase(
 
             is ExactOutputSwapTransactionProposal -> {
                 swapRepository.clearQuote()
-                navigationRouter.backTo(PayArgs::class)
+                navigationRouter.backTo(UnifiedSendArgs::class)
             }
 
             else -> {
                 if (clearSendForm) observeClearSend.requestClear()
-                navigationRouter.backTo(Send::class)
+                navigationRouter.backTo(UnifiedSendArgs::class)
             }
         }
     }

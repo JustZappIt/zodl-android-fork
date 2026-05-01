@@ -90,6 +90,7 @@ android {
                     "src/main/res/ui/tor",
                     "src/main/res/ui/peer_onramp",
                     "src/main/res/ui/offramp",
+                    "src/main/res/ui/unified_send",
                 )
             )
         }

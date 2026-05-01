@@ -7,7 +7,7 @@ import co.electriccoin.zcash.ui.screen.scan.ScanArgs
 import co.electriccoin.zcash.ui.screen.scan.ScanFlow.ADDRESS_BOOK
 import co.electriccoin.zcash.ui.screen.scan.ScanFlow.HOMEPAGE
 import co.electriccoin.zcash.ui.screen.scan.ScanFlow.SEND
-import co.electriccoin.zcash.ui.screen.send.Send
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
 
 class OnAddressScannedUseCase(
     private val navigationRouter: NavigationRouter,
@@ -31,18 +31,7 @@ class OnAddressScannedUseCase(
             }
 
             HOMEPAGE -> {
-                navigationRouter.replace(
-                    Send(
-                        address,
-                        when (addressType) {
-                            AddressType.Shielded -> cash.z.ecc.sdk.model.AddressType.UNIFIED
-                            AddressType.Tex -> cash.z.ecc.sdk.model.AddressType.TEX
-                            AddressType.Transparent -> cash.z.ecc.sdk.model.AddressType.TRANSPARENT
-                            AddressType.Unified -> cash.z.ecc.sdk.model.AddressType.UNIFIED
-                            else -> cash.z.ecc.sdk.model.AddressType.UNIFIED
-                        }
-                    )
-                )
+                navigationRouter.replace(UnifiedSendArgs(recipientAddress = address))
             }
         }
     }

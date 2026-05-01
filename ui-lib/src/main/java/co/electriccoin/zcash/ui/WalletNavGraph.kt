@@ -85,10 +85,8 @@ import co.electriccoin.zcash.ui.screen.integrations.IntegrationsArgs
 import co.electriccoin.zcash.ui.screen.integrations.IntegrationsScreen
 import co.electriccoin.zcash.ui.screen.more.MoreArgs
 import co.electriccoin.zcash.ui.screen.more.MoreScreen
-import co.electriccoin.zcash.ui.screen.pay.PayArgs
-import co.electriccoin.zcash.ui.screen.pay.PayScreen
-import co.electriccoin.zcash.ui.screen.pay.info.PayInfoArgs
-import co.electriccoin.zcash.ui.screen.pay.info.PayInfoScreen
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendScreen
 import co.electriccoin.zcash.ui.screen.qrcode.QrCodeScreen
 import co.electriccoin.zcash.ui.screen.receive.ReceiveAddressType
 import co.electriccoin.zcash.ui.screen.receive.ReceiveArgs
@@ -132,8 +130,6 @@ import co.electriccoin.zcash.ui.screen.scankeystone.WrapScanKeystonePCZTRequest
 import co.electriccoin.zcash.ui.screen.scankeystone.WrapScanKeystoneSignInRequest
 import co.electriccoin.zcash.ui.screen.selectkeystoneaccount.AndroidSelectKeystoneAccount
 import co.electriccoin.zcash.ui.screen.selectkeystoneaccount.SelectKeystoneAccount
-import co.electriccoin.zcash.ui.screen.send.Send
-import co.electriccoin.zcash.ui.screen.send.WrapSend
 import co.electriccoin.zcash.ui.screen.signkeystonetransaction.SignKeystoneTransactionArgs
 import co.electriccoin.zcash.ui.screen.signkeystonetransaction.SignKeystoneTransactionScreen
 import co.electriccoin.zcash.ui.screen.swap.SwapArgs
@@ -275,7 +271,6 @@ fun NavGraphBuilder.walletNavGraph(
         dialogComposable<TransactionNote> { AndroidTransactionNote(it.toRoute()) }
         composable<TaxExport> { AndroidTaxExport() }
         composable<ReceiveArgs> { ReceiveScreen() }
-        composable<Send> { WrapSend(it.toRoute()) }
         dialogComposable<TEXUnsupportedArgs> { AndroidTEXUnsupported() }
         dialogComposable<InsufficientFundsArgs> { InsufficientFundsScreen() }
         dialogComposable<OfframpArgs> { OfframpScreen(it.toRoute()) }
@@ -310,8 +305,7 @@ fun NavGraphBuilder.walletNavGraph(
         dialogComposable<ShieldedAddressInfoArgs> { ShieldedAddressInfoScreen() }
         dialogComposable<TransparentAddressInfoArgs> { TransparentAddressInfoScreen() }
         composable<ExchangeRateOptInArgs> { ExchangeRateOptInScreen() }
-        composable<PayArgs> { PayScreen() }
-        dialogComposable<PayInfoArgs> { PayInfoScreen() }
+        composable<UnifiedSendArgs> { UnifiedSendScreen(it.toRoute()) }
         composable<ORSwapConfirmationArgs> { ORSwapConfirmationScreen() }
         composable<SwapDetailArgs> { SwapDetailScreen(it.toRoute()) }
         dialogComposable<SwapRefundAddressInfoArgs> { SwapRefundAddressInfoScreen() }
