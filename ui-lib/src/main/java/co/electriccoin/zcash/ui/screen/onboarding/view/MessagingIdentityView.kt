@@ -89,8 +89,8 @@ fun UsernameEntryScreen(
     val isValid = isLong && isShort && isClean && username.isNotEmpty()
 
     OnbScreen(
-        step = 2,
-        ghostNum = 2,
+        step = 1,
+        ghostNum = 1,
         badge = "Part 1 · Username",
         cta = "Continue",
         ctaEnabled = isValid,

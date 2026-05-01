@@ -32,7 +32,7 @@ import co.electriccoin.zcash.ui.design.theme.ZappTheme
 @Composable
 fun OnbProgress(
     step: Int,
-    total: Int = 5,
+    total: Int = 3,
     modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
@@ -134,14 +134,29 @@ fun OnbBottomDock(
                         .border(1.dp, c.border, RectangleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    BasicText(
-                        text = "←",
-                        style = ZappTheme.typography.button.copy(
-                            color = c.text,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 18.sp,
-                        ),
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        BasicText(
+                            text = "←",
+                            style = ZappTheme.typography.button.copy(
+                                color = c.text,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                            ),
+                        )
+                        if (!showCta) {
+                            BasicText(
+                                text = "back",
+                                style = ZappTheme.typography.button.copy(
+                                    color = c.textSubtle,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 15.sp,
+                                ),
+                            )
+                        }
+                    }
                 }
             }
             if (showCta) {

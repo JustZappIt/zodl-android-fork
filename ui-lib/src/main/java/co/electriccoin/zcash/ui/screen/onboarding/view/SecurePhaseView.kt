@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicText
@@ -45,47 +46,59 @@ fun TwoFAChoiceScreen(
     onBack: () -> Unit,
     onPick: (TwoFAMode) -> Unit,
 ) {
-    OnbScreen(
-        step = 6,
-        ghostNum = 9,
-        badge = "Part 3 of 3 · Secure Zapp",
-        cta = "",
-        onCta = {},
-        showBack = true,
-        onBack = onBack,
-        showCta = false,
+    val c = ZappTheme.colors
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(WindowInsets.statusBars),
     ) {
-        OnbHero(text = "Secure\nyour app")
-        Spacer(Modifier.height(14.dp))
-        OnbSub("Choose how you unlock Zapp and authorise payments.")
-        Spacer(Modifier.height(28.dp))
-
-        // Each tile carries its own 1dp border (no shared list-card frame).
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OnbActionRow(
-                action = OnbAction(
-                    icon = "◎",
-                    label = "Biometric",
-                    sub = "Fingerprint or face — fastest",
-                    onClick = { onPick(TwoFAMode.Bio) },
-                    highlight = true,
+        Box(modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp)) {
+            OnbProgress(step = 3)
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(start = 28.dp, end = 28.dp, top = 24.dp),
+        ) {
+            GhostNum(n = 3, modifier = Modifier.align(Alignment.TopEnd))
+            Column(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()) {
+                Eyebrow("Part 3 of 3 · Secure Zapp")
+                Spacer(Modifier.height(14.dp))
+                OnbHero(text = "Secure\nyour app")
+                Spacer(Modifier.height(14.dp))
+                OnbSub("Choose how you unlock Zapp and authorise payments.")
+            }
+            OnbActionListCard(
+                actions = listOf(
+                    OnbAction(
+                        icon = "◎",
+                        label = "Biometric",
+                        sub = "Fingerprint or face — fastest",
+                        onClick = { onPick(TwoFAMode.Bio) },
+                        highlight = true,
+                    ),
+                    OnbAction(
+                        icon = "✱",
+                        label = "6-digit PIN",
+                        sub = "A passcode you remember",
+                        onClick = { onPick(TwoFAMode.Pin) },
+                    ),
                 ),
                 modifier = Modifier
+                    .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .border(1.dp, ZappTheme.colors.border, RectangleShape),
-            )
-            OnbActionRow(
-                action = OnbAction(
-                    icon = "✱",
-                    label = "6-digit PIN",
-                    sub = "A passcode you remember",
-                    onClick = { onPick(TwoFAMode.Pin) },
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, ZappTheme.colors.border, RectangleShape),
+                    .padding(bottom = 16.dp),
             )
         }
+        OnbBottomDock(
+            cta = "",
+            onCta = {},
+            showBack = false,
+            showCta = false,
+            noBorder = true,
+        )
     }
 }
 
@@ -116,7 +129,7 @@ fun BioScanScreen(
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         Box(modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp)) {
-            OnbProgress(step = 6)
+            OnbProgress(step = 3)
         }
         Box(
             modifier = Modifier
@@ -262,6 +275,7 @@ fun PinVerifyScreen(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
+                    .let { if (!showBack) it.windowInsetsPadding(WindowInsets.navigationBars) else it }
                     .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -350,7 +364,7 @@ fun PinSetupScreen(
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         Box(modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp)) {
-            OnbProgress(step = 6)
+            OnbProgress(step = 3)
         }
         Box(
             modifier = Modifier
@@ -358,7 +372,7 @@ fun PinSetupScreen(
                 .fillMaxWidth()
                 .padding(start = 28.dp, end = 28.dp, top = 24.dp),
         ) {
-            GhostNum(n = 9, modifier = Modifier.align(Alignment.TopEnd))
+            GhostNum(n = 3, modifier = Modifier.align(Alignment.TopEnd))
             // Hero text at the top
             Column(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()) {
                 Eyebrow("Part 3 of 3 · Secure Zapp")

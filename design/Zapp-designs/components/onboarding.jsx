@@ -3,7 +3,7 @@
 
 const MSG_SEED    = ['river','anchor','willow','lantern','silver','harbor','maple','breeze','copper','quartz','canyon','ember'];
 const WALLET_SEED = ['forest','orange','mellow','signal','rapid','corner','voyage','flame','beach','candle','prism','quiet'];
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 3;
 
 const OnbProgress = ({ t, step, total }) => (
   <div style={{ display:'flex', gap:3, flexShrink:0 }}>
