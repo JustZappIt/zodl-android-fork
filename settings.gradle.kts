@@ -387,7 +387,7 @@ project(":bare-kit").projectDir = file("../bare-kit/android")
 
 val zcashSdkIncludedBuildPath = extra["SDK_INCLUDED_BUILD_PATH"].toString()
 
-if (zcashSdkIncludedBuildPath.isNotEmpty()) {
+if (zcashSdkIncludedBuildPath.isNotEmpty() && file(zcashSdkIncludedBuildPath).exists()) {
     logger.lifecycle("The SDK will be used from $zcashSdkIncludedBuildPath instead of Maven Central.")
     includeBuild(zcashSdkIncludedBuildPath) {
         dependencySubstitution {
@@ -399,7 +399,7 @@ if (zcashSdkIncludedBuildPath.isNotEmpty()) {
 
 val bip39IncludedBuildPath = extra["BIP_39_INCLUDED_BUILD_PATH"].toString()
 
-if (bip39IncludedBuildPath.isNotEmpty()) {
+if (bip39IncludedBuildPath.isNotEmpty() && file(bip39IncludedBuildPath).exists()) {
     logger.lifecycle("BIP-39 will be used from $bip39IncludedBuildPath instead of Maven Central.")
     includeBuild(bip39IncludedBuildPath) {
         dependencySubstitution {

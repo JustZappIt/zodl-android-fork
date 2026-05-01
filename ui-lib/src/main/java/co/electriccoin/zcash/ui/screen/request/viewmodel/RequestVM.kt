@@ -20,7 +20,7 @@ import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
 import co.electriccoin.zcash.ui.design.util.getPreferredLocale
 import co.electriccoin.zcash.ui.screen.qrcode.ext.fromReceiveAddressType
 import co.electriccoin.zcash.ui.screen.receive.ReceiveAddressType
-import co.electriccoin.zcash.ui.screen.request.ext.convertToDouble
+import co.electriccoin.zcash.ui.screen.request.ext.toBigDecimalLocalized
 import co.electriccoin.zcash.ui.screen.request.model.AmountState
 import co.electriccoin.zcash.ui.screen.request.model.MemoState
 import co.electriccoin.zcash.ui.screen.request.model.OnAmount
@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.math.MathContext
 import java.text.DecimalFormatSymbols
 
 @Suppress("TooManyFunctions")
@@ -60,7 +61,7 @@ class RequestVM(
         get() = DecimalFormatSymbols(application.resources.configuration.getPreferredLocale())
 
     private val decimal: String
-        get() = Regex.escape(decimalFormatSymbols.monetaryDecimalSeparator.toString())
+        get() = Regex.escape(decimalFormatSymbols.decimalSeparator.toString())
 
     private val grouping: String
         get() = Regex.escape(decimalFormatSymbols.groupingSeparator.toString())
@@ -302,19 +303,22 @@ class RequestVM(
             }
 
         // Check for max Zcash supply
-        return newAmount.amount.convertToDouble(application)?.let { currentValue ->
-            val zecValue =
-                if (newAmount.currency == RequestCurrency.FIAT && conversion != null) {
-                    currentValue / conversion.priceOfZec
+        return newAmount.amount
+            .toBigDecimalLocalized(
+                application.resources.configuration.getPreferredLocale()
+            )?.let { currentValue ->
+                val zecValue =
+                    if (newAmount.currency == RequestCurrency.FIAT && conversion != null) {
+                        currentValue.divide(conversion.priceOfZec.toBigDecimal(), MathContext.DECIMAL128)
+                    } else {
+                        currentValue
+                    }
+                if (zecValue > MAX_ZCASH_SUPPLY.toBigDecimal()) {
+                    newAmount.copy(amount = request.value.amountState.amount)
                 } else {
-                    currentValue
+                    newAmount
                 }
-            if (zecValue > MAX_ZCASH_SUPPLY) {
-                newAmount.copy(amount = request.value.amountState.amount)
-            } else {
-                newAmount
-            }
-        } ?: newAmount
+            } ?: newAmount
     }
 
     internal fun onBack() {
@@ -344,7 +348,10 @@ class RequestVM(
                 when (it.amountState.currency) {
                     RequestCurrency.FIAT -> {
                         if (conversion != null) {
-                            it.amountState.toZecStringFloored(conversion, application)
+                            it.amountState.toZecStringFloored(
+                                conversion,
+                                application
+                            )
                         } else {
                             Twig.error { "Unexpected screen state" }
                             it.amountState.amount
@@ -391,7 +398,10 @@ class RequestVM(
                 when (it.amountState.currency) {
                     RequestCurrency.FIAT -> {
                         if (conversion != null) {
-                            it.amountState.toZecStringFloored(conversion, application)
+                            it.amountState.toZecStringFloored(
+                                conversion,
+                                application
+                            )
                         } else {
                             Twig.error { "Unexpected screen state" }
                             it.amountState.amount
@@ -438,7 +448,10 @@ class RequestVM(
                     }
 
                     RequestCurrency.ZEC -> {
-                        it.amountState.toZecString(conversion, application)
+                        it.amountState.toZecString(
+                            conversion,
+                            application
+                        )
                     }
                 }
 
@@ -461,7 +474,8 @@ class RequestVM(
         memo: String,
         zip321BuildUriUseCase: Zip321BuildUriUseCase,
     ): String {
-        val amountNumber = amount.convertToDouble(application)?.toBigDecimal()
+        val locale = application.resources.configuration.getPreferredLocale()
+        val amountNumber = amount.toBigDecimalLocalized(locale)
         return if (amountNumber == null) {
             Twig.error { "Unexpected amount state" }
             DEFAULT_URI

@@ -4,6 +4,7 @@ import co.electriccoin.zcash.preference.model.entry.BooleanPreferenceDefault
 import co.electriccoin.zcash.preference.model.entry.IntegerPreferenceDefault
 import co.electriccoin.zcash.preference.model.entry.LongPreferenceDefault
 import co.electriccoin.zcash.preference.model.entry.PreferenceKey
+import co.electriccoin.zcash.preference.model.entry.StringPreferenceDefault
 import co.electriccoin.zcash.ui.common.model.OnboardingState
 
 object StandardPreferenceKeys {
@@ -59,5 +60,15 @@ object StandardPreferenceKeys {
         LongPreferenceDefault(
             PreferenceKey("LATEST_APP_BACKGROUND_TIME_MILLIS"),
             Long.MAX_VALUE
+        )
+
+    /**
+     * Which 2FA method the user chose during onboarding.
+     * Values: "biometric", "pin", "none" (skipped or not yet set).
+     */
+    val AUTH_METHOD =
+        StringPreferenceDefault(
+            PreferenceKey("auth_method"),
+            "none"
         )
 }

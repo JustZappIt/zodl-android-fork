@@ -62,6 +62,7 @@ fun ZappTabsScaffold(
             )
             isOnboardingCompleted == false -> ZappOnboardingFlow(
                 onComplete = { welcomeGateVM.completeOnboarding() },
+                onBackToWelcome = { welcomeGateVM.undoDismissWelcome() },
                 walletViewModel = walletViewModel,
                 chatViewModel = koinViewModel(),
                 navigationRouter = navigationRouter,
@@ -99,8 +100,6 @@ private fun ZappTabsScaffoldContent(
                 onNewMessage = {
                     navigationRouter.forward(NewConversationArgs)
                 },
-                onNavigateToContacts = { currentTab = ZappTab.CONTACTS },
-                onNavigateToSettings = { currentTab = ZappTab.SETTINGS }
             )
             ZappTab.CONTACTS -> ContactsTabContent(
                 chatViewModel = chatViewModel,
@@ -133,8 +132,6 @@ private fun ChatsTabContent(
     chatViewModel: ChatViewModel,
     onOpenConversation: (String) -> Unit,
     onNewMessage: () -> Unit,
-    onNavigateToContacts: () -> Unit,
-    onNavigateToSettings: () -> Unit
 ) {
     val isInitializing by chatViewModel.isInitializing.collectAsState()
     val identity by chatViewModel.identity.collectAsState()
@@ -159,8 +156,6 @@ private fun ChatsTabContent(
                     onOpenConversation(conversation.id)
                 },
                 onNewMessage = onNewMessage,
-                onNavigateToSettings = onNavigateToSettings,
-                onNavigateToContacts = onNavigateToContacts,
                 onNavigateBack = {},
                 showBackButton = false,
                 viewModel = chatViewModel,

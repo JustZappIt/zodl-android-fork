@@ -24,7 +24,7 @@ class CameraCaptureState(
         val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
         val uri = FileProvider.getUriForFile(
             context,
-            "co.electriccoin.zcash.provider",
+            "${context.packageName}.provider",
             file
         )
         pendingUri = uri

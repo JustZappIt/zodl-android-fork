@@ -37,6 +37,6 @@ class FileShareUtilTest {
             FileShareUtil.SHARE_OUTSIDE_THE_APP_FLAGS or FileShareUtil.SHARE_CONTENT_PERMISSION_FLAGS,
             intent.flags
         )
-        assertContains(FileShareUtil.ZASHI_INTERNAL_DATA_AUTHORITY, intent.data.toString())
+        assertContains(FileShareUtil.fileProviderAuthority(getAppContext()), intent.data.toString())
     }
 }

@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cash.z.ecc.android.sdk.model.Zatoshi
-import cash.z.ecc.sdk.extension.toZecStringFull
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
 import co.electriccoin.zcash.ui.design.component.chart.SparkChart
@@ -56,8 +55,12 @@ import co.electriccoin.zcash.ui.design.component.zapp.ZappSectionLabel
 import co.electriccoin.zcash.ui.design.component.zapp.ZappSegmentedSelector
 import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
+import androidx.compose.ui.platform.LocalContext
 import co.electriccoin.zcash.ui.design.theme.colors.ZappNavBar
+import co.electriccoin.zcash.ui.design.util.TickerLocation
+import co.electriccoin.zcash.ui.design.util.getString
 import co.electriccoin.zcash.ui.design.util.getValue
+import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetArgs
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetState
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetVM
@@ -226,8 +229,6 @@ private fun BalanceCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(c.surfaceAlt, RectangleShape)
-            .border(BorderStroke(1.dp, c.border), RectangleShape)
             .padding(horizontal = 20.dp, vertical = 18.dp),
     ) {
         ZappSectionLabel(text = "Total balance")
@@ -253,8 +254,9 @@ private fun BalanceCard(
 private fun BalanceAmount(balanceState: BalanceWidgetState) {
     val c = ZappTheme.colors
     val fiat = balanceState.toFiatFormatted()
-    val zec = remember(balanceState.totalBalance) {
-        balanceState.totalBalance.toZecStringFull()
+    val context = LocalContext.current
+    val zec = remember(balanceState.totalBalance, context) {
+        stringRes(balanceState.totalBalance, TickerLocation.HIDDEN).getString(context)
     }
 
     // Swiss display style — Black weight, oversized, tight tracking — matches

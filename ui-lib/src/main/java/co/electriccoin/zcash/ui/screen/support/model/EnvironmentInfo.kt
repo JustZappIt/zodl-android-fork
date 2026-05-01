@@ -31,7 +31,7 @@ data class EnvironmentInfo(
             val separators =
                 MonetarySeparators(
                     grouping = symbols.groupingSeparator,
-                    decimal = symbols.monetaryDecimalSeparator
+                    decimal = symbols.decimalSeparator
                 )
 
             return EnvironmentInfo(

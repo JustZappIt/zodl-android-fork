@@ -10,12 +10,14 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
+import co.electriccoin.zcash.preference.EncryptedPreferenceProvider
 import co.electriccoin.zcash.preference.StandardPreferenceProvider
 import co.electriccoin.zcash.preference.model.entry.BooleanPreferenceDefault
 import co.electriccoin.zcash.spackle.AndroidApiVersion
 import co.electriccoin.zcash.spackle.Twig
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.provider.GetVersionInfoProvider
+import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.authentication.AuthenticationUseCase
 import kotlinx.coroutines.delay
@@ -42,6 +44,7 @@ class AuthenticationViewModel(
     private val biometricManager: BiometricManager,
     private val getVersionInfo: GetVersionInfoProvider,
     private val standardPreferenceProvider: StandardPreferenceProvider,
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val walletViewModel: WalletViewModel,
 ) : AndroidViewModel(application) {
     private val executor: Executor by lazy { ContextCompat.getMainExecutor(application) }
@@ -90,6 +93,18 @@ class AuthenticationViewModel(
     internal fun setAuthFailed() {
         authFailed.value = true
     }
+
+    /**
+     * True while the in-app PIN entry overlay should be visible.
+     * Set by [authenticate] when the user's auth method is PIN.
+     */
+    internal val showPinEntry: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    /**
+     * True for a brief window after the user submits an incorrect PIN.
+     * The overlay stays visible so the user can retry.
+     */
+    internal val pinEntryError: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     /**
      * App access authentication logic values
@@ -331,8 +346,43 @@ class AuthenticationViewModel(
 
         viewModelScope.launch {
             delay(initialAuthSystemWindowDelay)
+
+            val method = StandardPreferenceKeys.AUTH_METHOD.getValue(standardPreferenceProvider())
+            if (method == "pin") {
+                showPinEntry.value = true
+                return@launch
+            }
+
             biometricPrompt.authenticate(promptInfo)
         }
+    }
+
+    /**
+     * Verifies [pin] against the stored hash. On success, closes the PIN overlay and
+     * emits [AuthenticationResult.Success]. On failure, shows an error indicator briefly
+     * then re-enables entry so the user can retry.
+     */
+    fun submitPin(pin: String) {
+        viewModelScope.launch {
+            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
+            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
+                showPinEntry.value = false
+                authenticationResult.value = AuthenticationResult.Success
+            } else {
+                pinEntryError.value = true
+                delay(1_500)
+                pinEntryError.value = false
+            }
+        }
+    }
+
+    /**
+     * Closes the PIN entry overlay and reports [AuthenticationResult.Canceled].
+     */
+    fun cancelPinEntry() {
+        showPinEntry.value = false
+        pinEntryError.value = false
+        authenticationResult.value = AuthenticationResult.Canceled
     }
 
     private fun getBiometricAuthenticationSupport(allowedAuthenticators: Int): BiometricSupportResult =

@@ -30,6 +30,7 @@ import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 import co.electriccoin.zcash.ui.screen.onboarding.view.BioScanScreen
 import co.electriccoin.zcash.ui.screen.onboarding.view.MessagingPhaseIntro
 import co.electriccoin.zcash.ui.screen.onboarding.view.OnboardingDoneScreen
+import co.electriccoin.zcash.ui.screen.onboarding.view.PinSetupScreen
 import co.electriccoin.zcash.ui.screen.onboarding.view.TwoFAChoiceScreen
 import co.electriccoin.zcash.ui.screen.onboarding.view.TwoFAMode
 import co.electriccoin.zcash.ui.screen.onboarding.view.UsernameEntryScreen
@@ -37,6 +38,7 @@ import co.electriccoin.zcash.ui.screen.onboarding.view.WalletChoiceScreen
 import co.electriccoin.zcash.ui.screen.onboarding.view.WalletPhaseIntro
 import co.electriccoin.zcash.ui.screen.onboarding.view.WalletSeedPhraseScreen
 import co.electriccoin.zcash.ui.screen.restore.seed.RestoreSeedArgs
+import org.koin.androidx.compose.koinViewModel
 
 /** All steps the Swiss onboarding flow walks the user through. */
 private enum class Step {
@@ -47,6 +49,7 @@ private enum class Step {
     WALLET_SEED,
     SECURE_CHOICE,
     BIO_SCAN,
+    PIN_SETUP,
     DONE,
 }
 
@@ -70,32 +73,49 @@ private enum class Step {
 @Composable
 fun ZappOnboardingFlow(
     onComplete: () -> Unit,
+    onBackToWelcome: () -> Unit,
     walletViewModel: WalletViewModel,
     chatViewModel: ChatViewModel,
     navigationRouter: NavigationRouter,
 ) {
     var step by rememberSaveable { mutableStateOf(Step.MSG_INTRO) }
-    var twoFAMode by rememberSaveable { mutableStateOf(TwoFAMode.Pin) }
+    var twoFAMode by rememberSaveable { mutableStateOf(TwoFAMode.Bio) }
     var pendingUsername by rememberSaveable { mutableStateOf("") }
 
     val walletSeed by walletViewModel.currentSeedWords.collectAsStateWithLifecycle()
     val secretState by walletViewModel.secretState.collectAsStateWithLifecycle()
 
-    // Wallet-restore lives outside this composable (RestoreSeedScreen). When it
-    // completes, secretState flips to READY and the user is popped back into
-    // the tabs scaffold, which re-renders this flow at the saved WALLET_CHOICE
-    // step. Auto-advance so they don't have to re-tap "Restore" / "Create".
-    // Effect is keyed only on secretState — step is checked inside but doesn't
-    // need to retrigger the effect on its own changes.
-    LaunchedEffect(secretState) {
+    val securityVM: OnboardingSecurityViewModel = koinViewModel()
+    val bioState by securityVM.bioState.collectAsStateWithLifecycle()
+    val pinSaved by securityVM.pinSaved.collectAsStateWithLifecycle()
+
+    // Auto-advance from WALLET_CHOICE → SECURE_CHOICE whenever a wallet exists.
+    // Keyed on both values so it also fires when the user navigates *back* to
+    // WALLET_CHOICE after the wallet was already created (preventing a second
+    // createNewWallet() call that would crash with SeedNotRelevant).
+    LaunchedEffect(secretState, step) {
         if (secretState == SecretState.READY && step == Step.WALLET_CHOICE) {
             step = Step.SECURE_CHOICE
         }
     }
 
+    // Advance to Done once biometric enrollment succeeds.
+    LaunchedEffect(bioState) {
+        if (bioState is OnboardingSecurityViewModel.BioState.Success && step == Step.BIO_SCAN) {
+            step = Step.DONE
+        }
+    }
+
+    // Advance to Done once PIN is saved.
+    LaunchedEffect(pinSaved) {
+        if (pinSaved && step == Step.PIN_SETUP) {
+            step = Step.DONE
+        }
+    }
+
     when (step) {
         Step.MSG_INTRO -> MessagingPhaseIntro(
-            onBack = onComplete, // back from first step exits onboarding
+            onBack = onBackToWelcome,
             onContinue = { step = Step.MSG_USERNAME },
         )
         Step.MSG_USERNAME -> UsernameEntryScreen(
@@ -139,12 +159,24 @@ fun ZappOnboardingFlow(
             onBack = { step = Step.WALLET_INTRO },
             onPick = { mode ->
                 twoFAMode = mode
-                step = if (mode == TwoFAMode.Bio) Step.BIO_SCAN else Step.DONE
+                step = when (mode) {
+                    TwoFAMode.Bio -> Step.BIO_SCAN
+                    TwoFAMode.Pin -> Step.PIN_SETUP
+                }
             },
         )
         Step.BIO_SCAN -> BioScanScreen(
-            onCancel = { step = Step.SECURE_CHOICE },
-            onDone = { step = Step.DONE },
+            isEnrolling = bioState is OnboardingSecurityViewModel.BioState.Prompting,
+            errorMessage = (bioState as? OnboardingSecurityViewModel.BioState.Error)?.message,
+            onEnroll = { securityVM.triggerBiometricSetup() },
+            onCancel = {
+                securityVM.resetBioError()
+                step = Step.SECURE_CHOICE
+            },
+        )
+        Step.PIN_SETUP -> PinSetupScreen(
+            onBack = { step = Step.SECURE_CHOICE },
+            onPinConfirmed = { pin -> securityVM.savePin(pin) },
         )
         Step.DONE -> OnboardingDoneScreen(
             mode = twoFAMode,

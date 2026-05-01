@@ -22,12 +22,9 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,8 +56,6 @@ import java.util.Locale
 fun ChatListView(
     onConversationClick: (ChatConversation) -> Unit,
     onNewMessage: () -> Unit,
-    onNavigateToSettings: () -> Unit = {},
-    onNavigateToContacts: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
     showBackButton: Boolean = true,
     modifier: Modifier = Modifier,
@@ -89,35 +84,14 @@ fun ChatListView(
             ZappScreenHeader(
                 title = "Chats",
                 right = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        NetworkChip(
-                            connectionStatus = connectionStatus,
-                            peerCount = peerCount,
-                            onClick = {
-                                viewModel.fetchConnectionDetails()
-                                showNetworkSheet = true
-                            },
-                        )
-                        IconButton(onClick = onNavigateToContacts, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                Icons.Default.Contacts,
-                                contentDescription = "Contacts",
-                                tint = c.text,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                        IconButton(onClick = onNavigateToSettings, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                Icons.Default.Settings,
-                                contentDescription = "Settings",
-                                tint = c.text,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
+                    NetworkChip(
+                        connectionStatus = connectionStatus,
+                        peerCount = peerCount,
+                        onClick = {
+                            viewModel.fetchConnectionDetails()
+                            showNetworkSheet = true
+                        },
+                    )
                 },
             )
 

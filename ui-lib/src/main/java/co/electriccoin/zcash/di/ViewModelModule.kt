@@ -3,6 +3,7 @@ package co.electriccoin.zcash.di
 import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarVM
 import co.electriccoin.zcash.ui.screen.welcome.WelcomeGateVM
 import co.electriccoin.zcash.ui.common.viewmodel.AuthenticationViewModel
+import co.electriccoin.zcash.ui.screen.onboarding.OnboardingSecurityViewModel
 import co.electriccoin.zcash.ui.common.viewmodel.OldHomeViewModel
 import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
 import co.electriccoin.zcash.ui.screen.ScreenTimeoutVM
@@ -97,6 +98,7 @@ val viewModelModule =
     module {
         viewModelOf(::WalletViewModel)
         viewModelOf(::AuthenticationViewModel)
+        viewModelOf(::OnboardingSecurityViewModel)
         viewModelOf(::OldHomeViewModel)
         viewModelOf(::StorageCheckViewModel)
         viewModelOf(::RestoreSeedVM)

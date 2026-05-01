@@ -246,9 +246,7 @@ object ZashiNumberTextFieldParser {
     @Suppress("ReturnCount")
     fun toBigDecimalOrNull(input: String, locale: Locale): BigDecimal? {
         val symbols = DecimalFormatSymbols(locale)
-
         if (!isValidNumericWithOptionalDecimalSeparator(input = input, symbols = symbols)) return null
-
         val pattern = (DecimalFormat.getInstance(locale) as? DecimalFormat)?.toPattern()
 
         val decimalFormat =
