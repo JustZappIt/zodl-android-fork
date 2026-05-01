@@ -86,6 +86,16 @@ private fun WrapSendFundsAuth(
 ) {
     val authenticationViewModel = koinActivityViewModel<AuthenticationViewModel>()
 
+    // Start authentication once, before the showPinEntry early-return, so this
+    // LaunchedEffect stays in the composition tree while the PIN overlay is visible.
+    LaunchedEffect(key1 = true) {
+        authenticationViewModel.authenticate(
+            activity = activity,
+            initialAuthSystemWindowDelay = SEND_FUNDS_DELAY.milliseconds,
+            useCase = AuthenticationUseCase.SendFunds
+        )
+    }
+
     val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
     val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
 
@@ -159,15 +169,6 @@ private fun WrapSendFundsAuth(
             )
         }
     }
-
-    // Starting authentication
-    LaunchedEffect(key1 = true) {
-        authenticationViewModel.authenticate(
-            activity = activity,
-            initialAuthSystemWindowDelay = SEND_FUNDS_DELAY.milliseconds,
-            useCase = AuthenticationUseCase.SendFunds
-        )
-    }
 }
 
 @Composable
@@ -179,6 +180,19 @@ private fun WrapAppAccessAuth(
     onFail: () -> Unit,
 ) {
     val authenticationViewModel = koinActivityViewModel<AuthenticationViewModel>()
+
+    // Start authentication once per composition lifetime. Must live outside the
+    // showPinEntry early-return so the LaunchedEffect stays in the composition tree
+    // while the PIN overlay is visible. If it were placed after the return, it would
+    // leave and re-enter the tree each time showPinEntry toggles, causing authenticate()
+    // to fire again after a correct PIN entry and looping the PIN screen back.
+    LaunchedEffect(key1 = true) {
+        authenticationViewModel.authenticate(
+            activity = activity,
+            initialAuthSystemWindowDelay = APP_ACCESS_TRIGGER_DELAY.milliseconds,
+            useCase = AuthenticationUseCase.AppAccess
+        )
+    }
 
     val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
     val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
@@ -248,15 +262,6 @@ private fun WrapAppAccessAuth(
             }
             onFail()
         }
-    }
-
-    // Starting authentication
-    LaunchedEffect(key1 = true) {
-        authenticationViewModel.authenticate(
-            activity = activity,
-            initialAuthSystemWindowDelay = APP_ACCESS_TRIGGER_DELAY.milliseconds,
-            useCase = AuthenticationUseCase.AppAccess
-        )
     }
 }
 
