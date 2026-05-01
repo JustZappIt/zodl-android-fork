@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import co.electriccoin.zcash.ui.NavigationRouter
-import co.electriccoin.zcash.ui.common.usecase.PrefillSendUseCase
 import co.electriccoin.zcash.ui.screen.chat.view.ChatContactsView
 import co.electriccoin.zcash.ui.screen.chat.view.ChatIdentitySetupView
 import co.electriccoin.zcash.ui.screen.chat.view.ChatListView
@@ -20,7 +19,7 @@ import co.electriccoin.zcash.ui.screen.chat.view.ChatSettingsView
 import co.electriccoin.zcash.ui.screen.chat.view.ContactEditView
 import co.electriccoin.zcash.ui.screen.chat.view.NewConversationView
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
-import co.electriccoin.zcash.ui.screen.send.Send
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -96,7 +95,6 @@ fun AndroidChatRoom(
 ) {
     val viewModel: ChatViewModel = koinViewModel()
     val navigationRouter = koinInject<NavigationRouter>()
-    val prefillSend = koinInject<PrefillSendUseCase>()
     val contacts by viewModel.contacts.collectAsState()
     val currentConversation by viewModel.currentConversation.collectAsState()
 
@@ -109,14 +107,7 @@ fun AndroidChatRoom(
             val peerKey = currentConversation?.participantIds?.firstOrNull()
             val peerWalletAddress = peerKey
                 ?.let { key -> contacts.firstOrNull { it.publicKey == key }?.walletAddress }
-            if (peerWalletAddress != null) {
-                prefillSend.request(
-                    co.electriccoin.zcash.ui.common.usecase.PrefillSendData.FromAddressScan(
-                        address = peerWalletAddress
-                    )
-                )
-            }
-            navigationRouter.forward(Send(recipientAddress = peerWalletAddress))
+            navigationRouter.forward(UnifiedSendArgs(recipientAddress = peerWalletAddress))
         },
         viewModel = viewModel
     )

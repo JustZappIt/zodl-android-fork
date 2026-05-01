@@ -39,7 +39,7 @@ import co.electriccoin.zcash.ui.screen.home.tor.EnableTorMessageState
 import co.electriccoin.zcash.ui.screen.home.updating.WalletUpdatingInfo
 import co.electriccoin.zcash.ui.screen.home.updating.WalletUpdatingMessageState
 import co.electriccoin.zcash.ui.screen.restoresuccess.WrapRestoreSuccessArgs
-import co.electriccoin.zcash.ui.screen.send.Send
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
 import co.electriccoin.zcash.ui.screen.tor.optin.TorOptInArgs
 import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
 import kotlinx.coroutines.Job
@@ -270,7 +270,7 @@ class HomeVM(
 
     private fun onBuyButtonClick() = viewModelScope.launch { navigateToPeerOnramp() }
 
-    private fun onSendButtonClick() = navigationRouter.forward(Send())
+    private fun onSendButtonClick() = navigationRouter.forward(UnifiedSendArgs())
 
     private fun onReceiveButtonClick() = viewModelScope.launch { navigateToReceive() }
 

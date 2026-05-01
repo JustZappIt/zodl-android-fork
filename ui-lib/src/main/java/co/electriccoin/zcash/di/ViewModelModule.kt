@@ -41,7 +41,7 @@ import co.electriccoin.zcash.ui.screen.insufficientfunds.InsufficientFundsVM
 import co.electriccoin.zcash.ui.screen.offramp.OfframpVM
 import co.electriccoin.zcash.ui.screen.integrations.IntegrationsVM
 import co.electriccoin.zcash.ui.screen.more.MoreVM
-import co.electriccoin.zcash.ui.screen.pay.PayVM
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendViewModel
 import co.electriccoin.zcash.ui.screen.qrcode.QrCodeVM
 import co.electriccoin.zcash.ui.screen.receive.ReceiveVM
 import co.electriccoin.zcash.ui.screen.request.viewmodel.RequestVM
@@ -62,7 +62,6 @@ import co.electriccoin.zcash.ui.screen.scan.thirdparty.ThirdPartyScanViewModel
 import co.electriccoin.zcash.ui.screen.scankeystone.viewmodel.ScanKeystonePCZTViewModel
 import co.electriccoin.zcash.ui.screen.scankeystone.viewmodel.ScanKeystoneSignInRequestViewModel
 import co.electriccoin.zcash.ui.screen.selectkeystoneaccount.viewmodel.SelectKeystoneAccountViewModel
-import co.electriccoin.zcash.ui.screen.send.SendViewModel
 import co.electriccoin.zcash.ui.screen.signkeystonetransaction.SignKeystoneTransactionVM
 import co.electriccoin.zcash.ui.screen.support.viewmodel.SupportViewModel
 import co.electriccoin.zcash.ui.screen.tabs.viewmodel.WalletSyncStateVM
@@ -116,7 +115,6 @@ val viewModelModule =
         viewModelOf(::ScanKeystonePCZTViewModel)
         viewModelOf(::IntegrationsVM)
         viewModelOf(::FlexaViewModel)
-        viewModelOf(::SendViewModel)
         viewModelOf(::WalletBackupViewModel)
         viewModelOf(::FeedbackVM)
         viewModelOf(::SignKeystoneTransactionVM)
@@ -161,7 +159,7 @@ val viewModelModule =
         viewModelOf(::SwapAssetPickerVM)
         viewModelOf(::SwapSlippageVM)
         viewModelOf(::SwapVM)
-        viewModelOf(::PayVM)
+        viewModelOf(::UnifiedSendViewModel)
         viewModelOf(::SwapQuoteVM)
         viewModelOf(::ScanGenericAddressVM)
         viewModelOf(::ChatScanPublicKeyVM)

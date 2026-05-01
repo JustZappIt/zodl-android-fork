@@ -1,20 +1,21 @@
-package co.electriccoin.zcash.ui.screen.pay
+package co.electriccoin.zcash.ui.screen.unifiedsend
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import co.electriccoin.zcash.ui.common.appbar.ZashiTopAppBarVM
+import androidx.navigation.toRoute
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetArgs
 import co.electriccoin.zcash.ui.screen.balances.BalanceWidgetVM
 import co.electriccoin.zcash.ui.screen.swap.SwapCancelView
+import co.electriccoin.zcash.ui.screen.unifiedsend.view.UnifiedSendView
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun PayScreen() {
-    val vm = koinViewModel<PayVM>()
+internal fun UnifiedSendScreen(args: UnifiedSendArgs) {
+    val vm = koinViewModel<UnifiedSendViewModel> { parametersOf(args) }
     val balanceVM =
         koinViewModel<BalanceWidgetVM> {
             parametersOf(
@@ -25,15 +26,17 @@ fun PayScreen() {
                 )
             )
         }
-    val appBarVM = koinViewModel<ZashiTopAppBarVM>()
     val state by vm.state.collectAsStateWithLifecycle()
     val balanceState by balanceVM.state.collectAsStateWithLifecycle()
-    val appBarState by appBarVM.state.collectAsStateWithLifecycle()
     val cancelState by vm.cancelState.collectAsStateWithLifecycle()
-    state?.let { PayView(it, balanceState, appBarState) }
-    BackHandler(state != null) { state?.onBack?.invoke() }
+    state?.let { UnifiedSendView(it, balanceState) }
+    BackHandler(cancelState == null) { vm.onBack() }
     SwapCancelView(cancelState)
 }
 
 @Serializable
-data object PayArgs
+data class UnifiedSendArgs(
+    val recipientAddress: String? = null,
+    val recipientAddressType: String? = null,
+    val isScanZip321Enabled: Boolean = true,
+)

@@ -2,7 +2,7 @@ package co.electriccoin.zcash.ui.common.usecase
 
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.common.repository.SwapRepository
-import co.electriccoin.zcash.ui.screen.pay.PayArgs
+import co.electriccoin.zcash.ui.screen.unifiedsend.UnifiedSendArgs
 
 class NavigateToNearPayUseCase(
     private val swapRepository: SwapRepository,
@@ -14,7 +14,7 @@ class NavigateToNearPayUseCase(
 ) {
     operator fun invoke() {
         swapRepository.requestRefreshAssets()
-        navigationRouter.forward(PayArgs)
+        navigationRouter.forward(UnifiedSendArgs())
         // try {
         //     if (ephemeralAddressRepository.get() == null) {
         //         ephemeralAddressRepository.create()
