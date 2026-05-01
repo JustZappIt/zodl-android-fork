@@ -29,8 +29,8 @@ fun WalletPhaseIntro(
     onContinue: () -> Unit,
 ) {
     OnbScreen(
-        step = 3,
-        ghostNum = 4,
+        step = 2,
+        ghostNum = 2,
         badge = "Part 2 of 3 · Wallet & Messaging",
         cta = "Continue",
         onCta = onContinue,
@@ -75,7 +75,7 @@ fun WalletChoiceScreen(
     ) {
         // Progress bar
         Box(modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp)) {
-            OnbProgress(step = 3)
+            OnbProgress(step = 2)
         }
         // Body — hero at top, action card pinned to bottom (thumb zone)
         Box(
@@ -84,7 +84,7 @@ fun WalletChoiceScreen(
                 .fillMaxWidth()
                 .padding(start = 28.dp, end = 28.dp, top = 24.dp),
         ) {
-            GhostNum(n = 5, modifier = Modifier.align(Alignment.TopEnd))
+            GhostNum(n = 2, modifier = Modifier.align(Alignment.TopEnd))
             Column(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()) {
                 Eyebrow("Part 2 · Wallet & Messaging")
                 Spacer(Modifier.height(14.dp))
@@ -136,7 +136,7 @@ fun WalletSeedPhraseScreen(
     onContinue: () -> Unit,
 ) {
     SeedRevealScreen(
-        step = 4,
+        step = 2,
         title = "Wallet &\nmessaging phrase",
         sub = "These 24 words restore both your wallet funds and your messaging identity. Back them up offline — they cover everything.",
         words = words,
