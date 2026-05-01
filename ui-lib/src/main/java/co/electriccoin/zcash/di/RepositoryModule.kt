@@ -16,6 +16,8 @@ import co.electriccoin.zcash.ui.common.repository.HomeMessageCacheRepository
 import co.electriccoin.zcash.ui.common.repository.HomeMessageCacheRepositoryImpl
 import co.electriccoin.zcash.ui.common.repository.KeystoneProposalRepository
 import co.electriccoin.zcash.ui.common.repository.KeystoneProposalRepositoryImpl
+import co.electriccoin.zcash.ui.common.repository.PinRepository
+import co.electriccoin.zcash.ui.common.repository.PinRepositoryImpl
 import co.electriccoin.zcash.ui.common.repository.SwapRepository
 import co.electriccoin.zcash.ui.common.repository.SwapRepositoryImpl
 import co.electriccoin.zcash.ui.common.repository.TransactionFilterRepository
@@ -39,6 +41,7 @@ val repositoryModule =
         singleOf(::ExchangeRateRepositoryImpl) bind ExchangeRateRepository::class
         singleOf(::FlexaRepositoryImpl) bind FlexaRepository::class
         singleOf(::BiometricRepositoryImpl) bind BiometricRepository::class
+        singleOf(::PinRepositoryImpl) bind PinRepository::class
         singleOf(::KeystoneProposalRepositoryImpl) bind KeystoneProposalRepository::class
         singleOf(::TransactionRepositoryImpl) bind TransactionRepository::class
         singleOf(::TransactionFilterRepositoryImpl) bind TransactionFilterRepository::class

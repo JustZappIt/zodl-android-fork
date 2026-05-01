@@ -4,6 +4,7 @@ import co.electriccoin.zcash.preference.model.entry.BooleanPreferenceDefault
 import co.electriccoin.zcash.preference.model.entry.IntegerPreferenceDefault
 import co.electriccoin.zcash.preference.model.entry.LongPreferenceDefault
 import co.electriccoin.zcash.preference.model.entry.PreferenceKey
+import co.electriccoin.zcash.ui.common.model.AppLockMode
 import co.electriccoin.zcash.ui.common.model.OnboardingState
 
 object StandardPreferenceKeys {
@@ -42,12 +43,17 @@ object StandardPreferenceKeys {
         )
 
     /**
-     * Screens or flows protected by required authentication
+     * How the app gates access on launch. Defaults to [AppLockMode.NONE] so a
+     * device with no biometrics enrolled doesn't trip the BiometricPrompt no-op
+     * before the user has a chance to set up a PIN during onboarding. The
+     * onboarding flow always writes the chosen mode (NONE, BIOMETRIC, or PIN)
+     * before [IS_ONBOARDING_COMPLETED] flips, so the gate never sees the
+     * default in production.
      */
-    val IS_APP_ACCESS_AUTHENTICATION =
-        BooleanPreferenceDefault(
-            PreferenceKey("IS_APP_ACCESS_AUTHENTICATION"),
-            true
+    val APP_LOCK_MODE =
+        IntegerPreferenceDefault(
+            PreferenceKey("APP_LOCK_MODE"),
+            AppLockMode.NONE.toNumber()
         )
 
     val IS_HIDE_BALANCES =

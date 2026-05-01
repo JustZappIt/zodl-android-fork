@@ -30,9 +30,15 @@ class ResetZashiUseCase(
     private val metadataRepository: MetadataRepository,
 ) {
     @Suppress("TooGenericExceptionCaught", "ThrowsCount")
-    suspend operator fun invoke(keepFiles: Boolean) {
+    suspend operator fun invoke(keepFiles: Boolean, requireBiometric: Boolean = true) {
         try {
-            requestBiometrics()
+            // The forgot-PIN path can't biometric-auth (the user may not have
+            // enrolled biometrics, and they can't enter the PIN they forgot).
+            // The caller is expected to gate destructive entry with a confirm
+            // dialog before calling with [requireBiometric] = false.
+            if (requireBiometric) {
+                requestBiometrics()
+            }
             flexaRepository.disconnect()
             deleteLocalFiles(keepFiles)
             closeSynchronizer()

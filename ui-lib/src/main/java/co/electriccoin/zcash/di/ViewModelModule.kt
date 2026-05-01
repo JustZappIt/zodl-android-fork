@@ -41,6 +41,8 @@ import co.electriccoin.zcash.ui.screen.offramp.OfframpVM
 import co.electriccoin.zcash.ui.screen.integrations.IntegrationsVM
 import co.electriccoin.zcash.ui.screen.more.MoreVM
 import co.electriccoin.zcash.ui.screen.pay.PayVM
+import co.electriccoin.zcash.ui.screen.pin.PinSetupVM
+import co.electriccoin.zcash.ui.screen.pin.PinUnlockVM
 import co.electriccoin.zcash.ui.screen.qrcode.QrCodeVM
 import co.electriccoin.zcash.ui.screen.receive.ReceiveVM
 import co.electriccoin.zcash.ui.screen.request.viewmodel.RequestVM
@@ -160,6 +162,8 @@ val viewModelModule =
         viewModelOf(::SwapSlippageVM)
         viewModelOf(::SwapVM)
         viewModelOf(::PayVM)
+        viewModelOf(::PinSetupVM)
+        viewModelOf(::PinUnlockVM)
         viewModelOf(::SwapQuoteVM)
         viewModelOf(::ScanGenericAddressVM)
         viewModelOf(::ChatScanPublicKeyVM)

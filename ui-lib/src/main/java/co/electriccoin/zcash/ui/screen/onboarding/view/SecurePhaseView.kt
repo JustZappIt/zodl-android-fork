@@ -45,7 +45,7 @@ import kotlinx.coroutines.delay
 // 09 · Phase 3 / 2FA choice
 // ───────────────────────────────────────────────────────────────
 
-enum class TwoFAMode { Bio, Pin }
+enum class TwoFAMode { Bio, Pin, None }
 
 @Composable
 fun TwoFAChoiceScreen(
@@ -57,7 +57,7 @@ fun TwoFAChoiceScreen(
         ghostNum = 9,
         badge = "Part 3 of 3 · Secure Zapp",
         cta = "Skip — set up later",
-        onCta = { onPick(TwoFAMode.Pin) },
+        onCta = { onPick(TwoFAMode.None) },
         showBack = true,
         onBack = onBack,
     ) {
@@ -240,9 +240,12 @@ fun OnboardingDoneScreen(
                 AccentRule()
                 Spacer(Modifier.height(20.dp))
                 OnbSub(
-                    text = "Identity created, " +
-                        "wallet ready, secured with " +
-                        if (mode == TwoFAMode.Bio) "biometrics." else "a PIN.",
+                    text = "Identity created, wallet ready, secured with " +
+                        when (mode) {
+                            TwoFAMode.Bio -> "biometrics."
+                            TwoFAMode.Pin -> "a PIN."
+                            TwoFAMode.None -> "no app lock — set one in Settings."
+                        },
                 )
             }
         }

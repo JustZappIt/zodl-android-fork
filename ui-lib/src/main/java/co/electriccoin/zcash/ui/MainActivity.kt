@@ -38,10 +38,13 @@ import co.electriccoin.zcash.ui.design.component.Override
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.screen.ScreenTimeoutVM
 import co.electriccoin.zcash.ui.screen.authentication.AuthenticationUseCase
+import co.electriccoin.zcash.ui.design.theme.ProvideZappTheme
 import co.electriccoin.zcash.ui.screen.authentication.RETRY_TRIGGER_DELAY
 import co.electriccoin.zcash.ui.screen.authentication.WrapAuthentication
 import co.electriccoin.zcash.ui.screen.authentication.view.AnimationConstants
 import co.electriccoin.zcash.ui.screen.authentication.view.WelcomeAnimationAutostart
+import co.electriccoin.zcash.ui.screen.deletewallet.ResetZashiUseCase
+import co.electriccoin.zcash.ui.screen.pin.PinUnlockScreen
 import co.electriccoin.zcash.ui.screen.scan.thirdparty.ThirdPartyScan
 import co.electriccoin.zcash.ui.screen.warning.viewmodel.StorageCheckViewModel
 import co.electriccoin.zcash.work.WorkIds
@@ -73,6 +76,8 @@ class MainActivity : FragmentActivity() {
     val configurationOverrideFlow = MutableStateFlow<ConfigurationOverride?>(null)
 
     private val navigationRouter: NavigationRouter by inject()
+
+    private val resetZashiUseCase: ResetZashiUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -231,6 +236,27 @@ class MainActivity : FragmentActivity() {
                     },
                     useCase = AuthenticationUseCase.AppAccess
                 )
+            }
+
+            AuthenticationUIState.RequiredPin -> {
+                Twig.debug { "App access PIN unlock required" }
+                authenticationViewModel.setWelcomeAnimationDisplayed()
+                ProvideZappTheme {
+                    PinUnlockScreen(
+                        onSuccess = {
+                            authenticationViewModel.appAccessAuthentication.value =
+                                AuthenticationUIState.Successful
+                        },
+                        onForgot = {
+                            // The user is locked out of the PIN gate by definition,
+                            // so we can't biometric-auth this destructive action.
+                            // PinUnlockScreen has already shown a confirm dialog.
+                            lifecycleScope.launch {
+                                resetZashiUseCase(keepFiles = false, requireBiometric = false)
+                            }
+                        },
+                    )
+                }
             }
 
             AuthenticationUIState.Successful -> {

@@ -11,10 +11,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
 import co.electriccoin.zcash.preference.StandardPreferenceProvider
-import co.electriccoin.zcash.preference.model.entry.BooleanPreferenceDefault
 import co.electriccoin.zcash.spackle.AndroidApiVersion
 import co.electriccoin.zcash.spackle.Twig
 import co.electriccoin.zcash.ui.R
+import co.electriccoin.zcash.ui.common.model.AppLockMode
 import co.electriccoin.zcash.ui.common.provider.GetVersionInfoProvider
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.authentication.AuthenticationUseCase
@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -42,7 +41,6 @@ class AuthenticationViewModel(
     private val biometricManager: BiometricManager,
     private val getVersionInfo: GetVersionInfoProvider,
     private val standardPreferenceProvider: StandardPreferenceProvider,
-    private val walletViewModel: WalletViewModel,
 ) : AndroidViewModel(application) {
     private val executor: Executor by lazy { ContextCompat.getMainExecutor(application) }
     private lateinit var biometricPrompt: BiometricPrompt
@@ -94,29 +92,70 @@ class AuthenticationViewModel(
     /**
      * App access authentication logic values
      */
-    private val isAppAccessAuthenticationRequired: StateFlow<Boolean?> =
-        booleanStateFlow(StandardPreferenceKeys.IS_APP_ACCESS_AUTHENTICATION)
+    val appLockMode: StateFlow<AppLockMode?> =
+        flow<AppLockMode?> {
+            StandardPreferenceKeys.APP_LOCK_MODE
+                .observe(standardPreferenceProvider())
+                .collect { ordinal -> emit(AppLockMode.fromNumber(ordinal)) }
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT),
+            null
+        )
+
+    private val isOnboardingCompleted: StateFlow<Boolean?> =
+        flow<Boolean?> {
+            StandardPreferenceKeys.IS_ONBOARDING_COMPLETED
+                .observe(standardPreferenceProvider())
+                .collect { emit(it) }
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT),
+            null
+        )
 
     internal val appAccessAuthentication: MutableStateFlow<AuthenticationUIState> =
         MutableStateFlow(AuthenticationUIState.Initial)
 
+    init {
+        // The PIN/biometric the user just configured during onboarding *is* the
+        // authentication for this session. Watch for the onboarding-completed flag
+        // flipping false → true and pre-mark the gate as already-Successful so the
+        // user isn't re-prompted the moment they tap "Enter Zapp." On subsequent
+        // launches the flag is already true on first emission, so this check
+        // doesn't fire and the gate behaves normally.
+        viewModelScope.launch {
+            var sawIncomplete = false
+            isOnboardingCompleted.filterNotNull().collect { completed ->
+                if (!completed) {
+                    sawIncomplete = true
+                } else if (sawIncomplete && appAccessAuthentication.value == AuthenticationUIState.Initial) {
+                    appAccessAuthentication.value = AuthenticationUIState.Successful
+                }
+            }
+        }
+    }
+
     internal val appAccessAuthenticationResultState: StateFlow<AuthenticationUIState> =
         combine(
-            isAppAccessAuthenticationRequired.filterNotNull(),
+            appLockMode.filterNotNull(),
+            isOnboardingCompleted.filterNotNull(),
             appAccessAuthentication,
-            walletViewModel.secretState,
-        ) { required: Boolean, state: AuthenticationUIState, secretState: SecretState ->
+        ) { mode: AppLockMode, onboardingCompleted: Boolean, state: AuthenticationUIState ->
             when {
-                (!required || versionInfo.isRunningUnderTestService) -> {
+                // While the user is still in onboarding the gate stays open — the
+                // PIN/biometric they're configuring is the configuration step itself.
+                !onboardingCompleted -> AuthenticationUIState.NotRequired
+
+                (mode == AppLockMode.NONE || versionInfo.isRunningUnderTestService) -> {
                     AuthenticationUIState.NotRequired
                 }
 
                 (state == AuthenticationUIState.Initial) -> {
-                    if (secretState == SecretState.NONE) {
-                        appAccessAuthentication.value = AuthenticationUIState.NotRequired
-                        AuthenticationUIState.NotRequired
-                    } else {
-                        AuthenticationUIState.Required
+                    when (mode) {
+                        AppLockMode.PIN -> AuthenticationUIState.RequiredPin
+                        AppLockMode.BIOMETRIC -> AuthenticationUIState.Required
+                        AppLockMode.NONE -> AuthenticationUIState.NotRequired
                     }
                 }
 
@@ -400,20 +439,14 @@ class AuthenticationViewModel(
             }
         }
 
-    private fun booleanStateFlow(default: BooleanPreferenceDefault): StateFlow<Boolean?> =
-        flow<Boolean?> {
-            emitAll(default.observe(standardPreferenceProvider()))
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT),
-            null
-        )
 }
 
 sealed class AuthenticationUIState {
     data object Initial : AuthenticationUIState()
 
     data object Required : AuthenticationUIState()
+
+    data object RequiredPin : AuthenticationUIState()
 
     data object NotRequired : AuthenticationUIState()
 

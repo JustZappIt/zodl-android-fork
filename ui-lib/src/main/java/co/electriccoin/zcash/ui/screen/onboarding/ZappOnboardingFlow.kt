@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.electriccoin.zcash.ui.NavigationRouter
+import co.electriccoin.zcash.ui.common.model.AppLockMode
 import co.electriccoin.zcash.ui.common.viewmodel.SecretState
 import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
@@ -36,7 +37,10 @@ import co.electriccoin.zcash.ui.screen.onboarding.view.UsernameEntryScreen
 import co.electriccoin.zcash.ui.screen.onboarding.view.WalletChoiceScreen
 import co.electriccoin.zcash.ui.screen.onboarding.view.WalletPhaseIntro
 import co.electriccoin.zcash.ui.screen.onboarding.view.WalletSeedPhraseScreen
+import co.electriccoin.zcash.ui.screen.pin.PinSetupScreen
 import co.electriccoin.zcash.ui.screen.restore.seed.RestoreSeedArgs
+import co.electriccoin.zcash.ui.screen.welcome.WelcomeGateVM
+import org.koin.androidx.compose.koinViewModel
 
 /** All steps the Swiss onboarding flow walks the user through. */
 private enum class Step {
@@ -47,6 +51,7 @@ private enum class Step {
     WALLET_SEED,
     SECURE_CHOICE,
     BIO_SCAN,
+    PIN_SETUP,
     DONE,
 }
 
@@ -77,6 +82,8 @@ fun ZappOnboardingFlow(
     var step by rememberSaveable { mutableStateOf(Step.MSG_INTRO) }
     var twoFAMode by rememberSaveable { mutableStateOf(TwoFAMode.Pin) }
     var pendingUsername by rememberSaveable { mutableStateOf("") }
+
+    val welcomeGateVM = koinViewModel<WelcomeGateVM>()
 
     val walletSeed by walletViewModel.currentSeedWords.collectAsStateWithLifecycle()
     val secretState by walletViewModel.secretState.collectAsStateWithLifecycle()
@@ -139,12 +146,29 @@ fun ZappOnboardingFlow(
             onBack = { step = Step.WALLET_INTRO },
             onPick = { mode ->
                 twoFAMode = mode
-                step = if (mode == TwoFAMode.Bio) Step.BIO_SCAN else Step.DONE
+                step = when (mode) {
+                    TwoFAMode.Bio -> Step.BIO_SCAN
+                    TwoFAMode.Pin -> Step.PIN_SETUP
+                    TwoFAMode.None -> {
+                        welcomeGateVM.setAppLockMode(AppLockMode.NONE)
+                        Step.DONE
+                    }
+                }
             },
         )
         Step.BIO_SCAN -> BioScanScreen(
             onCancel = { step = Step.SECURE_CHOICE },
-            onDone = { step = Step.DONE },
+            onDone = {
+                welcomeGateVM.setAppLockMode(AppLockMode.BIOMETRIC)
+                step = Step.DONE
+            },
+        )
+        Step.PIN_SETUP -> PinSetupScreen(
+            onBack = { step = Step.SECURE_CHOICE },
+            onComplete = {
+                welcomeGateVM.setAppLockMode(AppLockMode.PIN)
+                step = Step.DONE
+            },
         )
         Step.DONE -> OnboardingDoneScreen(
             mode = twoFAMode,

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cash.z.ecc.sdk.ANDROID_STATE_FLOW_TIMEOUT
 import co.electriccoin.zcash.preference.StandardPreferenceProvider
+import co.electriccoin.zcash.ui.common.model.AppLockMode
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -55,6 +56,15 @@ class WelcomeGateVM(
             StandardPreferenceKeys.IS_ONBOARDING_COMPLETED.putValue(
                 preferenceProvider = standardPreferenceProvider(),
                 newValue = true,
+            )
+        }
+    }
+
+    fun setAppLockMode(mode: AppLockMode) {
+        viewModelScope.launch {
+            StandardPreferenceKeys.APP_LOCK_MODE.putValue(
+                preferenceProvider = standardPreferenceProvider(),
+                newValue = mode.toNumber(),
             )
         }
     }
