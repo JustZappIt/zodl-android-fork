@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -43,6 +42,7 @@ import co.electriccoin.zcash.ui.design.component.QrCodeDefaults
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.screen.request.model.RequestState
+import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
 import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalDensity
 
@@ -98,7 +98,7 @@ private fun AmountPill(
     modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
-    val ticker = state.zcashCurrency.localizedName(LocalContext.current)
+    val ticker = CURRENCY_TICKER
     Row(
         modifier = modifier
             .background(c.accentSoft, RectangleShape)
