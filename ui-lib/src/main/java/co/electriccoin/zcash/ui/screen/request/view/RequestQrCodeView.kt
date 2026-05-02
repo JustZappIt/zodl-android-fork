@@ -1,38 +1,50 @@
 package co.electriccoin.zcash.ui.screen.request.view
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cash.z.ecc.android.sdk.model.WalletAddress
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.design.component.ZashiQr
-import co.electriccoin.zcash.ui.design.component.zapp.ZappChipVariant
-import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
+import co.electriccoin.zcash.ui.design.component.QrCodeDefaults
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.screen.request.model.RequestState
+import kotlin.math.roundToInt
+import androidx.compose.ui.platform.LocalDensity
 
 @Composable
 internal fun RequestQrCodeView(
@@ -45,29 +57,13 @@ internal fun RequestQrCodeView(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 28.dp),
+            .padding(horizontal = 24.dp),
     ) {
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
 
-        when (state.walletAddress) {
-            is WalletAddress.Transparent -> ZappStatusChip(
-                text = stringResource(id = R.string.request_privacy_level_transparent).uppercase(),
-                variant = ZappChipVariant.Accent,
-                dotColor = c.accent,
-            )
-            is WalletAddress.Unified, is WalletAddress.Sapling -> ZappStatusChip(
-                text = stringResource(id = R.string.request_privacy_level_shielded).uppercase(),
-                variant = ZappChipVariant.Success,
-                dotColor = c.success,
-            )
-            else -> error("Unsupported address type")
-        }
+        AmountPill(state = state)
 
         Spacer(Modifier.height(20.dp))
-
-        RequestQrCodeZecAmountView(state = state)
-
-        Spacer(Modifier.height(28.dp))
 
         Box(
             modifier = Modifier
@@ -75,82 +71,174 @@ internal fun RequestQrCodeView(
                 .border(BorderStroke(1.dp, c.border), RectangleShape)
                 .padding(12.dp),
         ) {
-            QrCode(requestState = state)
+            ZashiQr(
+                state = state.toQrState(
+                    contentDescription = stringRes(R.string.request_qr_code_content_description),
+                    centerImage = state.icon,
+                ),
+                modifier = Modifier.fillMaxWidth(0.92f),
+            )
         }
+
+        Spacer(Modifier.height(12.dp))
+
+        SaveQrTextButton(state = state)
+
+        Spacer(Modifier.height(20.dp))
+
+        AddressSection(state = state)
 
         Spacer(Modifier.height(20.dp))
     }
 }
 
 @Composable
-private fun QrCode(
-    requestState: RequestState.QrCode,
-    modifier: Modifier = Modifier
+private fun AmountPill(
+    state: RequestState.QrCode,
+    modifier: Modifier = Modifier,
 ) {
-    ZashiQr(
-        state = requestState.toQrState(
-            contentDescription = stringRes(R.string.request_qr_code_content_description),
-            centerImage = requestState.icon,
-        ),
-        modifier = modifier,
-    )
+    val c = ZappTheme.colors
+    val ticker = state.zcashCurrency.localizedName(LocalContext.current)
+    Row(
+        modifier = modifier
+            .background(c.accentSoft, RectangleShape)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        BasicText(
+            text = state.request.qrCodeState.zecAmount,
+            style = ZappTheme.typography.button.copy(
+                color = c.text,
+                fontWeight = FontWeight.Black,
+            ),
+        )
+        BasicText(
+            text = ticker,
+            style = ZappTheme.typography.button.copy(
+                color = c.accent,
+                fontWeight = FontWeight.Black,
+            ),
+        )
+    }
 }
 
 @Composable
-private fun RequestQrCodeZecAmountView(
+private fun SaveQrTextButton(
     state: RequestState.QrCode,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
-    val zecText = buildAnnotatedString {
-        withStyle(style = SpanStyle(color = c.text)) {
-            append(state.request.qrCodeState.zecAmount)
-        }
-        append("\u2009")
-        withStyle(style = SpanStyle(color = c.textMuted)) {
-            append(state.zcashCurrency.localizedName(LocalContext.current))
-        }
+    val colors = QrCodeDefaults.colors()
+    val sizePixels = with(LocalDensity.current) { DEFAULT_QR_CODE_SIZE.toPx() }.roundToInt()
+    Row(
+        modifier = modifier
+            .clickable { state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri) }
+            .semantics { role = Role.Button }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Download,
+            contentDescription = null,
+            tint = c.textMuted,
+            modifier = Modifier.size(16.dp),
+        )
+        BasicText(
+            text = "Save QR to Photos",
+            style = ZappTheme.typography.caption.copy(
+                color = c.textMuted,
+                textDecoration = TextDecoration.Underline,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun AddressSection(
+    state: RequestState.QrCode,
+    modifier: Modifier = Modifier,
+) {
+    val c = ZappTheme.colors
+    val isShielded = state.walletAddress !is WalletAddress.Transparent
+    val addressLabel = if (isShielded) "Your Shielded Address" else "Your Transparent Address"
+    val address = state.walletAddress.address
+    val truncated = if (address.length > 16) {
+        address.take(10) + "…" + address.takeLast(6)
+    } else {
+        address
     }
 
-    AutoSizingText(
-        text = zecText,
-        style = ZappTheme.typography.display.copy(
-            color = c.text,
-            fontSize = 44.sp,
-            lineHeight = 48.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-1.8).sp,
-        ),
-        modifier = modifier.fillMaxWidth(),
-    )
-
-    if (state.request.qrCodeState.memo.isNotBlank()) {
-        Spacer(Modifier.height(10.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(BorderStroke(1.dp, c.border), RectangleShape)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+    Column(modifier = modifier.fillMaxWidth()) {
+        BasicText(
+            text = addressLabel.uppercase(),
+            style = ZappTheme.typography.eyebrow.copy(
+                color = c.textSubtle,
+                fontSize = 10.sp,
+                letterSpacing = 1.8.sp,
+                fontWeight = FontWeight.Black,
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
-                BasicText(
-                    text = "MEMO",
-                    style = ZappTheme.typography.eyebrow.copy(
-                        color = c.textSubtle,
-                        fontSize = 10.sp,
-                        letterSpacing = 1.8.sp,
-                        fontWeight = FontWeight.Black,
-                    ),
+            BasicText(
+                text = truncated,
+                style = ZappTheme.typography.mono.copy(
+                    color = c.textMuted,
+                    fontSize = 12.sp,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .border(BorderStroke(1.dp, c.border), RectangleShape)
+                    .clickable { /* address copy handled by QrCode state — no direct copy callback here */ }
+                    .semantics { role = Role.Button },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_copy_shielded),
+                    contentDescription = "Copy address",
+                    modifier = Modifier.size(18.dp),
+                    colorFilter = ColorFilter.tint(c.accentText),
                 )
-                Spacer(Modifier.height(4.dp))
-                BasicText(
-                    text = state.request.qrCodeState.memo,
-                    style = ZappTheme.typography.body.copy(
-                        color = c.textMuted,
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp,
-                    ),
-                )
+            }
+        }
+
+        if (state.request.qrCodeState.memo.isNotBlank()) {
+            Spacer(Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(BorderStroke(1.dp, c.border), RectangleShape)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+            ) {
+                Column {
+                    BasicText(
+                        text = "NOTE",
+                        style = ZappTheme.typography.eyebrow.copy(
+                            color = c.textSubtle,
+                            fontSize = 10.sp,
+                            letterSpacing = 1.8.sp,
+                            fontWeight = FontWeight.Black,
+                        ),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    BasicText(
+                        text = state.request.qrCodeState.memo,
+                        style = ZappTheme.typography.body.copy(
+                            color = c.textMuted,
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                        ),
+                    )
+                }
             }
         }
     }

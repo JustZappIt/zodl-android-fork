@@ -1,6 +1,8 @@
 package co.electriccoin.zcash.ui.screen.request.view
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,12 +13,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,9 +55,11 @@ import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.rememberDesiredFormatLocale
 import co.electriccoin.zcash.ui.design.util.stringResByNumber
 import co.electriccoin.zcash.ui.screen.request.model.AmountState
+import co.electriccoin.zcash.ui.screen.request.model.MemoState
 import co.electriccoin.zcash.ui.screen.request.model.OnAmount
 import co.electriccoin.zcash.ui.screen.request.model.RequestCurrency
 import co.electriccoin.zcash.ui.screen.request.model.RequestState
+import androidx.compose.ui.graphics.RectangleShape
 import java.math.BigDecimal
 import java.math.MathContext
 import java.text.DecimalFormatSymbols
@@ -98,6 +108,13 @@ internal fun RequestAmountView(
         }
 
         Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingDefault))
+
+        RequestAmountNoteField(
+            state = state,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = ZcashTheme.dimens.screenHorizontalSpacingRegular),
+        )
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -295,6 +312,45 @@ private fun RequestAmountNoFiatView(
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-1.8).sp,
             ),
+        )
+    }
+}
+
+@Composable
+private fun RequestAmountNoteField(
+    state: RequestState.Amount,
+    modifier: Modifier = Modifier,
+) {
+    val c = ZappTheme.colors
+    val memoText = state.request.memoState.text
+    Row(
+        modifier = modifier
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = null,
+            tint = c.textSubtle,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        BasicTextField(
+            value = memoText,
+            onValueChange = { state.onMemo(MemoState.new(it, state.request.memoState.zecAmount)) },
+            singleLine = true,
+            textStyle = ZappTheme.typography.body.copy(color = c.text),
+            modifier = Modifier.weight(1f),
+            decorationBox = { innerTextField ->
+                if (memoText.isEmpty()) {
+                    BasicText(
+                        text = "Add a note (optional)",
+                        style = ZappTheme.typography.body.copy(color = c.textSubtle),
+                    )
+                }
+                innerTextField()
+            },
         )
     }
 }

@@ -50,7 +50,9 @@ class ReceiveViewTestSetup(
                                                 IconButtonState(
                                                     icon = R.drawable.ic_receive_zashi_shielded_info,
                                                     onClick = {}
-                                                )
+                                                ),
+                                            qrData = WalletAddressFixture.UNIFIED_ADDRESS_STRING,
+                                            addressRaw = WalletAddressFixture.UNIFIED_ADDRESS_STRING,
                                         )
                                     ),
                                 isLoading = false,
