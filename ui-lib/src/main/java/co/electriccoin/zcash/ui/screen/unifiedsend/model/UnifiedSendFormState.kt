@@ -20,9 +20,11 @@ internal data class UnifiedSendFormState(
     val qrButton: IconButtonState,
     val isABHintVisible: Boolean,
 
-    // Amount — always ZEC input
+    // Amount — always ZEC input; isAmountSwapped flips which field appears on the left
     val zecAmount: NumberTextFieldState,
     val fiatAmount: NumberTextFieldState,
+    val isAmountSwapped: Boolean,
+    val onAmountSwap: () -> Unit,
     val amountError: StringResource?,
 
     // Swap mode only: estimated output amount ("They receive ≈ X TOKEN")

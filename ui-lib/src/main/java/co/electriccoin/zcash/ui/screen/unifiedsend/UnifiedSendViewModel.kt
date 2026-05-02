@@ -122,6 +122,7 @@ internal class UnifiedSendViewModel(
     private val memoText = MutableStateFlow("")
     private val isRequestingQuote = MutableStateFlow(false)
     private val isCancelStateVisible = MutableStateFlow(false)
+    private val isAmountSwapped = MutableStateFlow(false)
 
     // ── Derived flows ─────────────────────────────────────────────────────────
 
@@ -165,7 +166,7 @@ internal class UnifiedSendViewModel(
             initialValue = null
         )
 
-    val state =
+    private val _coreState =
         co.electriccoin.zcash.ui.design.util.combine(
             selectedAsset,
             zecAmountInner,
@@ -193,16 +194,21 @@ internal class UnifiedSendViewModel(
             abHintVisible,
             requesting,
             ->
-            val isSwap = asset != null && asset !is ZecSwapAsset
+            // Fall back to the ZEC asset from swap data when no explicit selection has been
+            // made yet. This prevents the asset card from showing a Loading spinner while
+            // PreselectSwapAssetUseCase is still running its coroutine.
+            val effectiveAsset = asset ?: swapAssets.zecAsset
+            val isSwap = effectiveAsset != null && effectiveAsset !is ZecSwapAsset
             val zecUsdPrice = swapAssets.zecAsset?.usdPrice
             val spendable = account?.spendableShieldedBalance
             val zecValue = zecAmount.amount
             val zatoshi = zecValue?.convertZecToZatoshi()
             val hasFunds = zatoshi == null || spendable == null || spendable >= zatoshi
+            val hasZeroBalance = spendable != null && spendable.value == 0L
 
             buildFormState(
                 isSwap = isSwap,
-                asset = asset,
+                asset = effectiveAsset,
                 zecAmount = zecAmount,
                 fiatAmount = fiatAmount,
                 zcashAddr = zcashAddr,
@@ -215,14 +221,22 @@ internal class UnifiedSendViewModel(
                 zecUsdPrice = zecUsdPrice,
                 zecValue = zecValue,
                 hasFunds = hasFunds,
+                hasZeroBalance = hasZeroBalance,
                 abHintVisible = abHintVisible,
                 isRequesting = requesting,
             )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT),
-            initialValue = null
-        )
+        }
+
+    val state =
+        _coreState
+            .combine(isAmountSwapped) { form, swapped ->
+                form.copy(isAmountSwapped = swapped, onAmountSwap = ::onAmountSwap)
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT),
+                initialValue = null
+            )
 
     init {
         // Validate the address supplied via nav args (e.g. from Chat or QR scan)
@@ -295,6 +309,8 @@ internal class UnifiedSendViewModel(
         }.launchIn(viewModelScope)
 
         preselectSwapAsset.observe().launchIn(viewModelScope)
+
+        swapRepository.requestRefreshAssets()
     }
 
     // ── Public event handlers ─────────────────────────────────────────────────
@@ -407,6 +423,8 @@ internal class UnifiedSendViewModel(
 
     fun onTryAgainClick() = swapRepository.requestRefreshAssets()
 
+    fun onAmountSwap() = isAmountSwapped.update { !it }
+
     // ── Private submission helpers ────────────────────────────────────────────
 
     private fun requestSwapQuoteClick() {
@@ -496,6 +514,7 @@ internal class UnifiedSendViewModel(
         zecUsdPrice: BigDecimal?,
         zecValue: BigDecimal?,
         hasFunds: Boolean,
+        hasZeroBalance: Boolean,
         abHintVisible: Boolean,
         isRequesting: Boolean,
     ): UnifiedSendFormState {
@@ -564,6 +583,8 @@ internal class UnifiedSendViewModel(
                 isEnabled = !isRequesting && zecUsdPrice != null,
                 explicitError = if (!hasFunds && hasAmount) stringRes("") else null
             ),
+            isAmountSwapped = false, // overridden by outer combine with isAmountSwapped flow
+            onAmountSwap = ::onAmountSwap, // overridden by outer combine
             amountError = if (!hasFunds && hasAmount) {
                 stringRes(R.string.send_amount_insufficient_balance)
             } else {
@@ -585,7 +606,11 @@ internal class UnifiedSendViewModel(
             ),
             amountErrorFooter = null,
             errorFooter = buildErrorFooter(swapAssets),
-            infoFooter = null,
+            infoFooter = if (!isSwap && (hasZeroBalance || (hasAmount && isAmountValid && !hasFunds))) {
+                stringRes(R.string.peer_onramp_subtitle)
+            } else {
+                null
+            },
             onBack = ::onBack,
             primaryButton = buildPrimaryButton(
                 isSwap = isSwap,
@@ -595,6 +620,7 @@ internal class UnifiedSendViewModel(
                 isAmountValid = isAmountValid,
                 hasAmount = hasAmount,
                 hasFunds = hasFunds,
+                hasZeroBalance = hasZeroBalance,
                 isMemoValid = isMemoValid,
             ),
         )
@@ -671,6 +697,7 @@ internal class UnifiedSendViewModel(
         isAmountValid: Boolean,
         hasAmount: Boolean,
         hasFunds: Boolean,
+        hasZeroBalance: Boolean,
         isMemoValid: Boolean,
     ): PrimaryButtonState {
         // Service unavailable blocks button
@@ -678,6 +705,11 @@ internal class UnifiedSendViewModel(
             swapAssets.error.response.status.isServiceUnavailable()
         ) {
             return PrimaryButtonState.Disabled
+        }
+
+        // Zero balance in ZEC mode → always show Top Up (before any amount is entered)
+        if (!isSwap && hasZeroBalance) {
+            return PrimaryButtonState.TopUp(onClick = { viewModelScope.launch { navigateToPeerOnramp() } })
         }
 
         // Insufficient funds → Top Up

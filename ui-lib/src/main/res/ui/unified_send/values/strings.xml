@@ -8,4 +8,6 @@
     <string name="unified_send_they_receive_approx">They receive ≈</string>
     <string name="unified_send_top_up">Top Up</string>
     <string name="unified_send_title">Send</string>
+    <string name="unified_send_available_balance">Available balance</string>
+    <string name="unified_send_swap_amounts">Swap ZEC and USD inputs</string>
 </resources>
