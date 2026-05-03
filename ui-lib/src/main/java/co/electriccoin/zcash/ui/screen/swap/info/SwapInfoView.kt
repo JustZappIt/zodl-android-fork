@@ -18,10 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
-import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.Spacer
-import co.electriccoin.zcash.ui.design.component.ZashiButton
 import co.electriccoin.zcash.ui.design.component.ZashiScreenModalBottomSheet
+import co.electriccoin.zcash.ui.design.component.zapp.ZappButton
+import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
@@ -68,13 +68,10 @@ fun SwapInfoView(state: SwapInfoState) {
                 color = ZashiColors.Text.textTertiary
             )
             Spacer(32.dp)
-            ZashiButton(
+            ZappButton(
                 modifier = Modifier.fillMaxWidth(),
-                state =
-                    ButtonState(
-                        text = stringRes(co.electriccoin.zcash.ui.design.R.string.general_ok),
-                        onClick = state.onBack
-                    )
+                text = stringRes(co.electriccoin.zcash.ui.design.R.string.general_ok).getValue(),
+                onClick = state.onBack,
             )
         }
     })

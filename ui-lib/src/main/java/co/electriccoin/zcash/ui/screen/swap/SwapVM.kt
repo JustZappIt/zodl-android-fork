@@ -18,6 +18,7 @@ import co.electriccoin.zcash.ui.common.usecase.GetSelectedWalletAccountUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetSlippageUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetSwapAssetsUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToScanGenericAddressUseCase
+import co.electriccoin.zcash.ui.common.usecase.NavigateToPeerOnrampUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToSelectABSwapRecipientUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToSwapInfoUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToSwapQuoteIfAvailableUseCase
@@ -63,6 +64,7 @@ internal class SwapVM(
     private val exactInputVMMapper: ExactInputVMMapper,
     private val navigateToScanAddress: NavigateToScanGenericAddressUseCase,
     private val navigateToSelectSwapRecipient: NavigateToSelectABSwapRecipientUseCase,
+    private val navigateToPeerOnramp: NavigateToPeerOnrampUseCase,
 ) : ViewModel() {
     private val mode = MutableStateFlow(SWAP_INTO_ZEC)
 
@@ -77,6 +79,9 @@ internal class SwapVM(
     private val isCancelStateVisible = MutableStateFlow(false)
 
     private var selectedContact: MutableStateFlow<EnhancedABContact?> = MutableStateFlow(null)
+
+    private val receivingAddressType: MutableStateFlow<ReceivingAddressType> =
+        MutableStateFlow(ReceivingAddressType.UNIFIED)
 
     val cancelState =
         isCancelStateVisible
@@ -119,7 +124,7 @@ internal class SwapVM(
             selectedContact,
             getSelectedWalletAccount.observe(),
             mode,
-            // isEphemeralAddressLocked.observe()
+            receivingAddressType,
         ) {
             address,
             amount,
@@ -131,7 +136,7 @@ internal class SwapVM(
             selectedContact,
             account,
             mode,
-            // isEphemeralAddressLocked
+            receivingAddressType,
             ->
             InternalStateImpl(
                 swapAsset = asset,
@@ -144,7 +149,8 @@ internal class SwapVM(
                 selectedContact = selectedContact,
                 account = account,
                 mode = mode,
-                isEphemeralAddressLocked = false
+                isEphemeralAddressLocked = false,
+                receivingAddressType = receivingAddressType,
             )
         }
 
@@ -181,11 +187,17 @@ internal class SwapVM(
             onDeleteSelectedContactClick = ::onDeleteSelectedContactClick,
             onBalanceButtonClick = ::onBalanceButtonClick,
             onChangeButtonClick = ::onChangeButtonClick,
-            onAddressClick = ::onAddressClick
+            onAddressClick = ::onAddressClick,
+            onTopUpClick = ::onTopUpClick,
+            onChangeReceivingAddress = ::onChangeReceivingAddressClick
         )
 
     private fun onBalanceButtonClick() {
         // navigationRouter.forward(SpendableBalanceArgs)
+    }
+
+    private fun onTopUpClick() {
+        viewModelScope.launch { navigateToPeerOnramp() }
     }
 
     private fun onChangeButtonClick() {
@@ -193,6 +205,15 @@ internal class SwapVM(
             when (it) {
                 SWAP_FROM_ZEC -> SWAP_INTO_ZEC
                 SWAP_INTO_ZEC -> SWAP_FROM_ZEC
+            }
+        }
+    }
+
+    private fun onChangeReceivingAddressClick() {
+        receivingAddressType.update {
+            when (it) {
+                ReceivingAddressType.UNIFIED -> ReceivingAddressType.TRANSPARENT
+                ReceivingAddressType.TRANSPARENT -> ReceivingAddressType.UNIFIED
             }
         }
     }
@@ -361,6 +382,8 @@ internal enum class CurrencyType { TOKEN, FIAT }
 
 internal enum class Mode { SWAP_FROM_ZEC, SWAP_INTO_ZEC }
 
+internal enum class ReceivingAddressType { UNIFIED, TRANSPARENT }
+
 internal interface InternalState {
     val account: WalletAccount?
     val swapAsset: SwapAsset?
@@ -373,6 +396,7 @@ internal interface InternalState {
     val selectedContact: EnhancedABContact?
     val mode: Mode
     val isEphemeralAddressLocked: Boolean
+    val receivingAddressType: ReceivingAddressType
 
     val totalSpendableBalance: Zatoshi
         get() = account?.spendableShieldedBalance ?: Zatoshi(0)
@@ -390,4 +414,5 @@ internal data class InternalStateImpl(
     override val selectedContact: EnhancedABContact?,
     override val mode: Mode,
     override val isEphemeralAddressLocked: Boolean,
+    override val receivingAddressType: ReceivingAddressType,
 ) : InternalState

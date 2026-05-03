@@ -10,18 +10,29 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.graphics.RectangleShape
 import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.ZashiCard
 import co.electriccoin.zcash.ui.design.component.ZashiScreenModalBottomSheet
-import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
 import co.electriccoin.zcash.ui.design.component.zapp.ZappButton
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
@@ -83,16 +94,26 @@ fun SwapSlippageView(state: SwapSlippageState?) {
                 }
                 Spacer(8.dp)
             }
-            ZappBottomActionBar(
-                onBack = innerState.onBack,
-                primaryAction = {
-                    ZappButton(
-                        text = innerState.primary.text.getValue(),
-                        enabled = innerState.primary.isEnabled,
-                        onClick = innerState.primary.onClick,
-                    )
-                }
-            )
+            val c = ZappTheme.colors
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(c.surface)
+                        .border(BorderStroke(1.dp, c.border), RectangleShape)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                ZappBackButton(onClick = innerState.onBack)
+                ZappButton(
+                    modifier = Modifier.weight(1f).padding(start = 12.dp),
+                    text = innerState.primary.text.getValue(),
+                    enabled = innerState.primary.isEnabled,
+                    onClick = innerState.primary.onClick,
+                )
+            }
         },
     )
 }

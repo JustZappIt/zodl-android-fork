@@ -2,6 +2,8 @@ package co.electriccoin.zcash.ui.screen.swap
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -10,17 +12,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
@@ -29,27 +41,25 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.NativeKeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.appbar.ZashiMainTopAppBarState
 import co.electriccoin.zcash.ui.design.component.AssetCardState
-import androidx.compose.material3.Scaffold
 import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.ButtonStyle
 import co.electriccoin.zcash.ui.design.component.ChipButtonState
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.component.NumberTextFieldState
-import co.electriccoin.zcash.ui.design.component.HorizontalSpacer
-import co.electriccoin.zcash.ui.design.component.Spacer
 import co.electriccoin.zcash.ui.design.component.TextFieldState
 import co.electriccoin.zcash.ui.design.component.ZashiAddressTextField
 import co.electriccoin.zcash.ui.design.component.ZashiButton
@@ -61,14 +71,16 @@ import co.electriccoin.zcash.ui.design.component.ZashiImageButton
 import co.electriccoin.zcash.ui.design.component.ZashiInfoText
 import co.electriccoin.zcash.ui.design.component.listitem.SimpleListItemState
 import co.electriccoin.zcash.ui.design.component.listitem.ZashiSimpleListItem
-import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
+import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappButton
+import co.electriccoin.zcash.ui.design.component.zapp.ZappButtonVariant
 import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
+import co.electriccoin.zcash.ui.design.component.zapp.ellipsizeAddress
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.imageRes
-import co.electriccoin.zcash.ui.design.util.scaffoldPadding
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.design.util.stringResByDynamicCurrencyNumber
 import co.electriccoin.zcash.ui.fixture.ZashiMainTopAppBarStateFixture
@@ -86,81 +98,323 @@ internal fun SwapView(
     onSideEffect: (amountFocusRequester: FocusRequester) -> Unit = { },
 ) {
     val amountFocusRequester = remember { FocusRequester() }
+    val c = ZappTheme.colors
 
-    Scaffold(
-        topBar = { TopAppBar(state, appBarState) },
-        bottomBar = { ZappBottomActionBar(onBack = state.onBack) }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(c.bg)
+                .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout)),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .scaffoldPadding(it)
-        ) {
-            SwapAmountTextField(
-                state = state.amountTextField,
-                focusRequester = amountFocusRequester
-            )
+        // ── Header ──────────────────────────────────────────────────────────
+        ZappScreenHeader(
+            title = stringResource(R.string.swap_title),
+            right = {
+                ZashiIconButton(state.swapInfoButton)
+            },
+        )
 
-            if (state.addressLocation == TOP) {
-                Spacer(10.dp)
-                AddressTextField(state = state)
-                Spacer(16.dp)
-            } else {
-                Spacer(16.dp)
-            }
+        // ── Scrollable body ─────────────────────────────────────────────────
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 18.dp, vertical = 8.dp),
+            ) {
+                // Balance header
+                SwapBalanceHeader(state)
+                Spacer(modifier = Modifier.height(20.dp))
 
-            SlippageSeparator(
-                state = state
-            )
-            Spacer(14.dp)
-            SwapAmountText(state = state.amountText)
-
-            if (state.addressLocation == BOTTOM) {
-                Spacer(10.dp)
-                AddressTextField(state = state)
-            }
-
-            Spacer(22.dp)
-
-            SlippageButton(
-                state = state.slippage
-            )
-
-            state.infoItems.forEach { infoItem ->
-                Spacer(16.dp)
-                ZashiSimpleListItem(
-                    state = infoItem
+                // "You send" label
+                BasicText(
+                    text = stringResource(R.string.swap_you_send),
+                    style = ZappTheme.typography.eyebrow.copy(color = c.textMuted),
                 )
-            }
-            Spacer(24.dp)
-            Spacer(1f)
-            if (state.errorFooter != null) {
-                SwapErrorFooter(state.errorFooter)
-                Spacer(32.dp)
-            } else if (state.infoFooter != null) {
-                ZashiInfoText(
-                    text = state.infoFooter.getValue()
+                Spacer(modifier = Modifier.height(6.dp))
+                SwapAmountTextField(
+                    state = state.amountTextField,
+                    focusRequester = amountFocusRequester,
                 )
-                Spacer(24.dp)
-            }
-            if (state.primaryButton != null) {
-                ZashiButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    state = state.primaryButton
+
+                // Address field TOP (SWAP_INTO_ZEC refund)
+                if (state.addressLocation == TOP) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AddressTextField(state = state)
+                }
+
+                // Swap direction toggle
+                SwapDirectionToggle(state)
+
+                // "You receive" label
+                BasicText(
+                    text = stringResource(R.string.swap_you_receive),
+                    style = ZappTheme.typography.eyebrow.copy(color = c.textMuted),
                 )
+                Spacer(modifier = Modifier.height(6.dp))
+                SwapAmountText(state = state.amountText)
+
+                // Rate info
+                if (state.infoItems.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    state.infoItems.forEach { ZashiSimpleListItem(state = it) }
+                }
+
+                // Receiving address (BOTTOM = SWAP_FROM_ZEC destination address)
+                if (state.addressLocation == BOTTOM) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AddressTextField(state = state)
+                } else {
+                    // Compact read-only "Receiving to" row (SWAP_INTO_ZEC)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ReceivingToRow(state)
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (state.errorFooter != null) {
+                    SwapErrorFooter(state.errorFooter)
+                    Spacer(modifier = Modifier.height(16.dp))
+                } else if (state.infoFooter != null) {
+                    ZashiInfoText(text = state.infoFooter.getValue())
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
 
-        SideEffect {
-            onSideEffect(amountFocusRequester)
+        // ── Bottom action bar ────────────────────────────────────────────────
+        SwapBottomBar(state)
+
+        SideEffect { onSideEffect(amountFocusRequester) }
+    }
+}
+
+@Composable
+private fun SwapBalanceHeader(state: SwapState) {
+    val c = ZappTheme.colors
+    val t = ZappTheme.typography
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+    ) {
+        BasicText(
+            text = stringResource(R.string.swap_available_to_swap),
+            style = t.caption.copy(color = c.textMuted),
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BasicText(
+                text = state.headerBalance?.getValue() ?: "—",
+                style = t.display.copy(color = c.text),
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            BasicText(
+                text = stringResource(cash.z.ecc.sdk.ext.R.string.zcash_token_zec),
+                style = t.display.copy(color = c.accent),
+            )
+        }
+        state.headerBalanceFiat?.let { fiat ->
+            Spacer(modifier = Modifier.height(2.dp))
+            BasicText(
+                text = fiat.getValue(),
+                style = t.caption.copy(color = c.textMuted),
+            )
+        }
+        state.priceStats?.let { stats ->
+            Spacer(modifier = Modifier.height(14.dp))
+            SwapPriceStatsRow(stats)
         }
     }
 }
 
 @Composable
+private fun SwapPriceStatsRow(stats: SwapPriceStats) {
+    val c = ZappTheme.colors
+    val t = ZappTheme.typography
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            BasicText(
+                text = stringResource(R.string.swap_stats_price),
+                style = t.caption.copy(color = c.textMuted),
+            )
+            BasicText(
+                text = stats.price.getValue(),
+                style = t.caption.copy(color = c.text, fontWeight = FontWeight.SemiBold),
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Box(
+            modifier =
+                Modifier
+                    .width(1.dp)
+                    .height(28.dp)
+                    .background(c.border),
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            BasicText(
+                text = stringResource(R.string.swap_stats_fee),
+                style = t.caption.copy(color = c.textMuted),
+            )
+            BasicText(
+                text = stats.fee.getValue(),
+                style = t.caption.copy(color = c.text, fontWeight = FontWeight.SemiBold),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SwapDirectionToggle(state: SwapState) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+    ) {
+        ZashiImageButton(state = state.changeModeButton)
+    }
+}
+
+@Composable
+private fun ReceivingToRow(state: SwapState) {
+    val c = ZappTheme.colors
+    val t = ZappTheme.typography
+    val address = state.receivingZecAddress?.getValue().orEmpty()
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(c.surfaceAlt)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .background(c.accent),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            BasicText(
+                text = stringResource(R.string.swap_receiving_to),
+                style = t.caption.copy(color = c.textMuted),
+            )
+            BasicText(
+                text = if (address.isNotBlank()) address.ellipsizeAddress() else "—",
+                style = t.mono.copy(color = c.text),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        state.onChangeReceivingAddress?.let { onClick ->
+            Spacer(modifier = Modifier.width(8.dp))
+            BasicText(
+                text = stringResource(R.string.swap_change_address),
+                style = t.button.copy(color = c.accent),
+                modifier =
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = c.accent),
+                        onClick = onClick,
+                    ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SwapBottomBar(state: SwapState) {
+    val c = ZappTheme.colors
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(c.surface)
+                .border(BorderStroke(1.dp, c.border), RectangleShape)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 18.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        ZappBackButton(onClick = state.onBack)
+        Row(
+            modifier = Modifier.padding(start = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SwapSlippageButton(state.slippage)
+            // Top Up takes precedence when balance is zero
+            when {
+                state.topUpButton != null -> {
+                    ZappButton(
+                        text = state.topUpButton.text.getValue(),
+                        modifier = Modifier.weight(1f),
+                        variant = ZappButtonVariant.Primary,
+                        onClick = state.topUpButton.onClick,
+                    )
+                }
+                state.primaryButton != null -> {
+                    ZappButton(
+                        text = state.primaryButton.text.getValue(),
+                        enabled = state.primaryButton.isEnabled,
+                        variant =
+                            if (state.primaryButton.style == ButtonStyle.DESTRUCTIVE1) {
+                                ZappButtonVariant.Danger
+                            } else {
+                                ZappButtonVariant.Primary
+                            },
+                        modifier = Modifier.weight(1f),
+                        onClick = state.primaryButton.onClick,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SwapSlippageButton(state: ButtonState) {
+    val c = ZappTheme.colors
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier =
+            Modifier
+                .size(52.dp)
+                .background(c.surface)
+                .border(BorderStroke(1.dp, c.border))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(color = c.text),
+                    enabled = state.isEnabled,
+                    onClick = state.onClick,
+                ),
+    ) {
+        state.trailingIcon?.let { icon ->
+            Image(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                colorFilter = ColorFilter.tint(c.text),
+            )
+        }
+        BasicText(
+            text = state.text.getValue(),
+            style = ZappTheme.typography.caption.copy(color = c.textMuted),
+        )
+    }
+}
+
+@Composable
 fun SwapErrorFooter(errorFooter: SwapErrorFooterState) {
+    val c = ZappTheme.colors
+    val t = ZappTheme.typography
     Column {
         Image(
             modifier =
@@ -169,85 +423,53 @@ fun SwapErrorFooter(errorFooter: SwapErrorFooterState) {
                     .align(Alignment.CenterHorizontally),
             painter = painterResource(co.electriccoin.zcash.ui.design.R.drawable.ic_info),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(ZappTheme.colors.danger)
+            colorFilter = ColorFilter.tint(c.danger),
         )
-        Spacer(8.dp)
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = errorFooter.title.getValue(),
-            style = ZappTheme.typography.caption,
+            style = t.caption,
             fontWeight = FontWeight.Medium,
-            color = ZappTheme.colors.danger,
-            textAlign = TextAlign.Center
+            color = c.danger,
+            textAlign = TextAlign.Center,
         )
-        Spacer(4.dp)
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = errorFooter.subtitle.getValue(),
-            style = ZappTheme.typography.caption,
-            color = ZappTheme.colors.danger,
-            textAlign = TextAlign.Center
+            style = t.caption,
+            color = c.danger,
+            textAlign = TextAlign.Center,
         )
     }
 }
 
+/** Public: also used by UnifiedSendView. */
 @Composable
-fun SlippageButton(state: ButtonState, modifier: Modifier = Modifier) {
+fun SlippageButton(
+    state: ButtonState,
+    modifier: Modifier = Modifier,
+) {
+    val c = ZappTheme.colors
+    val t = ZappTheme.typography
     Row(
         modifier = modifier,
-        verticalAlignment = CenterVertically
+        verticalAlignment = CenterVertically,
     ) {
         Text(
             text = stringResource(R.string.swap_slippage_tolerance),
-            style = ZappTheme.typography.caption,
+            style = t.caption,
             fontWeight = FontWeight.Medium,
-            color = ZappTheme.colors.textMuted
+            color = c.textMuted,
         )
-        Spacer(1f)
+        Spacer(modifier = Modifier.weight(1f))
         ZashiButton(
             state = state,
             contentPadding = PaddingValues(start = 10.dp, end = 12.dp),
-            defaultPrimaryColors = ZashiButtonDefaults.tertiaryColors()
+            defaultPrimaryColors = ZashiButtonDefaults.tertiaryColors(),
         )
     }
-}
-
-@Composable
-private fun SlippageSeparator(
-    state: SwapState,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = CenterVertically
-    ) {
-        ZashiHorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = ZappTheme.colors.border
-        )
-
-        ZashiImageButton(state.changeModeButton)
-
-        ZashiHorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = ZappTheme.colors.border
-        )
-    }
-}
-
-@Composable
-private fun TopAppBar(state: SwapState, appBarState: ZashiMainTopAppBarState) {
-    ZappScreenHeader(
-        title = stringResource(R.string.swap_title),
-        right = {
-            ZashiIconButton(
-                state = appBarState.balanceVisibilityButton,
-                modifier = Modifier.size(40.dp)
-            )
-            HorizontalSpacer(4.dp)
-            ZashiIconButton(state.swapInfoButton)
-        }
-    )
 }
 
 @Composable
@@ -261,10 +483,10 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                     Modifier.clickable(
                         onClick = state.onAddressClick,
                         indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
+                        interactionSource = remember { MutableInteractionSource() },
                     )
                 },
-        verticalAlignment = CenterVertically
+        verticalAlignment = CenterVertically,
     ) {
         Text(
             text =
@@ -273,10 +495,10 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                     BOTTOM -> stringResource(co.electriccoin.zcash.ui.design.R.string.general_address)
                 },
             style = ZappTheme.typography.caption,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
         if (state.onAddressClick != null) {
-            Spacer(4.dp)
+            Spacer(modifier = Modifier.width(4.dp))
             Image(
                 modifier = Modifier.size(16.dp),
                 painter = painterResource(co.electriccoin.zcash.ui.design.R.drawable.ic_info),
@@ -284,7 +506,7 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
             )
         }
     }
-    Spacer(6.dp)
+    Spacer(modifier = Modifier.height(6.dp))
     ZashiAddressTextField(
         state = state.address,
         modifier =
@@ -304,7 +526,7 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                     Text(
                         text = state.addressPlaceholder.getValue(),
                         style = ZappTheme.typography.body,
-                        color = ZappTheme.colors.textSubtle
+                        color = ZappTheme.colors.textSubtle,
                     )
                 }
             } else {
@@ -320,7 +542,7 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                             Modifier
                                 .fillMaxHeight()
                                 .padding(top = 3.5.dp),
-                        contentAlignment = Alignment.CenterStart
+                        contentAlignment = Alignment.CenterStart,
                     ) {
                         ZashiChipButton(
                             state.addressContact,
@@ -332,31 +554,29 @@ private fun ColumnScope.AddressTextField(state: SwapState) {
                             textStyle =
                                 ZappTheme.typography.caption.copy(
                                     color = ZappTheme.colors.text,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                    fontWeight = FontWeight.Medium,
+                                ),
                         )
                     }
                 }
             },
         suffix = {
-            Row(
-                verticalAlignment = Alignment.Top
-            ) {
+            Row(verticalAlignment = Alignment.Top) {
                 ZashiImageButton(
                     modifier = Modifier.size(36.dp),
-                    state = state.addressBookButton
+                    state = state.addressBookButton,
                 )
-                Spacer(4.dp)
+                Spacer(modifier = Modifier.width(4.dp))
                 ZashiImageButton(
                     modifier = Modifier.size(36.dp),
-                    state = state.qrScannerButton
+                    state = state.qrScannerButton,
                 )
             }
         },
         keyboardOptions =
             KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Done,
             ),
     )
 }
@@ -368,6 +588,13 @@ private fun Preview() {
         SwapView(
             state =
                 SwapState(
+                    headerBalance = stringRes("12.450"),
+                    headerBalanceFiat = stringRes("≈ $353.58"),
+                    priceStats =
+                        SwapPriceStats(
+                            price = stringRes("$28.40"),
+                            fee = stringRes("~1.0%"),
+                        ),
                     swapInfoButton = IconButtonState(R.drawable.ic_help) {},
                     amountTextField =
                         SwapAmountTextFieldState(
@@ -379,21 +606,21 @@ private fun Preview() {
                                     bigIcon = null,
                                     smallIcon = null,
                                     isEnabled = false,
-                                    onClick = {}
+                                    onClick = {},
                                 ),
                             textFieldPrefix = imageRes(R.drawable.ic_send_zashi),
                             textField = NumberTextFieldState {},
                             secondaryText = stringResByDynamicCurrencyNumber(100, "USDT"),
                             max =
                                 ButtonState(
-                                    stringResByDynamicCurrencyNumber(100, "$")
+                                    stringResByDynamicCurrencyNumber(100, "$"),
                                 ),
-                            onSwapChange = {}
+                            onSwapChange = {},
                         ),
                     slippage =
                         ButtonState(
                             stringRes("1%"),
-                            trailingIcon = R.drawable.ic_swap_slippage
+                            trailingIcon = R.drawable.ic_swap_slippage,
                         ),
                     amountText =
                         SwapAmountTextState(
@@ -403,30 +630,30 @@ private fun Preview() {
                                     bigIcon = null,
                                     smallIcon = null,
                                     isEnabled = false,
-                                    onClick = {}
+                                    onClick = {},
                                 ),
                             title = stringRes("To"),
                             text = stringResByDynamicCurrencyNumber(101, "$"),
                             secondaryText = stringResByDynamicCurrencyNumber(2.47123, "ZEC"),
-                            subtitle = null
+                            subtitle = null,
                         ),
                     infoItems =
                         listOf(
                             SimpleListItemState(
                                 title = stringRes("Rate"),
-                                text = stringRes("1 ZEC = 51.74 USDC")
-                            )
+                                text = stringRes("1 ZEC = 51.74 USDC"),
+                            ),
                         ),
                     addressContact =
                         ChipButtonState(
                             text = stringRes("Contact"),
                             onClick = {},
-                            endIcon = co.electriccoin.zcash.ui.design.R.drawable.ic_chip_close
+                            endIcon = co.electriccoin.zcash.ui.design.R.drawable.ic_chip_close,
                         ),
                     addressBookButton =
                         IconButtonState(
                             icon = R.drawable.send_address_book,
-                            onClick = {}
+                            onClick = {},
                         ),
                     addressLocation = BOTTOM,
                     onAddressClick = null,
@@ -435,20 +662,23 @@ private fun Preview() {
                     qrScannerButton =
                         IconButtonState(
                             icon = R.drawable.qr_code_icon,
-                            onClick = {}
+                            onClick = {},
                         ),
                     errorFooter = null,
                     primaryButton =
                         ButtonState(
-                            stringRes("Get a quote")
+                            stringRes("Get a quote"),
                         ),
+                    topUpButton = null,
                     infoFooter =
                         stringRes(
                             "NEAR only supports swaps to a transparent address. " +
-                                "Zashi will prompt you to shield your funds upon receipt."
+                                "Zashi will prompt you to shield your funds upon receipt.",
                         ),
                     onBack = {},
-                    changeModeButton = IconButtonState(R.drawable.ic_swap_change_mode) {}
+                    changeModeButton = IconButtonState(R.drawable.ic_swap_change_mode) {},
+                    receivingZecAddress = null,
+                    onChangeReceivingAddress = null,
                 ),
             appBarState = ZashiMainTopAppBarStateFixture.new(),
         )
@@ -457,11 +687,18 @@ private fun Preview() {
 
 @PreviewScreens
 @Composable
-private fun UnexpectedErrorPreview() {
+private fun TopUpPreview() {
     ZcashTheme {
         SwapView(
             state =
                 SwapState(
+                    headerBalance = stringRes("0.000"),
+                    headerBalanceFiat = stringRes("≈ $0.00"),
+                    priceStats =
+                        SwapPriceStats(
+                            price = stringRes("$382.77"),
+                            fee = stringRes("~2%"),
+                        ),
                     swapInfoButton = IconButtonState(R.drawable.ic_help) {},
                     amountTextField =
                         SwapAmountTextFieldState(
@@ -469,25 +706,22 @@ private fun UnexpectedErrorPreview() {
                             error = null,
                             token =
                                 AssetCardState.Data(
-                                    token = stringRes("USDT"),
+                                    token = stringRes("ZEC"),
                                     bigIcon = null,
                                     smallIcon = null,
                                     isEnabled = false,
-                                    onClick = {}
+                                    onClick = {},
                                 ),
                             textFieldPrefix = imageRes(R.drawable.ic_send_zashi),
                             textField = NumberTextFieldState {},
-                            secondaryText = stringResByDynamicCurrencyNumber(100, "USDT"),
-                            max =
-                                ButtonState(
-                                    stringResByDynamicCurrencyNumber(100, "$")
-                                ),
-                            onSwapChange = {}
+                            secondaryText = stringResByDynamicCurrencyNumber(0, "$"),
+                            max = null,
+                            onSwapChange = {},
                         ),
                     slippage =
                         ButtonState(
-                            stringRes("1%"),
-                            trailingIcon = R.drawable.ic_swap_slippage
+                            stringRes("2%"),
+                            trailingIcon = R.drawable.ic_swap_slippage,
                         ),
                     amountText =
                         SwapAmountTextState(
@@ -497,24 +731,24 @@ private fun UnexpectedErrorPreview() {
                                     bigIcon = null,
                                     smallIcon = null,
                                     isEnabled = false,
-                                    onClick = {}
+                                    onClick = {},
                                 ),
                             title = stringRes("To"),
-                            text = stringResByDynamicCurrencyNumber(101, "$"),
-                            secondaryText = stringResByDynamicCurrencyNumber(2.47123, "ZEC"),
-                            subtitle = null
+                            text = stringRes("0.00"),
+                            secondaryText = stringResByDynamicCurrencyNumber(0, "$"),
+                            subtitle = null,
                         ),
                     infoItems =
                         listOf(
                             SimpleListItemState(
                                 title = stringRes("Rate"),
-                                text = stringRes("1 ZEC = 51.74 USDC")
-                            )
+                                text = stringRes("1 ZEC = 1.00 ZEC"),
+                            ),
                         ),
                     addressBookButton =
                         IconButtonState(
                             icon = R.drawable.send_address_book,
-                            onClick = {}
+                            onClick = {},
                         ),
                     addressLocation = BOTTOM,
                     onAddressClick = null,
@@ -523,21 +757,16 @@ private fun UnexpectedErrorPreview() {
                     qrScannerButton =
                         IconButtonState(
                             icon = R.drawable.qr_code_icon,
-                            onClick = {}
+                            onClick = {},
                         ),
-                    errorFooter =
-                        SwapErrorFooterState(
-                            title = stringRes("Unexpected error"),
-                            subtitle = stringRes("Please check your connection and try again."),
-                        ),
-                    primaryButton =
-                        ButtonState(
-                            stringRes("Try again"),
-                            style = ButtonStyle.DESTRUCTIVE1
-                        ),
+                    errorFooter = null,
+                    primaryButton = null,
+                    topUpButton = ButtonState(stringRes("Top Up")),
                     infoFooter = null,
                     onBack = {},
-                    changeModeButton = IconButtonState(R.drawable.ic_swap_change_mode) {}
+                    changeModeButton = IconButtonState(R.drawable.ic_swap_change_mode) {},
+                    receivingZecAddress = null,
+                    onChangeReceivingAddress = null,
                 ),
             appBarState = ZashiMainTopAppBarStateFixture.new(),
         )
@@ -551,6 +780,9 @@ private fun ServiceUnavailableErrorPreview() {
         SwapView(
             state =
                 SwapState(
+                    headerBalance = null,
+                    headerBalanceFiat = null,
+                    priceStats = null,
                     swapInfoButton = IconButtonState(R.drawable.ic_help) {},
                     amountTextField =
                         SwapAmountTextFieldState(
@@ -562,21 +794,21 @@ private fun ServiceUnavailableErrorPreview() {
                                     bigIcon = null,
                                     smallIcon = null,
                                     isEnabled = false,
-                                    onClick = {}
+                                    onClick = {},
                                 ),
                             textFieldPrefix = imageRes(R.drawable.ic_send_zashi),
                             textField = NumberTextFieldState {},
                             secondaryText = stringResByDynamicCurrencyNumber(100, "USDT"),
                             max =
                                 ButtonState(
-                                    stringResByDynamicCurrencyNumber(100, "$")
+                                    stringResByDynamicCurrencyNumber(100, "$"),
                                 ),
-                            onSwapChange = {}
+                            onSwapChange = {},
                         ),
                     slippage =
                         ButtonState(
                             stringRes("1%"),
-                            trailingIcon = R.drawable.ic_swap_slippage
+                            trailingIcon = R.drawable.ic_swap_slippage,
                         ),
                     amountText =
                         SwapAmountTextState(
@@ -586,24 +818,24 @@ private fun ServiceUnavailableErrorPreview() {
                                     bigIcon = null,
                                     smallIcon = null,
                                     isEnabled = false,
-                                    onClick = {}
+                                    onClick = {},
                                 ),
                             title = stringRes("To"),
                             text = stringResByDynamicCurrencyNumber(101, "$"),
                             secondaryText = stringResByDynamicCurrencyNumber(2.47123, "ZEC"),
-                            subtitle = null
+                            subtitle = null,
                         ),
                     infoItems =
                         listOf(
                             SimpleListItemState(
                                 title = stringRes("Rate"),
-                                text = stringRes("1 ZEC = 51.74 USDC")
-                            )
+                                text = stringRes("1 ZEC = 51.74 USDC"),
+                            ),
                         ),
                     addressBookButton =
                         IconButtonState(
                             icon = R.drawable.send_address_book,
-                            onClick = {}
+                            onClick = {},
                         ),
                     addressLocation = BOTTOM,
                     onAddressClick = null,
@@ -612,7 +844,7 @@ private fun ServiceUnavailableErrorPreview() {
                     qrScannerButton =
                         IconButtonState(
                             icon = R.drawable.qr_code_icon,
-                            onClick = {}
+                            onClick = {},
                         ),
                     errorFooter =
                         SwapErrorFooterState(
@@ -620,9 +852,12 @@ private fun ServiceUnavailableErrorPreview() {
                             subtitle = stringRes("Please try again later."),
                         ),
                     primaryButton = null,
+                    topUpButton = null,
                     infoFooter = null,
                     onBack = {},
-                    changeModeButton = IconButtonState(R.drawable.ic_swap_change_mode) {}
+                    changeModeButton = IconButtonState(R.drawable.ic_swap_change_mode) {},
+                    receivingZecAddress = null,
+                    onChangeReceivingAddress = null,
                 ),
             appBarState = ZashiMainTopAppBarStateFixture.new(),
         )

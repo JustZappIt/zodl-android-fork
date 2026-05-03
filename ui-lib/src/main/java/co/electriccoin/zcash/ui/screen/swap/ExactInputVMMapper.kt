@@ -29,6 +29,7 @@ import co.electriccoin.zcash.ui.screen.swap.CurrencyType.FIAT
 import co.electriccoin.zcash.ui.screen.swap.CurrencyType.TOKEN
 import co.electriccoin.zcash.ui.screen.swap.Mode.SWAP_FROM_ZEC
 import co.electriccoin.zcash.ui.screen.swap.Mode.SWAP_INTO_ZEC
+import co.electriccoin.zcash.ui.screen.swap.ReceivingAddressType
 import co.electriccoin.zcash.ui.screen.swap.ui.SwapAmountTextFieldState
 import co.electriccoin.zcash.ui.screen.swap.ui.SwapAmountTextState
 import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
@@ -57,6 +58,8 @@ internal class ExactInputVMMapper {
         onBalanceButtonClick: () -> Unit,
         onChangeButtonClick: () -> Unit,
         onAddressClick: () -> Unit,
+        onTopUpClick: () -> Unit,
+        onChangeReceivingAddress: () -> Unit,
     ): SwapState {
         val state = ExactInputInternalState(internalState)
         val textFieldState =
@@ -68,6 +71,24 @@ internal class ExactInputVMMapper {
                 onSwapAssetPickerClick = onSwapAssetPickerClick
             )
         return SwapState(
+            headerBalance = if (state.account != null) {
+                stringRes(state.totalSpendableBalance, TickerLocation.HIDDEN)
+            } else {
+                null
+            },
+            headerBalanceFiat = state.swapAssets.zecAsset?.usdPrice?.let { zecPrice ->
+                val fiatAmount =
+                    state.totalSpendableBalance.value
+                        .convertZatoshiToZecBigDecimal()
+                        .multiply(zecPrice, MathContext.DECIMAL128)
+                stringRes("≈ ") + stringResByDynamicCurrencyNumber(fiatAmount, FiatCurrency.USD.symbol)
+            },
+            priceStats = state.swapAssets.zecAsset?.usdPrice?.let { zecPrice ->
+                SwapPriceStats(
+                    price = stringResByDynamicCurrencyNumber(zecPrice, FiatCurrency.USD.symbol),
+                    fee = stringRes("~") + stringResByNumber(state.slippage, minDecimals = 0) + stringRes("%")
+                )
+            },
             amountTextField = textFieldState,
             slippage =
                 createSlippageState(
@@ -116,6 +137,11 @@ internal class ExactInputVMMapper {
                     onRequestSwapQuoteClick = onRequestSwapQuoteClick,
                     onTryAgainClick = onTryAgainClick
                 ),
+            topUpButton =
+                createTopUpButtonState(
+                    state = state,
+                    onTopUpClick = onTopUpClick
+                ),
             addressLocation =
                 when (state.mode) {
                     SWAP_FROM_ZEC -> SwapState.AddressLocation.BOTTOM
@@ -139,7 +165,23 @@ internal class ExactInputVMMapper {
                             co.electriccoin.zcash.ui.design.R.string.general_enter_address_partial,
                             it.chainName
                         )
-                    } ?: stringRes(co.electriccoin.zcash.ui.design.R.string.general_enter_address)
+                    } ?: stringRes(co.electriccoin.zcash.ui.design.R.string.general_enter_address),
+            receivingZecAddress =
+                when (state.mode) {
+                    SWAP_FROM_ZEC -> null
+                    SWAP_INTO_ZEC ->
+                        state.account?.let { account ->
+                            when (state.receivingAddressType) {
+                                ReceivingAddressType.UNIFIED -> stringRes(account.unified.address.address)
+                                ReceivingAddressType.TRANSPARENT -> stringRes(account.transparent.address.address)
+                            }
+                        }
+                },
+            onChangeReceivingAddress =
+                when (state.mode) {
+                    SWAP_FROM_ZEC -> null
+                    SWAP_INTO_ZEC -> if (state.account != null) onChangeReceivingAddress else null
+                },
         )
     }
 
@@ -534,6 +576,18 @@ internal class ExactInputVMMapper {
         )
     }
 
+    private fun createTopUpButtonState(
+        state: ExactInputInternalState,
+        onTopUpClick: () -> Unit,
+    ): ButtonState? {
+        if (state.mode != SWAP_FROM_ZEC) return null
+        if (state.totalSpendableBalance > Zatoshi(0)) return null
+        return ButtonState(
+            text = stringRes(R.string.unified_send_top_up),
+            onClick = onTopUpClick,
+        )
+    }
+
     private fun createListItems(state: ExactInputInternalState): List<SimpleListItemState> {
         val zecToAssetExchangeRate = state.getZecToDestinationAssetExchangeRate()
         val assetTokenTicker = state.swapAsset?.tokenTicker
@@ -571,7 +625,8 @@ private data class ExactInputInternalState(
     override val isRequestingQuote: Boolean,
     override val selectedContact: EnhancedABContact?,
     override val mode: Mode,
-    override val isEphemeralAddressLocked: Boolean
+    override val isEphemeralAddressLocked: Boolean,
+    override val receivingAddressType: ReceivingAddressType,
 ) : InternalState {
     constructor(original: InternalState) : this(
         account = original.account,
@@ -584,7 +639,8 @@ private data class ExactInputInternalState(
         isRequestingQuote = original.isRequestingQuote,
         selectedContact = original.selectedContact,
         mode = original.mode,
-        isEphemeralAddressLocked = original.isEphemeralAddressLocked
+        isEphemeralAddressLocked = original.isEphemeralAddressLocked,
+        receivingAddressType = original.receivingAddressType,
     )
 
     val originAsset: SwapAsset? =
