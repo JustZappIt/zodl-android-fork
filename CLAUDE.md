@@ -1,168 +1,71 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Zapp Android — privacy-focused Zcash wallet (Zodl 3.3.1 fork) with P2P chat (Hyperswarm/BareKit), 4-tab shell, fiat on/off-ramp (peer.xyz), ZKP2P providers.
 
-## What This Repo Is
-
-Zapp Android — a privacy-focused Zcash wallet forked from Zodl 3.3.1, with additions:
-- P2P encrypted chat via Hyperswarm (BareKit JS runtime embedded in Kotlin)
-- 4-tab navigation shell (Wallet, Chats, Contacts, Settings)
-- Fiat on/off-ramp via peer.xyz integration
-- ZKP2P providers (PIX, UPI, GCash) for Phase C
-
-## Required Sibling Repos
-
-Build fails without these siblings checked out at the same level as this repo:
+## Sibling repos (required at same level)
 
 ```
-../zappMessaging/     # P2P SDK — github.com/JustZappIt/zappMessaging
-../bare-kit/          # Hyperswarm JS runtime — github.com/holepunchto/bare-kit v2.0.0
+../zappMessaging/   # P2P SDK
+../bare-kit/        # Hyperswarm JS runtime v2.0.0
 ```
 
-Pinned SHAs live in `.zapp-deps`. If builds break after a pull, verify sibling revisions match.
+Pinned SHAs in `.zapp-deps`. Match them if builds break after a pull.
 
-## Build Commands
+## Build
 
 ```bash
-# Debug build (mainnet by default)
-./gradlew :app:assembleZcashmainnetStoreDebug
-
-# Testnet debug build
-./gradlew :app:assembleZcashtestnetStoreDebug
-
-# Install on connected device
-./gradlew :app:installZcashmainnetStoreDebug
-
-# Build with explicit network flag
-./gradlew -PZCASH_NETWORK=mainnet :app:assembleDebug
+./gradlew :app:assembleZcashmainnetStoreDebug   # debug mainnet
+./gradlew :app:installZcashmainnetStoreDebug    # install on device
+./gradlew check                                  # unit tests
+./gradlew detektAll && ./gradlew ktlintFormat    # lint + format
+./gradlew resolveAndLockAll --write-locks        # after dep changes
 ```
 
-## Test Commands
-
+Build cache conflict (when building both zodl-android + this fork):
 ```bash
-# Unit tests (Kotlin-only modules)
-./gradlew check
-
-# Android instrumentation tests (requires device/emulator)
-./gradlew connectedCheck
-
-# UI tests on specific module
-./gradlew :ui-lib:connectedCheck
-
-# Gradle Managed Device tests (no physical device needed)
-./gradlew :ui-lib:pixel2TargetDebugAndroidTest
+./gradlew --stop && rm -rf ~/.gradle/caches/build-cache-1 build-conventions-secant/{build,.gradle,.kotlin} .gradle
 ```
 
-## Lint & Formatting
+## Environment
 
-```bash
-./gradlew detektAll       # Static analysis
-./gradlew ktlintFormat    # Auto-format Kotlin
-./gradlew lint            # Android lint
-```
-
-## Environment Requirements
-
-- **JDK 17** (not 21+ — breaks Kotlin compiler parse). Set `JAVA_HOME` explicitly.
-- **NDK 27.0.12077973** (exact version; CMake 4.1.2 also required for bare-kit native build)
-- Android `compileSdk 36`, `minSdk 27`
-
-Verify environment:
-```bash
-./gradlew --version  # should show Gradle 8.14.4, Launcher JVM 17.x
-```
-
-## Build Cache Issues
-
-If you build both `zodl-android` (upstream) and this fork on the same machine, precompiled-script-plugin hash conflicts occur. Fix:
-
-```bash
-./gradlew --stop
-rm -rf ~/.gradle/caches/build-cache-1 build-conventions-secant/{build,.gradle,.kotlin} .gradle
-./gradlew :app:installZcashmainnetFossDebug --no-build-cache
-```
+- JDK 17 (not 21+), NDK 27.0.12077973, CMake 4.1.2
+- `compileSdk 36`, `minSdk 27`, Gradle 8.14.4
 
 ## Architecture
 
-### Module Layout
-
 | Module | Purpose |
 |--------|---------|
-| `app` | Application entry, Koin DI init, crash/analytics setup |
-| `ui-lib` | 99% of UI — all screens, navigation, ViewModels, DI modules |
-| `ui-design-lib` | `ZappTheme` design system (tokens, components) |
+| `app` | Koin DI init, crash/analytics |
+| `ui-lib` | All screens, ViewModels, nav, DI modules |
+| `ui-design-lib` | `ZappTheme` — tokens, components |
 | `sdk-ext-lib` | Zcash SDK extensions |
-| `preference-*-lib` | Key-value storage (multiplatform API + DataStore impl) |
-| `configuration-*-lib` | Remote feature-flag config (multiplatform API + Android impl) |
-| `crash-*-lib` | Crash reporting (multiplatform API + Android impl) |
-| `spackle-*-lib` | Common utilities |
-| `build-info-lib` | Build metadata injection |
+| `preference-*-lib` | DataStore key-value storage |
+| `configuration-*-lib` | Remote feature flags |
 
-### Key Architectural Patterns
+**DI** — Koin (`viewModel { ... }`), not Hilt. Modules in `ui-lib`.
 
-**Dependency Injection — Koin (not Hilt)**
-All DI modules live in `ui-lib`. VMs are declared `viewModel { ... }`. Key modules:
-- `CoreModule`, `ProviderModule`, `RepositoryModule`, `UseCaseModule`, `ViewModelModule`
-- `ZappMessagingModule` wires the P2P chat SDK
+**State** — `StateFlow<UiState>` + `.collectAsStateWithLifecycle()`. Always `SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT)` with explicit `import kotlinx.coroutines.flow.WhileSubscribed`.
 
-**State — Kotlin Flow only (no LiveData)**
-- VMs expose `StateFlow<UiState>` consumed via `.collectAsStateWithLifecycle()`
-- Always use `SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT)` — requires `import kotlinx.coroutines.flow.WhileSubscribed` (without this import, compiler resolves to the Long overload and fails)
+**Navigation** — `@Serializable` routes. `RootNavGraph` → `WalletNavGraph` + `ChatNavGraph`.
 
-**Navigation — Jetpack Compose Navigation with `@Serializable` routes**
-- `RootNavGraph` → `WalletNavGraph` + `ChatNavGraph`
-- `MainActivity` (unexported; exposed via activity-alias in manifest)
+**Screen layout** — `screen/[name]/[Name]View.kt`, `[Name]VM.kt`, `[Name]State.kt`.
 
-**Screen structure** — each screen follows:
-```
-screen/[name]/
-  [Name]View.kt    # Composable UI
-  [Name]VM.kt      # ViewModel
-  [Name]State.kt   # Sealed state classes
-```
+**P2P Chat** — `ZappMessagingSDK` via BareKit. Never call Hyperswarm from UI; go through `ChatViewModel`.
 
-**P2P Chat** — `ZappMessagingSDK` runs a Hyperswarm node via BareKit (embedded JS VM). Ed25519 identity is derived from the BIP39 seed. Never call Hyperswarm directly from UI; use `ChatViewModel` → SDK.
+**UI design system** — `ZappTheme` tokens only. No `ZashiColors`, no `ZashiTypography`, no rounded shapes. See `zapp-android-ui` skill.
 
-### UI Design System
+**Build variants** — network: `zcashmainnet`/`zcashtestnet` × distribution: `store`/`foss`. ML Kit barcode only in `store`.
 
-Use `ZappTheme` tokens exclusively. Do not use `ZashiColors`, `ZashiTypography`, or rounded shapes (legacy).
+**Suspend nav use cases** — always `viewModelScope.launch { navigateTo...() }`.
 
-- Colors: `ZappTheme.colors.*` (warm off-white background, `#FF9417` orange accent)
-- Typography: `ZappTheme.typography.*`
-- Components: `ZappScreenHeader`, `ZappRow`, `ZappRowDivider`, `ZappBottomActionBar`, `ZappBackButton`
-- No rounded corners (Swiss-minimalist design)
-
-`com.google.android.material` is **not** a dependency of `ui-lib`. Use `Color.parseColor("#FF9417")` or color resources — not `MaterialColors`.
-
-### Build Variants
-
-- **Network dimension**: `zcashmainnet` / `zcashtestnet`
-- **Distribution dimension**: `store` / `foss`
-- ML Kit barcode scanning only in `store` flavor (proprietary)
-
-### Dependency Locking
-
-Dependency locking is enabled. After changing `gradle.properties` or adding dependencies, update lock files:
-```bash
-./gradlew resolveAndLockAll --write-locks
-```
-
-### Suspend Navigation Use Cases
-
-`NavigateToPeerOnrampUseCase` and similar use-case classes are suspend functions. Always call them inside a coroutine scope:
-```kotlin
-viewModelScope.launch { navigateToPeerOnramp() }
-```
-
-## Key Files
+## Key files
 
 | File | Purpose |
 |------|---------|
-| `app/src/main/.../ZcashApplication.kt` | Root Application — Koin init |
-| `ui-lib/src/main/.../MainActivity.kt` | Main Activity |
-| `ui-lib/src/main/.../RootNavGraph.kt` | Top-level navigation |
-| `ui-lib/src/main/.../WalletNavGraph.kt` | Wallet tab + nested screens |
-| `ui-lib/src/main/.../screen/tabs/` | 4-tab shell |
-| `ZAPP_CHANGES.md` | Patch series stacked on Zodl 3.3.1 — read before merging upstream |
-| `DEVELOPER_SETUP.md` | Full environment setup with exact version pins |
-| `docs/Architecture.md` | Module dependency rules |
+| `app/.../ZcashApplication.kt` | Koin init |
+| `ui-lib/.../MainActivity.kt` | Main activity |
+| `ui-lib/.../RootNavGraph.kt` | Top-level nav |
+| `ui-lib/.../WalletNavGraph.kt` | Wallet tab + nested screens |
+| `ui-lib/.../screen/tabs/` | 4-tab shell |
+| `ZAPP_CHANGES.md` | Patch series — read before merging upstream |
+| `DEVELOPER_SETUP.md` | Full env setup with version pins |
