@@ -15,9 +15,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import co.electriccoin.zcash.preference.EncryptedPreferenceProvider
+import co.electriccoin.zcash.preference.StandardPreferenceProvider
 import co.electriccoin.zcash.ui.common.provider.PersistableWalletProvider
+import co.electriccoin.zcash.ui.common.repository.BiometricRepository
+import co.electriccoin.zcash.ui.common.repository.BiometricRequest
+import co.electriccoin.zcash.ui.common.repository.BiometricsCancelledException
+import co.electriccoin.zcash.ui.common.repository.BiometricsFailureException
 import co.electriccoin.zcash.ui.common.usecase.GetZashiAccountUseCase
 import co.electriccoin.zcash.ui.common.usecase.NavigateToScanPublicKeyUseCase
+import co.electriccoin.zcash.ui.design.util.stringRes
+import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
+import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.chat.media.FileUtils
 import co.electriccoin.zcash.ui.screen.chat.media.ImageProcessor
 import co.electriccoin.zcash.ui.screen.chat.model.ChatContact
@@ -38,8 +47,17 @@ class ChatViewModel(
     private val sdk: ZappMessagingSDK,
     private val persistableWalletProvider: PersistableWalletProvider,
     private val navigateToScanPublicKey: NavigateToScanPublicKeyUseCase,
-    private val getZashiAccount: GetZashiAccountUseCase
+    private val getZashiAccount: GetZashiAccountUseCase,
+    private val biometricRepository: BiometricRepository,
+    private val standardPreferenceProvider: StandardPreferenceProvider,
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
 ) : AndroidViewModel(application) {
+
+    sealed class PinVerifyState {
+        object Idle : PinVerifyState()
+        object Required : PinVerifyState()
+        object Error : PinVerifyState()
+    }
 
     // ── Identity State ──────────────────────────────────────────────────
 
@@ -74,6 +92,13 @@ class ChatViewModel(
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _pinVerifyState = MutableStateFlow<PinVerifyState>(PinVerifyState.Idle)
+    val pinVerifyState: StateFlow<PinVerifyState> = _pinVerifyState.asStateFlow()
+
+    /** Non-null only while the seed phrase dialog is visible; consumed by the UI. */
+    private val _pendingSeedPhrase = MutableStateFlow<String?>(null)
+    val pendingSeedPhrase: StateFlow<String?> = _pendingSeedPhrase.asStateFlow()
 
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.DISCONNECTED)
     val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
@@ -388,11 +413,56 @@ class ChatViewModel(
         null
     }
 
-    /** Callback variant for non-coroutine call sites (legacy chat profile/setup screens). */
-    fun exportSeedPhrase(onResult: (String?) -> Unit) {
+    /**
+     * Entry point for the seed phrase row tap. Checks the configured auth method
+     * (biometric / PIN / none) and gates [exportAndEmitSeedPhrase] behind it.
+     */
+    fun onSeedPhraseRequested() {
         viewModelScope.launch {
-            onResult(exportSeedPhraseSuspending())
+            val authMethod = StandardPreferenceKeys.AUTH_METHOD.getValue(standardPreferenceProvider())
+            when (authMethod) {
+                "biometric" -> {
+                    try {
+                        biometricRepository.requestBiometrics(
+                            BiometricRequest(message = stringRes("View your seed phrase"))
+                        )
+                        exportAndEmitSeedPhrase()
+                    } catch (_: BiometricsFailureException) {}
+                    catch (_: BiometricsCancelledException) {}
+                }
+                "pin" -> _pinVerifyState.value = PinVerifyState.Required
+                else -> exportAndEmitSeedPhrase()
+            }
         }
+    }
+
+    /** Called by the UI PIN overlay on each 6-digit submission. */
+    fun onPinSubmitted(pin: String) {
+        viewModelScope.launch {
+            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
+            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
+                _pinVerifyState.value = PinVerifyState.Idle
+                exportAndEmitSeedPhrase()
+            } else {
+                _pinVerifyState.value = PinVerifyState.Error
+                delay(1_500)
+                _pinVerifyState.value = PinVerifyState.Required
+            }
+        }
+    }
+
+    fun onPinEntryDismissed() {
+        _pinVerifyState.value = PinVerifyState.Idle
+    }
+
+    /** Called by the UI after the seed phrase dialog is dismissed. */
+    fun consumeSeedPhrase() {
+        _pendingSeedPhrase.value = null
+    }
+
+    private suspend fun exportAndEmitSeedPhrase() {
+        val phrase = exportSeedPhraseSuspending()
+        if (phrase != null) _pendingSeedPhrase.value = phrase
     }
 
     // ── Conversation Management ─────────────────────────────────────────
