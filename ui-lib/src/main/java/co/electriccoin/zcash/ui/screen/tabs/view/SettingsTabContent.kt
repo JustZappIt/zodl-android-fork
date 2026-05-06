@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.graphics.RectangleShape
@@ -37,7 +38,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VpnLock
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,8 +47,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -76,7 +74,6 @@ import co.electriccoin.zcash.ui.design.component.zapp.initialsOf
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZappNavBar
 import co.electriccoin.zcash.ui.screen.about.AboutArgs
-import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 import co.electriccoin.zcash.ui.screen.chooseserver.ChooseServerArgs
@@ -108,13 +105,13 @@ fun SettingsTabContent(
     var showDeleteIdentityConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = c.bg,
-    ) { paddingValues ->
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .windowInsetsPadding(WindowInsets.statusBars),
         ) {
             ZappScreenHeader(title = "Settings")
@@ -187,13 +184,6 @@ fun SettingsTabContent(
                             subtitle = "Choose a lightwalletd server",
                             icon = Icons.Default.Cloud,
                             onClick = { navigationRouter.forward(ChooseServerArgs) },
-                        )
-                        ZappRowDivider(inset = true)
-                        ZappRow(
-                            title = "Advanced wallet settings",
-                            subtitle = "Export, privacy, resync, and more",
-                            icon = Icons.Default.Tune,
-                            onClick = { navigationRouter.forward(AdvancedSettingsArgs) },
                         )
                     }
                 }
@@ -271,7 +261,12 @@ fun SettingsTabContent(
             titleContentColor = c.text,
             textContentColor = c.textMuted,
             shape = RectangleShape,
-            title = { Text("Edit display name") },
+            title = {
+                BasicText(
+                    text = "Edit display name",
+                    style = ZappTheme.typography.sectionTitle.copy(color = c.text),
+                )
+            },
             text = {
                 OutlinedTextField(
                     value = editNameText,
@@ -282,17 +277,36 @@ fun SettingsTabContent(
                 )
             },
             confirmButton = {
-                TextButton(
-                    enabled = editNameText.isNotBlank(),
-                    onClick = {
-                        chatViewModel.updateDisplayName(editNameText.trim())
-                        showEditNameDialog = false
-                    },
-                ) { Text("Save", color = c.accent) }
+                Box(
+                    modifier = Modifier
+                        .clickable(enabled = editNameText.isNotBlank()) {
+                            chatViewModel.updateDisplayName(editNameText.trim())
+                            showEditNameDialog = false
+                        }
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText(
+                        text = "Save",
+                        style = ZappTheme.typography.button.copy(
+                            color = if (editNameText.isNotBlank()) c.accent else c.textSubtle,
+                        ),
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = c.textMuted)
+                Box(
+                    modifier = Modifier
+                        .clickable { showEditNameDialog = false }
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText(
+                        text = "Cancel",
+                        style = ZappTheme.typography.button.copy(color = c.textMuted),
+                    )
                 }
             },
         )
@@ -305,24 +319,50 @@ fun SettingsTabContent(
             titleContentColor = c.text,
             textContentColor = c.textMuted,
             shape = RectangleShape,
-            title = { Text("Delete identity?") },
+            title = {
+                BasicText(
+                    text = "Delete identity?",
+                    style = ZappTheme.typography.sectionTitle.copy(color = c.text),
+                )
+            },
             text = {
-                Text(
-                    "This will remove your identity, contacts, and messages from this device. " +
+                BasicText(
+                    text = "This will remove your identity, contacts, and messages from this device. " +
                         "You'll need your seed phrase to restore them.",
+                    style = ZappTheme.typography.body.copy(color = c.textMuted),
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    showDeleteIdentityConfirm = false
-                    chatViewModel.deleteIdentity {
-                        scope.launch { snackbarHostState.showSnackbar("Identity deleted.") }
-                    }
-                }) { Text("Delete", color = c.danger) }
+                Box(
+                    modifier = Modifier
+                        .clickable {
+                            showDeleteIdentityConfirm = false
+                            chatViewModel.deleteIdentity {
+                                scope.launch { snackbarHostState.showSnackbar("Identity deleted.") }
+                            }
+                        }
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText(
+                        text = "Delete",
+                        style = ZappTheme.typography.button.copy(color = c.danger),
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteIdentityConfirm = false }) {
-                    Text("Cancel", color = c.textMuted)
+                Box(
+                    modifier = Modifier
+                        .clickable { showDeleteIdentityConfirm = false }
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText(
+                        text = "Cancel",
+                        style = ZappTheme.typography.button.copy(color = c.textMuted),
+                    )
                 }
             },
         )
