@@ -4,9 +4,13 @@ package co.electriccoin.zcash.ui.screen.chooseserver
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,18 +18,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,15 +43,16 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.graphics.RectangleShape
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.design.R.drawable
 import co.electriccoin.zcash.ui.design.component.AlertDialogState
@@ -71,8 +75,6 @@ import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
 import co.electriccoin.zcash.ui.design.util.StringResource
 import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.orDark
@@ -94,12 +96,12 @@ fun ChooseServerView(state: ChooseServerState?) {
             ZappScreenHeader(
                 title = stringResource(id = R.string.choose_server_title),
                 modifier = Modifier.testTag(CHOOSE_SERVER_TOP_APP_BAR),
-                left = { ZappBackButton(onClick = state.onBack) },
             )
         },
         bottomBar = {
             ChooseServerBottomBar(
-                saveButtonState = state.saveButton
+                saveButtonState = state.saveButton,
+                onBack = state.onBack,
             )
         }
     ) { paddingValues ->
@@ -145,12 +147,12 @@ private fun ServerLoading() {
             size = 32.dp,
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Text(
+        BasicText(
             text = stringResource(id = R.string.choose_server_loading_title),
             style = ZappTheme.typography.sectionTitle.copy(color = c.text),
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
+        BasicText(
             text = stringResource(id = R.string.choose_server_loading_subtitle),
             style = ZappTheme.typography.body.copy(color = c.textMuted),
         )
@@ -166,20 +168,27 @@ private fun ErrorDialog(dialogState: ServerDialogState) {
 
     when (dialogState) {
         is ServerDialogState.Validation -> {
+            val c = ZappTheme.colors
             AppAlertDialog(
                 title = dialogState.state.title.getValue(),
                 text = {
                     Column(
                         Modifier.verticalScroll(rememberScrollState())
                     ) {
-                        Text(dialogState.state.text.getValue())
+                        BasicText(
+                            text = dialogState.state.text.getValue(),
+                            style = ZappTheme.typography.body.copy(color = c.text),
+                        )
 
                         if (dialogState.reason != null) {
                             Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingDefault))
 
-                            Text(
+                            BasicText(
                                 text = dialogState.reason.getValue(),
-                                fontStyle = FontStyle.Italic
+                                style = ZappTheme.typography.body.copy(
+                                    color = c.textMuted,
+                                    fontStyle = FontStyle.Italic,
+                                ),
                             )
                         }
                     }
@@ -195,19 +204,24 @@ private fun ErrorDialog(dialogState: ServerDialogState) {
 }
 
 @Composable
-fun ChooseServerBottomBar(saveButtonState: ButtonState) {
+fun ChooseServerBottomBar(saveButtonState: ButtonState, onBack: () -> Unit) {
     val c = ZappTheme.colors
-    androidx.compose.foundation.layout.Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(c.surface)
-            .padding(horizontal = 18.dp, vertical = 12.dp)
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        ZappBackButton(onClick = onBack)
         ZappButton(
             text = saveButtonState.text.getValue(),
             onClick = saveButtonState.onClick,
             enabled = saveButtonState.isEnabled,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -237,6 +251,7 @@ private fun LazyListScope.serverListItems(state: ServerListState) {
         contentType = { _, item -> item.contentType },
         key = { _, item -> item.key }
     ) { index, item ->
+        val c = ZappTheme.colors
         when (item) {
             is ServerState.Custom -> {
                 CustomServerRadioButton(
@@ -246,7 +261,7 @@ private fun LazyListScope.serverListItems(state: ServerListState) {
                             .padding(start = 4.dp, end = 4.dp)
                             .then(
                                 if (item.radioButtonState.isChecked) {
-                                    Modifier.background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(0.dp))
+                                    Modifier.background(c.surfaceAlt, RectangleShape)
                                 } else {
                                     Modifier
                                 }
@@ -264,7 +279,7 @@ private fun LazyListScope.serverListItems(state: ServerListState) {
                             .padding(horizontal = 4.dp)
                             .then(
                                 if (item.radioButtonState.isChecked && item.badge == null) {
-                                    Modifier.background(ZashiColors.Surfaces.bgSecondary, RoundedCornerShape(0.dp))
+                                    Modifier.background(c.surfaceAlt, RectangleShape)
                                 } else {
                                     Modifier
                                 }
@@ -317,13 +332,18 @@ private fun FastestServersHeader(state: ServerListState.Fastest) {
     ) {
         ZappGroupHeader(text = state.title.getValue())
         Spacer(modifier = Modifier.weight(1f))
-        TextButton(onClick = state.retryButton.onClick) {
-            Text(
+        Row(
+            modifier = Modifier
+                .clickable(onClick = state.retryButton.onClick)
+                .heightIn(min = 48.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicText(
                 text = state.retryButton.text.getValue(),
                 style = ZappTheme.typography.button.copy(color = c.text),
             )
             Spacer(modifier = Modifier.width(6.dp))
-
             if (state.isLoading) {
                 LottieProgress()
             } else {
@@ -353,6 +373,7 @@ private fun CustomServerRadioButton(
     state: ServerState.Custom,
     modifier: Modifier = Modifier
 ) {
+    val c = ZappTheme.colors
     Column(modifier = modifier) {
         ZashiRadioButton(
             state = state.radioButtonState,
@@ -397,7 +418,7 @@ private fun CustomServerRadioButton(
                             .rotate(iconAngle.value),
                     painter = painterResource(id = R.drawable.ic_expand),
                     contentDescription = state.radioButtonState.text.getValue(),
-                    colorFilter = ColorFilter.tint(ZashiColors.Text.textPrimary)
+                    colorFilter = ColorFilter.tint(c.text)
                 )
             }
         )
@@ -408,7 +429,10 @@ private fun CustomServerRadioButton(
             ZashiTextField(
                 state = state.newServerTextFieldState,
                 placeholder = {
-                    Text(text = stringResource(R.string.choose_server_textfield_hint))
+                    BasicText(
+                        text = stringResource(R.string.choose_server_textfield_hint),
+                        style = ZappTheme.typography.body.copy(color = c.textSubtle),
+                    )
                 },
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(true) }),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
@@ -422,15 +446,15 @@ private fun CustomServerRadioButton(
                         ),
                 colors =
                     ZashiTextFieldDefaults.defaultColors(
-                        containerColor = ZashiColors.Surfaces.bgPrimary,
-                        textColor = ZashiColors.Text.textPrimary,
-                        borderColor = ZashiColors.Inputs.Default.stroke,
+                        containerColor = c.bg,
+                        textColor = c.text,
+                        borderColor = c.border,
                     ) orDark
                         ZashiTextFieldDefaults.defaultColors(
-                            containerColor = ZashiColors.Surfaces.bgSecondary,
-                            hintColor = ZashiColors.Utility.Gray.utilityGray400,
-                            textColor = ZashiColors.Text.textPrimary,
-                            borderColor = ZashiColors.Utility.Gray.utilityGray600
+                            containerColor = c.surfaceAlt,
+                            hintColor = c.textSubtle,
+                            textColor = c.text,
+                            borderColor = c.borderStrong,
                         )
             )
         }
