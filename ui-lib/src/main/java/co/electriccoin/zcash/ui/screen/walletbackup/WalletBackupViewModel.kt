@@ -12,6 +12,7 @@ import co.electriccoin.zcash.ui.common.repository.BiometricRepository
 import co.electriccoin.zcash.ui.common.repository.BiometricRequest
 import co.electriccoin.zcash.ui.common.repository.BiometricsCancelledException
 import co.electriccoin.zcash.ui.common.repository.BiometricsFailureException
+import co.electriccoin.zcash.ui.common.security.PinAuthGate
 import co.electriccoin.zcash.ui.common.usecase.GetPersistableWalletUseCase
 import co.electriccoin.zcash.ui.common.usecase.OnUserSavedWalletBackupUseCase
 import co.electriccoin.zcash.ui.common.usecase.RemindWalletBackupLaterUseCase
@@ -21,9 +22,9 @@ import co.electriccoin.zcash.ui.design.component.ButtonState
 import co.electriccoin.zcash.ui.design.component.IconButtonState
 import co.electriccoin.zcash.ui.design.component.SeedTextState
 import co.electriccoin.zcash.ui.design.util.stringRes
-import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.restore.info.SeedInfo
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,10 +56,27 @@ class WalletBackupViewModel(
         object Idle : PinVerifyState()
         object Required : PinVerifyState()
         object Error : PinVerifyState()
+
+        /** Lockout in effect — input must be disabled and a countdown shown. */
+        data class Locked(val secondsRemaining: Int) : PinVerifyState()
     }
 
     private val _pinVerifyState = MutableStateFlow<PinVerifyState>(PinVerifyState.Idle)
     val pinVerifyState: StateFlow<PinVerifyState> = _pinVerifyState.asStateFlow()
+    private var pinLockoutTickerJob: Job? = null
+
+    private fun startPinLockoutTicker(initialMs: Long) {
+        pinLockoutTickerJob?.cancel()
+        pinLockoutTickerJob = viewModelScope.launch {
+            var remaining = initialMs
+            while (remaining > 0) {
+                _pinVerifyState.value = PinVerifyState.Locked(((remaining + 999) / 1000).toInt())
+                delay(1_000)
+                remaining -= 1_000
+            }
+            _pinVerifyState.value = PinVerifyState.Required
+        }
+    }
 
     private val lockoutDuration =
         walletBackupMessageUseCase
@@ -207,19 +225,31 @@ class WalletBackupViewModel(
         }
 
     /**
-     * Called by the UI when the user submits a PIN on the [PinVerifyState.Required] overlay.
-     * Verifies against the stored hash; on success reveals the seed phrase.
+     * Called by the UI when the user submits a PIN on the [PinVerifyState.Required]
+     * overlay. Verifies through [PinAuthGate] (shared global lockout); on success
+     * reveals the seed phrase.
      */
     fun onPinSubmitted(pin: String) {
         viewModelScope.launch {
-            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
-            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
-                isRevealed.value = true
-                _pinVerifyState.value = PinVerifyState.Idle
-            } else {
-                _pinVerifyState.value = PinVerifyState.Error
-                delay(1_500)
-                _pinVerifyState.value = PinVerifyState.Required
+            when (val result = PinAuthGate.tryVerify(
+                pin,
+                encryptedPreferenceProvider,
+                standardPreferenceProvider,
+            )) {
+                PinAuthGate.Result.Success -> {
+                    isRevealed.value = true
+                    _pinVerifyState.value = PinVerifyState.Idle
+                }
+
+                PinAuthGate.Result.Wrong -> {
+                    _pinVerifyState.value = PinVerifyState.Error
+                    delay(1_500)
+                    _pinVerifyState.value = PinVerifyState.Required
+                }
+
+                is PinAuthGate.Result.Locked -> {
+                    startPinLockoutTicker(result.msUntilUnlock)
+                }
             }
         }
     }
