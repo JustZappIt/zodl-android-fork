@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
@@ -80,7 +79,6 @@ import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 import co.electriccoin.zcash.ui.screen.chooseserver.ChooseServerArgs
-import co.electriccoin.zcash.ui.screen.swap.SwapArgs
 import co.electriccoin.zcash.ui.screen.taxexport.TaxExport
 import co.electriccoin.zcash.ui.screen.tor.optin.TorOptInArgs
 import kotlinx.coroutines.delay
@@ -158,7 +156,7 @@ fun SettingsTabContent(
                         iconBackground = c.accentSoft,
                         onClick = { navigationRouter.forward(ChatProfileArgs) },
                     )
-                    // HIDDEN: Backup / restore — uncomment to restore (and the divider above)
+                    // DEAD CODE [hidden]: Backup / restore — uncomment to restore (and the divider above)
                     // ZappRowDivider(inset = true)
                     // ZappRow(
                     //     title = "Backup / restore",
@@ -172,7 +170,7 @@ fun SettingsTabContent(
 
                 if (hasWallet) {
                     SettingsGroup(title = "Wallet") {
-                        // HIDDEN: Backup seed phrase — uncomment to restore (and the divider below)
+                        // DEAD CODE [hidden]: Backup seed phrase — uncomment to restore (and the divider below)
                         // ZappRow(
                         //     title = "Backup seed phrase",
                         //     subtitle = "View and save your 24-word recovery phrase",
@@ -209,7 +207,7 @@ fun SettingsTabContent(
                     )
                 }
 
-                // HIDDEN: About — uncomment to restore
+                // DEAD CODE [hidden]: About — uncomment to restore
                 // SettingsGroup(title = "About") {
                 //     ZappRow(
                 //         title = "About Zapp",
@@ -217,31 +215,6 @@ fun SettingsTabContent(
                 //         onClick = { navigationRouter.forward(AboutArgs) },
                 //     )
                 // }
-
-                SettingsGroup(title = "Advanced") {
-                    ZappRow(
-                        title = "Swap",
-                        subtitle = "Exchange ZEC for other assets via Flexa",
-                        icon = Icons.Default.CurrencyExchange,
-                        onClick = { navigationRouter.forward(SwapArgs) },
-                    )
-                    // HIDDEN: Tor / Privacy — uncomment to restore (and the divider above)
-                    // ZappRowDivider(inset = true)
-                    // ZappRow(
-                    //     title = "Tor / Privacy",
-                    //     subtitle = "Route traffic through the Tor network",
-                    //     icon = Icons.Default.VpnLock,
-                    //     onClick = { navigationRouter.forward(TorOptInArgs) },
-                    // )
-                    // HIDDEN: Tax export — uncomment to restore (and the divider above)
-                    // ZappRowDivider(inset = true)
-                    // ZappRow(
-                    //     title = "Tax export",
-                    //     subtitle = "Export transaction history for tax reporting",
-                    //     icon = Icons.Default.Receipt,
-                    //     onClick = { navigationRouter.forward(TaxExport) },
-                    // )
-                }
 
                 Spacer(Modifier.height(20.dp))
 

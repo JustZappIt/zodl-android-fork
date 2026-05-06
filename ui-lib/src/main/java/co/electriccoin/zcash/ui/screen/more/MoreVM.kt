@@ -10,7 +10,6 @@ import co.electriccoin.zcash.ui.common.usecase.NavigateToAddressBookUseCase
 import co.electriccoin.zcash.ui.design.component.listitem.ListItemState
 import co.electriccoin.zcash.ui.design.util.imageRes
 import co.electriccoin.zcash.ui.design.util.stringRes
-import co.electriccoin.zcash.ui.screen.about.AboutArgs
 import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.exchangerate.settings.ExchangeRateSettingsArgs
 import co.electriccoin.zcash.ui.screen.feedback.FeedbackArgs
@@ -61,11 +60,14 @@ class MoreVM(
                         bigIcon = imageRes(R.drawable.ic_settings_whats_new),
                         onClick = ::onWhatsNewClick
                     ),
-                    ListItemState(
-                        title = stringRes(R.string.settings_about_us),
-                        bigIcon = imageRes(R.drawable.ic_settings_info),
-                        onClick = ::onAboutUsClick
-                    ),
+                    // DEAD CODE [hidden]: About item — fork hides About in Settings
+                    // (see SettingsTabContent), keeping symmetry here. Restore by
+                    // uncommenting both call sites.
+                    // ListItemState(
+                    //     title = stringRes(R.string.settings_about_us),
+                    //     bigIcon = imageRes(R.drawable.ic_settings_info),
+                    //     onClick = ::onAboutUsClick
+                    // ),
                     ListItemState(
                         title = stringRes(R.string.settings_feedback),
                         bigIcon = imageRes(R.drawable.ic_settings_feedback),
@@ -88,7 +90,8 @@ class MoreVM(
 
     private fun onAdvancedSettingsClick() = navigationRouter.forward(AdvancedSettingsArgs)
 
-    private fun onAboutUsClick() = navigationRouter.forward(AboutArgs)
+    // DEAD CODE [hidden]: paired with the About list item above.
+    // private fun onAboutUsClick() = navigationRouter.forward(AboutArgs)
 
     private fun onSendUsFeedbackClick() = navigationRouter.forward(FeedbackArgs)
 

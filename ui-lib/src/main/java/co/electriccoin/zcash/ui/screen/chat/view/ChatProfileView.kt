@@ -46,8 +46,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.design.component.QrState
 import co.electriccoin.zcash.ui.design.component.ZashiQr
 import co.electriccoin.zcash.ui.design.component.zapp.ZappBottomActionBar
@@ -81,14 +83,14 @@ fun ChatProfileView(
 
     Scaffold(
         topBar = {
-            ZappScreenHeader(title = "Profile")
+            ZappScreenHeader(title = stringResource(R.string.chat_profile_title))
         },
         bottomBar = {
             ZappBottomActionBar(
                 onBack = onNavigateBack,
                 primaryAction = {
                     ZappButton(
-                        text = "Delete Identity",
+                        text = stringResource(R.string.chat_profile_delete_button),
                         variant = ZappButtonVariant.Danger,
                         leadingIcon = Icons.Default.Delete,
                         onClick = { showDeleteDialog = true },
@@ -125,7 +127,7 @@ fun ChatProfileView(
             }
 
             BasicText(
-                identity?.displayName ?: "Unknown",
+                identity?.displayName ?: stringResource(R.string.chat_profile_unknown_name),
                 style = ZappTheme.typography.sectionTitle.copy(color = c.text),
             )
 
@@ -152,7 +154,7 @@ fun ChatProfileView(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             BasicText(
-                                "Public Key",
+                                stringResource(R.string.chat_profile_public_key_label),
                                 style = ZappTheme.typography.caption.copy(color = c.textMuted),
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -163,15 +165,16 @@ fun ChatProfileView(
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
+                        val clipboardLabel = stringResource(R.string.chat_profile_public_key_label)
                         IconButton(onClick = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("Public Key", pk))
+                            clipboard.setPrimaryClip(ClipData.newPlainText(clipboardLabel, pk))
                             showCopiedFeedback = true
                             scope.launch { delay(2000); showCopiedFeedback = false }
                         }) {
                             Icon(
                                 if (showCopiedFeedback) Icons.Default.Check else Icons.Default.ContentCopy,
-                                contentDescription = "Copy",
+                                contentDescription = stringResource(R.string.chat_profile_copy_content_description),
                                 tint = if (showCopiedFeedback) c.success else c.textMuted,
                             )
                         }
@@ -183,8 +186,8 @@ fun ChatProfileView(
 
             // Menu items using ZappRow
             ZappRow(
-                title = "Seed Phrase",
-                subtitle = "View your recovery words",
+                title = stringResource(R.string.chat_profile_seed_phrase_title),
+                subtitle = stringResource(R.string.chat_profile_seed_phrase_subtitle),
                 icon = Icons.Default.Key,
                 iconBackground = c.accentSoft,
                 iconTint = c.accentText,
@@ -195,7 +198,7 @@ fun ChatProfileView(
                     }
                 },
             )
-            // HIDDEN: Contacts — uncomment to restore (and the divider above)
+            // DEAD CODE [hidden]: Contacts — uncomment to restore (and the divider above)
             // ZappRowDivider(inset = true)
             // ZappRow(
             //     title = "Contacts",
@@ -204,7 +207,7 @@ fun ChatProfileView(
             //     iconBackground = c.surfaceAlt,
             //     onClick = onNavigateToContacts,
             // )
-            // HIDDEN: Network Status — uncomment to restore (and the divider above)
+            // DEAD CODE [hidden]: Network Status — uncomment to restore (and the divider above)
             // ZappRowDivider(inset = true)
             // ZappRow(
             //     title = "Network Status",
@@ -219,18 +222,20 @@ fun ChatProfileView(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Identity") },
-            text = { Text("This will remove your messaging identity. Make sure you've backed up your seed phrase. This cannot be undone.") },
+            title = { Text(stringResource(R.string.chat_profile_delete_dialog_title)) },
+            text = { Text(stringResource(R.string.chat_profile_delete_dialog_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
                         viewModel.deleteIdentity { onIdentityDeleted() }
                     },
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.chat_profile_delete_dialog_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.chat_profile_delete_dialog_cancel))
+                }
             },
         )
     }
@@ -238,11 +243,11 @@ fun ChatProfileView(
     if (showSeedPhrase && seedPhrase != null) {
         AlertDialog(
             onDismissRequest = { showSeedPhrase = false },
-            title = { Text("Seed Phrase") },
+            title = { Text(stringResource(R.string.chat_profile_seed_phrase_dialog_title)) },
             text = {
                 val words = seedPhrase!!.split(" ").filter { it.isNotBlank() }
                 Column {
-                    Text("Keep this safe. Anyone with these words can access your messaging identity.")
+                    Text(stringResource(R.string.chat_profile_seed_phrase_dialog_message))
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -265,7 +270,9 @@ fun ChatProfileView(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showSeedPhrase = false }) { Text("Done") }
+                TextButton(onClick = { showSeedPhrase = false }) {
+                    Text(stringResource(R.string.chat_profile_seed_phrase_dialog_done))
+                }
             },
         )
     }

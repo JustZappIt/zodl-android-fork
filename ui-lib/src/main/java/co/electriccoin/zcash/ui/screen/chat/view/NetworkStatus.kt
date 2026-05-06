@@ -33,8 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import co.electriccoin.zcash.ui.screen.chat.model.ConnectionDetailsUi
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
-import xyz.justzappit.zappmessaging.ZappMessagingSDK
 
 private val OkColor = Color(0xFF2E7D32)
 private val WarnColor = Color(0xFFE65100)
@@ -101,7 +101,7 @@ fun NetworkDetailsSheet(
     connectionStatus: ChatViewModel.ConnectionStatus,
     peerCount: Int,
     dhtHealth: ChatViewModel.DhtHealth,
-    connectionDetails: ZappMessagingSDK.ConnectionDetails?,
+    connectionDetails: ConnectionDetailsUi?,
     onDismiss: () -> Unit
 ) {
     val errorColor = MaterialTheme.colorScheme.error

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chat profile screen -->
+    <string name="chat_profile_title">Profile</string>
+    <string name="chat_profile_unknown_name">Unknown</string>
+    <string name="chat_profile_public_key_label">Public Key</string>
+    <string name="chat_profile_copy_content_description">Copy</string>
+    <string name="chat_profile_seed_phrase_title">Seed Phrase</string>
+    <string name="chat_profile_seed_phrase_subtitle">View your recovery words</string>
+
+    <!-- Delete identity dialog -->
+    <string name="chat_profile_delete_button">Delete Identity</string>
+    <string name="chat_profile_delete_dialog_title">Delete Identity</string>
+    <string name="chat_profile_delete_dialog_message">This will remove your messaging identity. Make sure you\'ve backed up your seed phrase. This cannot be undone.</string>
+    <string name="chat_profile_delete_dialog_confirm">Delete</string>
+    <string name="chat_profile_delete_dialog_cancel">Cancel</string>
+
+    <!-- Seed phrase dialog -->
+    <string name="chat_profile_seed_phrase_dialog_title">Seed Phrase</string>
+    <string name="chat_profile_seed_phrase_dialog_message">Keep this safe. Anyone with these words can access your messaging identity.</string>
+    <string name="chat_profile_seed_phrase_dialog_done">Done</string>
+</resources>

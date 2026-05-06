@@ -14,11 +14,18 @@ Pinned SHAs in `.zapp-deps`. Match them if builds break after a pull.
 ## Build
 
 ```bash
-./gradlew :app:assembleZcashmainnetStoreDebug   # debug mainnet
-./gradlew :app:installZcashmainnetStoreDebug    # install on device
+./gradlew :app:assembleZcashtestnetStoreDebug    # debug (default network = testnet)
+./gradlew :app:installZcashtestnetStoreDebug     # install on device
 ./gradlew check                                  # unit tests
 ./gradlew detektAll && ./gradlew ktlintFormat    # lint + format
 ./gradlew resolveAndLockAll --write-locks        # after dep changes
+```
+
+`gradle.properties` pins `ZCASH_NETWORK=testnet` so only `Zcashtestnet*` Gradle
+tasks are registered. To target mainnet for a build, override at invocation:
+
+```bash
+./gradlew -PZCASH_NETWORK=mainnet :app:installZcashmainnetStoreDebug
 ```
 
 Build cache conflict (when building both zodl-android + this fork):
@@ -46,7 +53,7 @@ Build cache conflict (when building both zodl-android + this fork):
 
 **State** — `StateFlow<UiState>` + `.collectAsStateWithLifecycle()`. Always `SharingStarted.WhileSubscribed(ANDROID_STATE_FLOW_TIMEOUT)` with explicit `import kotlinx.coroutines.flow.WhileSubscribed`.
 
-**Navigation** — `@Serializable` routes. `RootNavGraph` → `WalletNavGraph` + `ChatNavGraph`.
+**Navigation** — `@Serializable` routes. Top-level: `RootNavGraph` → `WalletNavGraph`. Chat sub-graph (`ChatNavGraph.kt`) is registered inside `MainAppGraph` via `chatNavGraph(navigationRouter)` for back-stack continuity with the tabs shell.
 
 **Screen layout** — `screen/[name]/[Name]View.kt`, `[Name]VM.kt`, `[Name]State.kt`.
 
@@ -54,9 +61,14 @@ Build cache conflict (when building both zodl-android + this fork):
 
 **UI design system** — `ZappTheme` tokens only. No `ZashiColors`, no `ZashiTypography`, no rounded shapes. See `zapp-android-ui` skill.
 
-**Build variants** — network: `zcashmainnet`/`zcashtestnet` × distribution: `store`/`foss`. ML Kit barcode only in `store`.
+**Build variants** — network: `zcashmainnet`/`zcashtestnet` × distribution: `store`/`foss`. The active network is selected by `ZCASH_NETWORK` in `gradle.properties` (currently `testnet`); the other network's variants are disabled at the AGP `beforeVariants` level. ML Kit barcode only in `store`.
 
 **Suspend nav use cases** — always `viewModelScope.launch { navigateTo...() }`.
+
+**Hidden upstream features** — features carried over from upstream Zashi but not
+exposed in the fork's UI are kept as commented blocks prefixed
+`// DEAD CODE [hidden]:` (Settings/Advanced/About/Backup/Tor/Tax export, etc.).
+Restore by uncommenting; do not delete — keeps merges with upstream simple.
 
 ## Key files
 
@@ -66,6 +78,7 @@ Build cache conflict (when building both zodl-android + this fork):
 | `ui-lib/.../MainActivity.kt` | Main activity |
 | `ui-lib/.../RootNavGraph.kt` | Top-level nav |
 | `ui-lib/.../WalletNavGraph.kt` | Wallet tab + nested screens |
+| `ui-lib/.../ChatNavGraph.kt` | P2P chat sub-graph (called from WalletNavGraph) |
 | `ui-lib/.../screen/tabs/` | 4-tab shell |
 | `ZAPP_CHANGES.md` | Patch series — read before merging upstream |
 | `DEVELOPER_SETUP.md` | Full env setup with version pins |

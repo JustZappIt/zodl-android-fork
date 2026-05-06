@@ -77,13 +77,13 @@ class AdvancedSettingsVM(
                         bigIcon = imageRes(R.drawable.ic_advanced_settings_recovery),
                         onClick = ::onSeedRecoveryClick
                     ),
-                    // HIDDEN: Export private data — uncomment to restore
+                    // DEAD CODE [hidden]: Export private data — uncomment to restore
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_export),
                     //     bigIcon = imageRes(R.drawable.ic_advanced_settings_export),
                     //     onClick = ::onExportPrivateDataClick
                     // ),
-                    // HIDDEN: Tax export — uncomment to restore
+                    // DEAD CODE [hidden]: Tax export — uncomment to restore
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_tax),
                     //     bigIcon =
@@ -97,7 +97,7 @@ class AdvancedSettingsVM(
                     //     isEnabled = walletRestoringState != WalletRestoringState.RESTORING,
                     //     onClick = ::onTaxExportClick
                     // ),
-                    // HIDDEN: Choose server — uncomment to restore
+                    // DEAD CODE [hidden]: Choose server — uncomment to restore
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_choose_server),
                     //     bigIcon = imageRes(R.drawable.ic_advanced_settings_choose_server),
@@ -108,13 +108,13 @@ class AdvancedSettingsVM(
                     //     bigIcon = imageRes(R.drawable.ic_advanced_settings_resync),
                     //     onClick = ::onResyncWalletClick
                     // ),
-                    // HIDDEN: Tor / Privacy — uncomment to restore
+                    // DEAD CODE [hidden]: Tor / Privacy — uncomment to restore
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_privacy),
                     //     bigIcon = imageRes(R.drawable.ic_advanced_settings_privacy),
                     //     onClick = ::onPrivacyClick
                     // ),
-                    // HIDDEN: Crash reporting — uncomment to restore
+                    // DEAD CODE [hidden]: Crash reporting — uncomment to restore
                     // ListItemState(
                     //     title = stringRes(R.string.advanced_settings_crash_reporting),
                     //     bigIcon = imageRes(R.drawable.ic_advanced_settings_crash_reporting),
@@ -125,7 +125,7 @@ class AdvancedSettingsVM(
                         bigIcon = imageRes(R.drawable.ic_advanced_settings_disconnect_hw),
                         onClick = ::onDisconnectHwWalletClick
                     ).takeIf { hasKeystoneAccount },
-                    // HIDDEN: Debug menu — uncomment to restore
+                    // DEAD CODE [hidden]: Debug menu — uncomment to restore
                     // ListItemState(
                     //     title = stringRes("Debug menu"),
                     //     onClick = ::onDebugMenuClick
