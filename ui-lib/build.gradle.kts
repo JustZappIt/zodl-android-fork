@@ -44,6 +44,7 @@ android {
                     "src/main/res/ui/advanced_settings",
                     "src/main/res/ui/authentication",
                     "src/main/res/ui/balances",
+                    "src/main/res/ui/chat",
                     "src/main/res/ui/common",
                     "src/main/res/ui/contact",
                     "src/main/res/ui/connect_keystone",

@@ -21,11 +21,14 @@ fun AndroidReviewTransaction() {
         }
     }
 
-    when (sendAuthState) {
+    when (val auth = sendAuthState) {
         ReviewTransactionVM.SendAuthState.PinRequired,
-        ReviewTransactionVM.SendAuthState.PinError -> {
+        ReviewTransactionVM.SendAuthState.PinError,
+        is ReviewTransactionVM.SendAuthState.PinLocked -> {
             PinVerifyScreen(
-                hasError = sendAuthState == ReviewTransactionVM.SendAuthState.PinError,
+                hasError = auth == ReviewTransactionVM.SendAuthState.PinError,
+                lockoutSecondsRemaining =
+                    (auth as? ReviewTransactionVM.SendAuthState.PinLocked)?.secondsRemaining ?: 0,
                 onPinSubmit = { pin -> vm.onSendPinSubmitted(pin) },
                 onCancel = { vm.onSendAuthDismissed() }
             )

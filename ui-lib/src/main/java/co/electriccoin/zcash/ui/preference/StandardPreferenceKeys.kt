@@ -56,10 +56,51 @@ object StandardPreferenceKeys {
             PreferenceKey("IS_HIDE_BALANCES"),
             false
         )
+    /**
+     * Wall-clock timestamp captured in [android.app.Activity.onStop]. Used as a coarse
+     * fallback for the inactivity re-auth gate; the authoritative timer is
+     * [LATEST_APP_BACKGROUND_REALTIME_MILLIS], which is monotonic and resists clock
+     * manipulation. Default `0L` so a fresh install reads as "ages ago" and the
+     * combine-driven state machine routes the user to auth on first launch.
+     */
     val LATEST_APP_BACKGROUND_TIME_MILLIS =
         LongPreferenceDefault(
             PreferenceKey("LATEST_APP_BACKGROUND_TIME_MILLIS"),
-            Long.MAX_VALUE
+            0L
+        )
+
+    /**
+     * Monotonic [android.os.SystemClock.elapsedRealtime] captured at background time.
+     * Resists wall-clock manipulation. Resets to `0` on reboot, so the per-boot
+     * comparison (`now < stored`) is treated as expired (i.e. a reboot forces re-auth),
+     * which is what we want.
+     */
+    val LATEST_APP_BACKGROUND_REALTIME_MILLIS =
+        LongPreferenceDefault(
+            PreferenceKey("latest_app_background_realtime_millis"),
+            0L
+        )
+
+    /**
+     * Number of consecutive failed PIN entries since the last success or lockout reset.
+     * Persisted so a process kill between attempts doesn't reset the counter.
+     */
+    val FAILED_PIN_ATTEMPTS_COUNT =
+        IntegerPreferenceDefault(
+            PreferenceKey("failed_pin_attempts_count"),
+            0
+        )
+
+    /**
+     * Wall-clock timestamp at which the current PIN lockout ends. `0` means no
+     * lockout is in effect. Wall-clock is intentional here — bypassing it would
+     * require Settings access (i.e. an already-unlocked device), which is outside
+     * the threat model this gate addresses.
+     */
+    val PIN_LOCKOUT_END_WALLTIME_MS =
+        LongPreferenceDefault(
+            PreferenceKey("pin_lockout_end_walltime_ms"),
+            0L
         )
 
     /**

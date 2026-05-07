@@ -98,11 +98,14 @@ private fun WrapSendFundsAuth(
 
     val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
     val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
+    val pinLockoutSecondsRemaining =
+        authenticationViewModel.pinLockoutSecondsRemaining.collectAsStateWithLifecycle().value
 
     // PIN auth overlay — takes priority over the system biometric dialog.
     if (showPinEntry) {
         PinVerifyScreen(
             hasError = pinEntryError,
+            lockoutSecondsRemaining = pinLockoutSecondsRemaining,
             onPinSubmit = { pin -> authenticationViewModel.submitPin(pin) },
             onCancel = {
                 authenticationViewModel.cancelPinEntry()
@@ -196,6 +199,8 @@ private fun WrapAppAccessAuth(
 
     val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
     val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
+    val pinLockoutSecondsRemaining =
+        authenticationViewModel.pinLockoutSecondsRemaining.collectAsStateWithLifecycle().value
 
     // PIN auth overlay — takes priority over the welcome animation.
     // No back button: app-open auth is mandatory and cannot be dismissed.
@@ -203,6 +208,7 @@ private fun WrapAppAccessAuth(
         PinVerifyScreen(
             hasError = pinEntryError,
             showBack = false,
+            lockoutSecondsRemaining = pinLockoutSecondsRemaining,
             onPinSubmit = { pin -> authenticationViewModel.submitPin(pin) },
         )
         return

@@ -180,22 +180,6 @@ import co.electriccoin.zcash.ui.screen.transactionprogress.TransactionProgressAr
 import co.electriccoin.zcash.ui.screen.transactionprogress.TransactionProgressScreen
 import co.electriccoin.zcash.ui.screen.walletbackup.AndroidWalletBackup
 import co.electriccoin.zcash.ui.screen.walletbackup.WalletBackup
-import co.electriccoin.zcash.ui.screen.chat.AndroidChatContacts
-import co.electriccoin.zcash.ui.screen.chat.AndroidChatHome
-import co.electriccoin.zcash.ui.screen.chat.AndroidChatRoom
-import co.electriccoin.zcash.ui.screen.chat.AndroidNewConversation
-import co.electriccoin.zcash.ui.screen.chat.AndroidChatProfile
-import co.electriccoin.zcash.ui.screen.chat.AndroidChatSettings
-import co.electriccoin.zcash.ui.screen.chat.AndroidContactEdit
-import co.electriccoin.zcash.ui.screen.chat.ChatContactsArgs
-import co.electriccoin.zcash.ui.screen.chat.scan.ChatScanPublicKeyArgs
-import co.electriccoin.zcash.ui.screen.chat.scan.ChatScanPublicKeyScreen
-import co.electriccoin.zcash.ui.screen.chat.ChatHomeArgs
-import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
-import co.electriccoin.zcash.ui.screen.chat.ChatRoomArgs
-import co.electriccoin.zcash.ui.screen.chat.ChatSettingsArgs
-import co.electriccoin.zcash.ui.screen.chat.ContactEditArgs
-import co.electriccoin.zcash.ui.screen.chat.NewConversationArgs
 import co.electriccoin.zcash.ui.screen.tabs.AndroidTabs
 import co.electriccoin.zcash.ui.screen.tabs.TabsArgs
 import co.electriccoin.zcash.ui.screen.warning.WrapNotEnoughSpace
@@ -327,65 +311,7 @@ fun NavGraphBuilder.walletNavGraph(
         composable<RestoreBDEstimationArgs> { RestoreBDEstimationScreen(it.toRoute()) }
         dialogComposable<RestoreTorArgs> { RestoreTorScreen(it.toRoute()) }
 
-        // ── P2P Chat screens ────────────────────────────────────────────
-        composable<ChatHomeArgs> {
-            AndroidChatHome(
-                onNavigateToChatRoom = { conversationId ->
-                    navigationRouter.forward(ChatRoomArgs(conversationId))
-                },
-                onNavigateToNewConversation = {
-                    navigationRouter.forward(NewConversationArgs)
-                },
-                onNavigateBack = { navigationRouter.back() }
-            )
-        }
-        composable<ChatRoomArgs> { backStackEntry ->
-            val args = backStackEntry.toRoute<ChatRoomArgs>()
-            AndroidChatRoom(
-                conversationId = args.conversationId,
-                onNavigateBack = { navigationRouter.back() }
-            )
-        }
-        composable<NewConversationArgs> {
-            AndroidNewConversation(
-                onConversationCreated = { conversationId ->
-                    navigationRouter.replace(ChatRoomArgs(conversationId))
-                },
-                onNavigateBack = { navigationRouter.back() }
-            )
-        }
-        composable<ChatContactsArgs> {
-            AndroidChatContacts(
-                onStartChat = { conversationId ->
-                    navigationRouter.forward(ChatRoomArgs(conversationId))
-                },
-                onNavigateBack = { navigationRouter.back() }
-            )
-        }
-        composable<ChatProfileArgs> {
-            AndroidChatProfile(
-                onNavigateBack = { navigationRouter.back() },
-                onNavigateToContacts = { navigationRouter.forward(ChatContactsArgs) },
-                onIdentityDeleted = { navigationRouter.backToRoot() }
-            )
-        }
-        composable<ChatSettingsArgs> {
-            AndroidChatSettings(
-                onNavigateBack = { navigationRouter.back() },
-                onNavigateToProfile = { navigationRouter.forward(ChatProfileArgs) },
-                onNavigateToContacts = { navigationRouter.forward(ChatContactsArgs) },
-                onIdentityDeleted = { navigationRouter.backToRoot() }
-            )
-        }
-        composable<ContactEditArgs> { backStackEntry ->
-            val args = backStackEntry.toRoute<ContactEditArgs>()
-            AndroidContactEdit(
-                publicKey = args.publicKey,
-                onNavigateBack = { navigationRouter.back() }
-            )
-        }
-        composable<ChatScanPublicKeyArgs> { backStackEntry ->
-            ChatScanPublicKeyScreen(args = backStackEntry.toRoute())
-        }
+        // P2P Chat sub-graph — see ChatNavGraph.kt
+        chatNavGraph(navigationRouter)
     }
 }

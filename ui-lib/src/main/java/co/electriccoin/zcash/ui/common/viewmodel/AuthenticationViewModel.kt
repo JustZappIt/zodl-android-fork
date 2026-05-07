@@ -2,6 +2,7 @@ package co.electriccoin.zcash.ui.common.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.os.SystemClock
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators
 import androidx.biometric.BiometricPrompt
@@ -17,14 +18,16 @@ import co.electriccoin.zcash.spackle.AndroidApiVersion
 import co.electriccoin.zcash.spackle.Twig
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.provider.GetVersionInfoProvider
-import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
+import co.electriccoin.zcash.ui.common.security.PinAuthGate
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.authentication.AuthenticationUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
@@ -107,6 +110,38 @@ class AuthenticationViewModel(
     internal val pinEntryError: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     /**
+     * Seconds remaining on the current global PIN lockout (`0` = not locked). Driven
+     * by [PinAuthGate]; PIN screens consume this to disable input and show a
+     * countdown after the user has burned through
+     * [PinAuthGate.MAX_ATTEMPTS_BEFORE_LOCKOUT] consecutive wrong PINs.
+     */
+    private val _pinLockoutSecondsRemaining: MutableStateFlow<Int> = MutableStateFlow(0)
+    internal val pinLockoutSecondsRemaining: StateFlow<Int> = _pinLockoutSecondsRemaining.asStateFlow()
+    private var lockoutTickerJob: Job? = null
+
+    init {
+        // Restore lockout state across process death so a kill-and-relaunch can't
+        // reset the cooldown.
+        viewModelScope.launch {
+            val ms = PinAuthGate.msUntilUnlock(standardPreferenceProvider)
+            if (ms > 0) startLockoutTicker(ms)
+        }
+    }
+
+    private fun startLockoutTicker(initialMs: Long) {
+        lockoutTickerJob?.cancel()
+        lockoutTickerJob = viewModelScope.launch {
+            var remaining = initialMs
+            while (remaining > 0) {
+                _pinLockoutSecondsRemaining.value = ((remaining + 999) / 1000).toInt()
+                delay(1_000)
+                remaining -= 1_000
+            }
+            _pinLockoutSecondsRemaining.value = 0
+        }
+    }
+
+    /**
      * App access authentication logic values
      */
     private val isAppAccessAuthenticationRequired: StateFlow<Boolean?> =
@@ -152,17 +187,35 @@ class AuthenticationViewModel(
 
     fun runAuthenticationRequiredCheck() =
         viewModelScope.launch {
-            val latestAppBackgroundedTimeMillis =
-                StandardPreferenceKeys.LATEST_APP_BACKGROUND_TIME_MILLIS.getValue(standardPreferenceProvider())
+            val standard = standardPreferenceProvider()
+            val storedRealtime =
+                StandardPreferenceKeys.LATEST_APP_BACKGROUND_REALTIME_MILLIS.getValue(standard)
+            val storedWalltime =
+                StandardPreferenceKeys.LATEST_APP_BACKGROUND_TIME_MILLIS.getValue(standard)
+            val nowRealtime = SystemClock.elapsedRealtime()
+            val nowWalltime = System.currentTimeMillis()
 
-            if ((System.currentTimeMillis() - latestAppBackgroundedTimeMillis) > AUTHENTICATE_TIMEOUT) {
-                resetEntireAuthenticationState()
-            }
+            val expired =
+                when {
+                    // Fresh install / never persisted — treat as expired so the gate fires.
+                    storedRealtime == 0L && storedWalltime == 0L -> true
+                    // elapsedRealtime went backward → device rebooted since last persist.
+                    nowRealtime < storedRealtime -> true
+                    // Wall-clock went backward → clock manipulation, treat as expired.
+                    nowWalltime < storedWalltime -> true
+                    else -> (nowRealtime - storedRealtime) > AUTHENTICATE_TIMEOUT
+                }
+
+            if (expired) resetEntireAuthenticationState()
         }
 
-    fun persistGoToBackgroundTime(millis: Long) =
+    fun persistGoToBackgroundTime(@Suppress("UNUSED_PARAMETER") millis: Long = 0L) =
         viewModelScope.launch {
-            StandardPreferenceKeys.LATEST_APP_BACKGROUND_TIME_MILLIS.putValue(standardPreferenceProvider(), millis)
+            val standard = standardPreferenceProvider()
+            StandardPreferenceKeys.LATEST_APP_BACKGROUND_TIME_MILLIS
+                .putValue(standard, System.currentTimeMillis())
+            StandardPreferenceKeys.LATEST_APP_BACKGROUND_REALTIME_MILLIS
+                .putValue(standard, SystemClock.elapsedRealtime())
         }
 
     /**
@@ -279,9 +332,13 @@ class AuthenticationViewModel(
                             BiometricPrompt.ERROR_NO_BIOMETRICS,
                             // The device does not have pin, pattern, or password set up
                             BiometricPrompt.ERROR_NO_DEVICE_CREDENTIAL -> {
-                                // Allow unauthenticated access if no authentication method is available on the device
-                                // These 2 errors can come for a different Android SDK versions, but they mean the same
-                                authenticationResult.value = AuthenticationResult.Success
+                                // Previously these returned Success ("graceful degradation"), which
+                                // permanently unlocked the wallet on devices that lost both biometric
+                                // enrolment and the device PIN/pattern. Treat them as a recoverable
+                                // error instead so the user is shown an explanatory dialog and can
+                                // re-enrol on the device before continuing.
+                                authenticationResult.value =
+                                    AuthenticationResult.Error(errorCode, errorString.toString())
                             }
                         }
                     }
@@ -358,20 +415,35 @@ class AuthenticationViewModel(
     }
 
     /**
-     * Verifies [pin] against the stored hash. On success, closes the PIN overlay and
-     * emits [AuthenticationResult.Success]. On failure, shows an error indicator briefly
-     * then re-enables entry so the user can retry.
+     * Verifies [pin] through [PinAuthGate]. On success, closes the PIN overlay and
+     * emits [AuthenticationResult.Success]. On a wrong PIN, shows the error indicator
+     * briefly then re-enables entry. After [PinAuthGate.MAX_ATTEMPTS_BEFORE_LOCKOUT]
+     * consecutive wrong PINs the gate triggers a [PinAuthGate.LOCKOUT_DURATION]
+     * lockout that disables input until the timer elapses.
      */
     fun submitPin(pin: String) {
         viewModelScope.launch {
-            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
-            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
-                showPinEntry.value = false
-                authenticationResult.value = AuthenticationResult.Success
-            } else {
-                pinEntryError.value = true
-                delay(1_500)
-                pinEntryError.value = false
+            when (val result = PinAuthGate.tryVerify(
+                pin,
+                encryptedPreferenceProvider,
+                standardPreferenceProvider,
+            )) {
+                PinAuthGate.Result.Success -> {
+                    showPinEntry.value = false
+                    pinEntryError.value = false
+                    authenticationResult.value = AuthenticationResult.Success
+                }
+
+                PinAuthGate.Result.Wrong -> {
+                    pinEntryError.value = true
+                    delay(1_500)
+                    pinEntryError.value = false
+                }
+
+                is PinAuthGate.Result.Locked -> {
+                    pinEntryError.value = false
+                    startLockoutTicker(result.msUntilUnlock)
+                }
             }
         }
     }

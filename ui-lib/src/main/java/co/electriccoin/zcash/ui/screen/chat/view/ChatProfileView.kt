@@ -206,10 +206,15 @@ fun ChatProfileView(
         )
     }
 
-    // PIN overlay — takes over the full screen until dismissed or verified
+    // PIN overlay — takes over the full screen until dismissed or verified.
+    // Picks up the global PinAuthGate lockout via the Locked sub-state so the
+    // keypad disables and shows a countdown if the user has burned through
+    // attempts on any other PIN surface in the app.
     if (pinVerifyState != ChatViewModel.PinVerifyState.Idle) {
         PinVerifyScreen(
             hasError = pinVerifyState == ChatViewModel.PinVerifyState.Error,
+            lockoutSecondsRemaining =
+                (pinVerifyState as? ChatViewModel.PinVerifyState.Locked)?.secondsRemaining ?: 0,
             onPinSubmit = { viewModel.onPinSubmitted(it) },
             onCancel = { viewModel.onPinEntryDismissed() },
         )
