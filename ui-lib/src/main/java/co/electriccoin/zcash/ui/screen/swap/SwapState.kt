@@ -12,6 +12,9 @@ import co.electriccoin.zcash.ui.screen.swap.ui.SwapAmountTextFieldState
 import co.electriccoin.zcash.ui.screen.swap.ui.SwapAmountTextState
 
 internal data class SwapState(
+    val headerBalance: StringResource?,
+    val headerBalanceFiat: StringResource?,
+    val priceStats: SwapPriceStats?,
     val swapInfoButton: IconButtonState,
     val amountTextField: SwapAmountTextFieldState,
     val slippage: ButtonState,
@@ -27,14 +30,22 @@ internal data class SwapState(
     val infoFooter: StringResource?,
     val errorFooter: SwapErrorFooterState?,
     val primaryButton: ButtonState?,
+    val topUpButton: ButtonState?,
     val onBack: () -> Unit,
     val changeModeButton: IconButtonState,
+    val receivingZecAddress: StringResource?,
+    val onChangeReceivingAddress: (() -> Unit)?,
 ) {
     enum class AddressLocation {
         TOP,
         BOTTOM
     }
 }
+
+data class SwapPriceStats(
+    val price: StringResource,
+    val fee: StringResource,
+)
 
 data class SwapErrorFooterState(
     val title: StringResource,

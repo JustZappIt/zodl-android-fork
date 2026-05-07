@@ -1,8 +1,9 @@
 package co.electriccoin.zcash.ui.screen.chat.view
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -19,9 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.CheckCircle
@@ -30,31 +31,30 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.electriccoin.zcash.ui.design.component.zapp.ZappBackButton
 import co.electriccoin.zcash.ui.design.component.zapp.ZappChipVariant
 import co.electriccoin.zcash.ui.design.component.zapp.ZappFab
@@ -267,11 +267,18 @@ private fun ContactListItem(
             )
         }
 
-        IconButton(onClick = onChat) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clickable(onClick = onChat)
+                .semantics { contentDescription = "Start chat"; role = Role.Button },
+            contentAlignment = Alignment.Center,
+        ) {
             Icon(
                 Icons.AutoMirrored.Filled.Chat,
-                contentDescription = "Start chat",
+                contentDescription = null,
                 tint = c.accent,
+                modifier = Modifier.size(22.dp),
             )
         }
     }
@@ -287,6 +294,7 @@ private fun AddContactSheet(
     onDismiss: () -> Unit,
     onAdd: (publicKey: String, name: String) -> Unit,
 ) {
+    val c = ZappTheme.colors
     var nameInput by remember { mutableStateOf(TextFieldValue("")) }
     var publicKeyInput by remember { mutableStateOf(TextFieldValue("")) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -302,117 +310,199 @@ private fun AddContactSheet(
     }
 
     val cleanedKey = publicKeyInput.text.trim().removePrefix("0x")
-    val isValidKey = cleanedKey.length == 64
-            && cleanedKey.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+    val isValidKey = cleanedKey.length == 64 &&
+        cleanedKey.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = c.surface,
+        shape = RectangleShape,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
+                .imePadding()
+                .padding(bottom = 28.dp),
         ) {
-            Text("Add Contact", style = MaterialTheme.typography.headlineSmall)
+            BasicText(
+                text = "Add Contact",
+                style = ZappTheme.typography.sectionTitle.copy(
+                    color = c.text,
+                    fontWeight = FontWeight.Black,
+                ),
+            )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(Modifier.height(20.dp))
 
-            OutlinedTextField(
+            ContactInputField(
                 value = nameInput,
                 onValueChange = { nameInput = it; error = null },
-                label = { Text("Name") },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(0.dp)
+                placeholder = "Name",
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = c.textSubtle,
+                    )
+                },
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
+            ContactInputField(
                 value = publicKeyInput,
                 onValueChange = { publicKeyInput = it; error = null },
-                label = { Text("Public Key (64 hex chars)") },
-                leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
-                trailingIcon = {
-                    IconButton(onClick = onScanQr) {
-                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = MaterialTheme.colorScheme.primary)
-                    }
+                placeholder = "Public Key (64 hex chars)",
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Key,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = c.textSubtle,
+                    )
                 },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(0.dp)
-            )
-
-            // Scan QR button
-            OutlinedButton(
-                onClick = onScanQr,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(0.dp)
-            ) {
-                Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Scan QR Code")
-            }
-
-            if (isValidKey) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                trailingIcon = {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clickable(onClick = onScanQr)
+                            .semantics { contentDescription = "Scan QR code"; role = Role.Button },
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            Icons.Default.CheckCircle,
+                            Icons.Default.QrCodeScanner,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "${cleanedKey.take(10)}...${cleanedKey.takeLast(6)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            modifier = Modifier.size(20.dp),
+                            tint = c.textSubtle,
                         )
                     }
+                },
+            )
+
+            // Valid key confirmation row
+            if (isValidKey) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(c.successSoft, RectangleShape)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = c.success,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    BasicText(
+                        text = "${cleanedKey.take(10)}…${cleanedKey.takeLast(6)}",
+                        style = ZappTheme.typography.chip.copy(color = c.success),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
 
+            // Inline error message
             error?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(8.dp))
+                BasicText(
+                    text = it,
+                    style = ZappTheme.typography.caption.copy(color = c.danger),
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(Modifier.height(20.dp))
 
-            Button(
-                onClick = {
-                    val pk = publicKeyInput.text.trim().removePrefix("0x")
-                    val name = nameInput.text.trim()
-                    val isValidHex = pk.length == 64 && pk.all {
-                        it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F'
-                    }
-                    when {
-                        name.isEmpty() -> error = "Name is required"
-                        pk.isEmpty() -> error = "Public key is required"
-                        !isValidHex -> error = "Invalid public key - must be 64 hex characters"
-                        existingKeys.contains(pk) -> error = "Contact already exists"
-                        else -> onAdd(pk, name)
-                    }
-                },
+            // Add Contact primary CTA
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(0.dp)
+                    .height(52.dp)
+                    .background(c.accent, RectangleShape)
+                    .clickable(onClick = {
+                        val pk = publicKeyInput.text.trim().removePrefix("0x")
+                        val name = nameInput.text.trim()
+                        val isValidHex = pk.length == 64 && pk.all {
+                            it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F'
+                        }
+                        when {
+                            name.isEmpty() -> error = "Name is required"
+                            pk.isEmpty() -> error = "Public key is required"
+                            !isValidHex -> error = "Invalid public key — must be 64 hex characters"
+                            existingKeys.contains(pk) -> error = "Contact already exists"
+                            else -> onAdd(pk, name)
+                        }
+                    })
+                    .semantics { contentDescription = "Add Contact"; role = Role.Button },
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Contact")
+                BasicText(
+                    text = "ADD CONTACT",
+                    style = ZappTheme.typography.button.copy(
+                        color = c.onAccent,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.6.sp,
+                    ),
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun ContactInputField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    placeholder: String,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+) {
+    val c = ZappTheme.colors
+    val isFilled = value.text.isNotEmpty()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(c.surfaceInput, RectangleShape)
+            .then(
+                if (isFilled) {
+                    Modifier.border(BorderStroke(2.dp, c.borderStrong), RectangleShape)
+                } else {
+                    Modifier.border(BorderStroke(1.dp, c.border), RectangleShape)
+                }
+            ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 14.dp, end = 0.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            leadingIcon?.let {
+                it()
+                Spacer(Modifier.width(10.dp))
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    textStyle = ZappTheme.typography.body.copy(color = c.text),
+                    cursorBrush = SolidColor(c.accent),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (value.text.isEmpty()) {
+                    BasicText(
+                        text = placeholder,
+                        style = ZappTheme.typography.body.copy(color = c.textSubtle),
+                    )
+                }
+            }
+            trailingIcon?.let { it() }
         }
     }
 }

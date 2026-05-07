@@ -22,6 +22,8 @@ data class ReceiveAddressState(
     val onCopyClicked: () -> Unit,
     val onQrClicked: () -> Unit,
     val onRequestClicked: () -> Unit,
+    val qrData: String,
+    val addressRaw: String,
 ) {
     enum class ColorMode {
         ZASHI,

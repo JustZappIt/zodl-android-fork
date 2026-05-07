@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,6 +43,7 @@ import co.electriccoin.zcash.ui.design.component.zapp.ZappStatusChip
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.screen.request.model.MemoState
 import co.electriccoin.zcash.ui.screen.request.model.RequestState
+import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
 
 @Composable
 internal fun RequestMemoView(
@@ -102,7 +102,7 @@ private fun RequestMemoZecAmountView(
         }
         append("\u2009")
         withStyle(style = SpanStyle(color = c.textMuted)) {
-            append(state.zcashCurrency.localizedName(LocalContext.current))
+            append(CURRENCY_TICKER)
         }
     }
 

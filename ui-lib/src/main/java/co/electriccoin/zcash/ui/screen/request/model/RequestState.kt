@@ -22,6 +22,7 @@ internal sealed class RequestState {
         val onAmount: (OnAmount) -> Unit,
         val onSwitch: (RequestCurrency) -> Unit,
         override val onBack: () -> Unit,
+        val onMemo: (MemoState) -> Unit,
         val onDone: () -> Unit,
     ) : Prepared(onBack)
 

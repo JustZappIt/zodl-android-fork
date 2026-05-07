@@ -2,18 +2,20 @@
 
 package co.electriccoin.zcash.ui.screen.advancedsettings
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
+import co.electriccoin.zcash.ui.NavigationRouter
+import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import kotlinx.serialization.Serializable
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 internal fun AdvancedSettingsScreen() {
-    val viewModel = koinViewModel<AdvancedSettingsVM>()
-    val state = viewModel.state.collectAsStateWithLifecycle().value
-    BackHandler { viewModel.onBack() }
-    AdvancedSettings(state = state)
+    val navigationRouter = koinInject<NavigationRouter>()
+    LaunchedEffect(Unit) {
+        navigationRouter.back()
+        navigationRouter.forward(ChatProfileArgs)
+    }
 }
 
 @Serializable

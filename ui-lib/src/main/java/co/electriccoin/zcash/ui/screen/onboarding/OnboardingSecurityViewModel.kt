@@ -86,12 +86,14 @@ class OnboardingSecurityViewModel(
     }
 
     /**
-     * Hashes [pin] with SHA-256 and persists it in encrypted preferences, then marks
-     * [IS_APP_ACCESS_AUTHENTICATION] enabled.  [pinSaved] flips to `true` once done.
+     * Hashes [pin] with PBKDF2 (per-install salt, 100k iterations) and persists it
+     * in encrypted preferences, then marks [IS_APP_ACCESS_AUTHENTICATION] enabled.
+     * [pinSaved] flips to `true` once done.
      */
     fun savePin(pin: String) {
         viewModelScope.launch {
-            EncryptedPreferenceKeys.APP_PIN_HASH.putValue(encryptedPreferenceProvider(), EncryptedPreferenceKeys.hashPin(pin))
+            EncryptedPreferenceKeys.APP_PIN_HASH
+                .putValue(encryptedPreferenceProvider(), EncryptedPreferenceKeys.hashPinV2(pin))
             StandardPreferenceKeys.IS_APP_ACCESS_AUTHENTICATION
                 .putValue(standardPreferenceProvider(), true)
             StandardPreferenceKeys.AUTH_METHOD

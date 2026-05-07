@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.Scaffold
@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -88,7 +87,8 @@ private fun RequestPreview() =
                     zcashCurrency = ZcashCurrency.ZEC,
                     onAmount = {},
                     onSwitch = {},
-                    onBack = {}
+                    onBack = {},
+                    onMemo = {},
                 ) {},
             snackbarHostState = SnackbarHostState(),
         )
@@ -107,12 +107,16 @@ internal fun RequestView(
         is RequestState.Prepared -> {
             Scaffold(
                 topBar = {
-                    ZappScreenHeader(title = stringResource(id = R.string.request_title))
+                    ZappScreenHeader(
+                        title = stringResource(id = R.string.request_title),
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
+                    )
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 bottomBar = {
                     RequestBottomBar(state = state)
-                }
+                },
+                contentWindowInsets = WindowInsets(0),
             ) { paddingValues ->
                 RequestContents(
                     state = state,
@@ -158,24 +162,12 @@ private fun RequestBottomBar(
             is RequestState.QrCode -> {
                 val sizePixels = with(LocalDensity.current) { DEFAULT_QR_CODE_SIZE.toPx() }.roundToInt()
                 val colors = QrCodeDefaults.colors()
-                // QR step has two stacked CTAs (share + close), back arrow on
-                // the left like the other steps.
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    SwissBackBox(onClick = state.onBack)
-                    Column(modifier = Modifier.weight(1f)) {
-                        SwissPrimaryButton(
-                            text = stringResource(id = R.string.request_qr_share_btn),
-                            onClick = {
-                                state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri)
-                            },
-                            enabled = true,
-                        )
-                        SwissGhostButton(
-                            text = stringResource(id = R.string.request_qr_close_btn),
-                            onClick = state.onClose,
-                        )
-                    }
-                }
+                SwissDockRow(
+                    onBack = state.onBack,
+                    cta = stringResource(id = R.string.request_qr_share_btn),
+                    onCta = { state.onQrCodeShare(colors, sizePixels, state.request.qrCodeState.requestUri) },
+                    ctaEnabled = true,
+                )
             }
         }
     }
@@ -223,11 +215,6 @@ private fun SwissBackBox(onClick: () -> Unit) {
     }
 }
 
-// Swiss primary button uses brand yellow (matches Receive / Advanced
-// Settings accents) so the request CTA reads as on-brand.
-private val RequestYellow = Color(0xFFFCBB1A)
-private val RequestYellowText = Color(0xFF1A1100)
-
 @Composable
 private fun SwissPrimaryButton(
     text: String,
@@ -236,8 +223,8 @@ private fun SwissPrimaryButton(
     modifier: Modifier = Modifier,
 ) {
     val c = ZappTheme.colors
-    val bg = if (enabled) RequestYellow else c.surfaceAlt
-    val fg = if (enabled) RequestYellowText else c.textSubtle
+    val bg = if (enabled) c.accent else c.surfaceAlt
+    val fg = if (enabled) c.onAccent else c.textSubtle
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -255,39 +242,6 @@ private fun SwissPrimaryButton(
                 letterSpacing = 0.6.sp,
             ),
         )
-    }
-}
-
-@Composable
-private fun SwissGhostButton(
-    text: String,
-    onClick: () -> Unit,
-) {
-    val c = ZappTheme.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(width = 20.dp, height = 1.dp)
-                    .background(c.text, RectangleShape),
-            )
-            Spacer(Modifier.width(10.dp))
-            BasicText(
-                text = text.uppercase(),
-                style = ZappTheme.typography.button.copy(
-                    color = c.text,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 0.6.sp,
-                ),
-            )
-        }
     }
 }
 

@@ -1,16 +1,11 @@
 package co.electriccoin.zcash.ui.screen.tabs.view
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,71 +14,44 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Backup
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.CurrencyExchange
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.VpnLock
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.electriccoin.zcash.ui.NavigationRouter
 import co.electriccoin.zcash.ui.common.viewmodel.SecretState
 import co.electriccoin.zcash.ui.common.viewmodel.WalletViewModel
-import co.electriccoin.zcash.ui.design.component.zapp.ZappButton
-import co.electriccoin.zcash.ui.design.component.zapp.ZappButtonVariant
 import co.electriccoin.zcash.ui.design.component.zapp.ZappGroupHeader
 import co.electriccoin.zcash.ui.design.component.zapp.ZappRow
 import co.electriccoin.zcash.ui.design.component.zapp.ZappRowDivider
 import co.electriccoin.zcash.ui.design.component.zapp.ZappScreenHeader
-import co.electriccoin.zcash.ui.design.component.zapp.ellipsizeAddress
 import co.electriccoin.zcash.ui.design.component.zapp.initialsOf
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZappNavBar
-import co.electriccoin.zcash.ui.screen.about.AboutArgs
-import co.electriccoin.zcash.ui.screen.advancedsettings.AdvancedSettingsArgs
 import co.electriccoin.zcash.ui.screen.chat.ChatProfileArgs
 import co.electriccoin.zcash.ui.screen.chat.viewmodel.ChatViewModel
 import co.electriccoin.zcash.ui.screen.chooseserver.ChooseServerArgs
-import co.electriccoin.zcash.ui.screen.swap.SwapArgs
-import co.electriccoin.zcash.ui.screen.taxexport.TaxExport
-import co.electriccoin.zcash.ui.screen.tor.optin.TorOptInArgs
-import kotlinx.coroutines.delay
+import co.electriccoin.zcash.ui.screen.securitysettings.SecuritySettingsArgs
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -94,7 +62,6 @@ fun SettingsTabContent(
     chatViewModel: ChatViewModel,
     walletViewModel: WalletViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val c = ZappTheme.colors
     val identity by chatViewModel.identity.collectAsState()
@@ -102,19 +69,14 @@ fun SettingsTabContent(
     val hasWallet = secretState == SecretState.READY
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var showEditNameDialog by remember { mutableStateOf(false) }
-    var editNameText by remember { mutableStateOf("") }
-    var showCopiedFeedback by remember { mutableStateOf(false) }
-    var showDeleteIdentityConfirm by remember { mutableStateOf(false) }
-
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = c.bg,
-    ) { paddingValues ->
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .windowInsetsPadding(WindowInsets.statusBars),
         ) {
             ZappScreenHeader(title = "Settings")
@@ -126,39 +88,28 @@ fun SettingsTabContent(
                     .padding(bottom = ZappNavBar.CLEARANCE_DP.dp),
             ) {
                 identity?.let { id ->
-                    ProfileCard(
-                        displayName = id.displayName,
-                        publicKey = id.publicKey,
-                        showCopiedFeedback = showCopiedFeedback,
-                        onEditName = {
-                            editNameText = id.displayName
-                            showEditNameDialog = true
-                        },
-                        onCopyKey = {
-                            val clipboard =
-                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(
-                                ClipData.newPlainText("Public Key", id.publicKey),
-                            )
-                            showCopiedFeedback = true
-                            scope.launch {
-                                delay(2000)
-                                showCopiedFeedback = false
-                            }
-                        },
-                    )
+                    ProfileCard(displayName = id.displayName)
                 }
 
                 SettingsGroup(title = "Security") {
                     ZappRow(
                         title = "Profile & identity",
-                        subtitle = "Seed phrase, backup, display name",
-                        icon = Icons.Default.Key,
+                        subtitle = "Seed phrase, messaging key, wallet address",
+                        icon = Icons.Default.Person,
                         iconTint = c.accentText,
                         iconBackground = c.accentSoft,
                         onClick = { navigationRouter.forward(ChatProfileArgs) },
                     )
-                    // HIDDEN: Backup / restore — uncomment to restore (and the divider above)
+                    ZappRowDivider(inset = true)
+                    ZappRow(
+                        title = "App lock",
+                        subtitle = "Change PIN or switch auth method",
+                        icon = Icons.Default.Lock,
+                        iconTint = c.accentText,
+                        iconBackground = c.accentSoft,
+                        onClick = { navigationRouter.forward(SecuritySettingsArgs) },
+                    )
+                    // DEAD CODE [hidden]: Backup / restore — uncomment to restore (and the divider above)
                     // ZappRowDivider(inset = true)
                     // ZappRow(
                     //     title = "Backup / restore",
@@ -172,7 +123,7 @@ fun SettingsTabContent(
 
                 if (hasWallet) {
                     SettingsGroup(title = "Wallet") {
-                        // HIDDEN: Backup seed phrase — uncomment to restore (and the divider below)
+                        // DEAD CODE [hidden]: Backup seed phrase — uncomment to restore (and the divider below)
                         // ZappRow(
                         //     title = "Backup seed phrase",
                         //     subtitle = "View and save your 24-word recovery phrase",
@@ -188,13 +139,6 @@ fun SettingsTabContent(
                             icon = Icons.Default.Cloud,
                             onClick = { navigationRouter.forward(ChooseServerArgs) },
                         )
-                        ZappRowDivider(inset = true)
-                        ZappRow(
-                            title = "Advanced wallet settings",
-                            subtitle = "Export, privacy, resync, and more",
-                            icon = Icons.Default.Tune,
-                            onClick = { navigationRouter.forward(AdvancedSettingsArgs) },
-                        )
                     }
                 }
 
@@ -209,7 +153,7 @@ fun SettingsTabContent(
                     )
                 }
 
-                // HIDDEN: About — uncomment to restore
+                // DEAD CODE [hidden]: About — uncomment to restore
                 // SettingsGroup(title = "About") {
                 //     ZappRow(
                 //         title = "About Zapp",
@@ -218,129 +162,16 @@ fun SettingsTabContent(
                 //     )
                 // }
 
-                SettingsGroup(title = "Advanced") {
-                    ZappRow(
-                        title = "Swap",
-                        subtitle = "Exchange ZEC for other assets via Flexa",
-                        icon = Icons.Default.CurrencyExchange,
-                        onClick = { navigationRouter.forward(SwapArgs) },
-                    )
-                    // HIDDEN: Tor / Privacy — uncomment to restore (and the divider above)
-                    // ZappRowDivider(inset = true)
-                    // ZappRow(
-                    //     title = "Tor / Privacy",
-                    //     subtitle = "Route traffic through the Tor network",
-                    //     icon = Icons.Default.VpnLock,
-                    //     onClick = { navigationRouter.forward(TorOptInArgs) },
-                    // )
-                    // HIDDEN: Tax export — uncomment to restore (and the divider above)
-                    // ZappRowDivider(inset = true)
-                    // ZappRow(
-                    //     title = "Tax export",
-                    //     subtitle = "Export transaction history for tax reporting",
-                    //     icon = Icons.Default.Receipt,
-                    //     onClick = { navigationRouter.forward(TaxExport) },
-                    // )
-                }
-
-                Spacer(Modifier.height(20.dp))
-
-                Column(modifier = Modifier.padding(horizontal = 18.dp)) {
-                    ZappButton(
-                        text = "Delete identity",
-                        variant = ZappButtonVariant.Danger,
-                        onClick = { showDeleteIdentityConfirm = true },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    BasicText(
-                        text = "Permanently removes this identity and its chat history from this device.",
-                        style = ZappTheme.typography.caption.copy(color = c.textSubtle),
-                    )
-                }
-
                 Spacer(Modifier.height(16.dp))
             }
         }
     }
-
-    if (showEditNameDialog) {
-        AlertDialog(
-            onDismissRequest = { showEditNameDialog = false },
-            containerColor = c.surface,
-            titleContentColor = c.text,
-            textContentColor = c.textMuted,
-            shape = RectangleShape,
-            title = { Text("Edit display name") },
-            text = {
-                OutlinedTextField(
-                    value = editNameText,
-                    onValueChange = { editNameText = it },
-                    singleLine = true,
-                    shape = RectangleShape,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = editNameText.isNotBlank(),
-                    onClick = {
-                        chatViewModel.updateDisplayName(editNameText.trim())
-                        showEditNameDialog = false
-                    },
-                ) { Text("Save", color = c.accent) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = c.textMuted)
-                }
-            },
-        )
-    }
-
-    if (showDeleteIdentityConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteIdentityConfirm = false },
-            containerColor = c.surface,
-            titleContentColor = c.text,
-            textContentColor = c.textMuted,
-            shape = RectangleShape,
-            title = { Text("Delete identity?") },
-            text = {
-                Text(
-                    "This will remove your identity, contacts, and messages from this device. " +
-                        "You'll need your seed phrase to restore them.",
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteIdentityConfirm = false
-                    chatViewModel.deleteIdentity {
-                        scope.launch { snackbarHostState.showSnackbar("Identity deleted.") }
-                    }
-                }) { Text("Delete", color = c.danger) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteIdentityConfirm = false }) {
-                    Text("Cancel", color = c.textMuted)
-                }
-            },
-        )
-    }
-
 }
 
 @Composable
-private fun ProfileCard(
-    displayName: String,
-    publicKey: String,
-    showCopiedFeedback: Boolean,
-    onEditName: () -> Unit,
-    onCopyKey: () -> Unit,
-) {
+private fun ProfileCard(displayName: String) {
     val c = ZappTheme.colors
     val initials = remember(displayName) { initialsOf(displayName) }
-    val shortKey = remember(publicKey) { publicKey.ellipsizeAddress() }
 
     Column(
         modifier = Modifier
@@ -361,50 +192,12 @@ private fun ProfileCard(
             )
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            BasicText(
-                text = "@$displayName",
-                style = ZappTheme.typography.sectionTitle.copy(color = c.text),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            IconButton(
-                onClick = onEditName,
-                modifier = Modifier.size(24.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit display name",
-                    tint = c.textMuted,
-                    modifier = Modifier.size(14.dp),
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .background(c.surfaceAlt, RectangleShape)
-                .clickable(onClick = onCopyKey)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicText(
-                text = shortKey,
-                style = ZappTheme.typography.mono.copy(color = c.textMuted),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.width(6.dp))
-            Icon(
-                imageVector = if (showCopiedFeedback) Icons.Default.Check else Icons.Default.ContentCopy,
-                contentDescription = "Copy public key",
-                tint = if (showCopiedFeedback) c.success else c.accent,
-                modifier = Modifier.size(12.dp),
-            )
-        }
+        BasicText(
+            text = "@$displayName",
+            style = ZappTheme.typography.sectionTitle.copy(color = c.text),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

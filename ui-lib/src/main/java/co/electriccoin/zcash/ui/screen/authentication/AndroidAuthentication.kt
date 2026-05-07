@@ -98,11 +98,14 @@ private fun WrapSendFundsAuth(
 
     val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
     val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
+    val pinLockoutSecondsRemaining =
+        authenticationViewModel.pinLockoutSecondsRemaining.collectAsStateWithLifecycle().value
 
     // PIN auth overlay — takes priority over the system biometric dialog.
     if (showPinEntry) {
         PinVerifyScreen(
             hasError = pinEntryError,
+            lockoutSecondsRemaining = pinLockoutSecondsRemaining,
             onPinSubmit = { pin -> authenticationViewModel.submitPin(pin) },
             onCancel = {
                 authenticationViewModel.cancelPinEntry()
@@ -196,6 +199,8 @@ private fun WrapAppAccessAuth(
 
     val showPinEntry = authenticationViewModel.showPinEntry.collectAsStateWithLifecycle().value
     val pinEntryError = authenticationViewModel.pinEntryError.collectAsStateWithLifecycle().value
+    val pinLockoutSecondsRemaining =
+        authenticationViewModel.pinLockoutSecondsRemaining.collectAsStateWithLifecycle().value
 
     // PIN auth overlay — takes priority over the welcome animation.
     // No back button: app-open auth is mandatory and cannot be dismissed.
@@ -203,6 +208,7 @@ private fun WrapAppAccessAuth(
         PinVerifyScreen(
             hasError = pinEntryError,
             showBack = false,
+            lockoutSecondsRemaining = pinLockoutSecondsRemaining,
             onPinSubmit = { pin -> authenticationViewModel.submitPin(pin) },
         )
         return
@@ -210,6 +216,19 @@ private fun WrapAppAccessAuth(
 
     val welcomeAnimVisibility = authenticationViewModel.showWelcomeAnimation.collectAsStateWithLifecycle().value
     val authFailed = authenticationViewModel.authFailed.collectAsStateWithLifecycle().value
+
+    // Auto-retry authentication when a previous attempt failed or was cancelled,
+    // so the user never has to tap the lock icon manually.
+    LaunchedEffect(authFailed) {
+        if (authFailed) {
+            authenticationViewModel.resetAuthenticationResult()
+            authenticationViewModel.authenticate(
+                activity = activity,
+                initialAuthSystemWindowDelay = RETRY_TRIGGER_DELAY.milliseconds,
+                useCase = AuthenticationUseCase.AppAccess
+            )
+        }
+    }
 
     AppAccessAuthentication(
         onRetry = {

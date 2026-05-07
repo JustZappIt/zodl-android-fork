@@ -26,7 +26,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallReceived
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -151,7 +150,6 @@ fun WalletHomeView() {
         WalletActionFabStack(
             onSend = { homeState?.secondButton?.onClick?.invoke() },
             onReceive = { homeState?.firstButton?.onClick?.invoke() },
-            onPay = { homeState?.thirdButton?.onClick?.invoke() },
             onSwap = { homeState?.fourthButton?.onClick?.invoke() },
             modifier = Modifier.align(Alignment.BottomEnd),
         )
@@ -162,7 +160,6 @@ fun WalletHomeView() {
 private fun WalletActionFabStack(
     onSend: () -> Unit,
     onReceive: () -> Unit,
-    onPay: () -> Unit,
     onSwap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -184,11 +181,6 @@ private fun WalletActionFabStack(
             icon = Icons.AutoMirrored.Filled.CallReceived,
             contentDescription = "Receive",
             onClick = onReceive,
-        )
-        ZappFab(
-            icon = Icons.Default.Bolt,
-            contentDescription = "Pay",
-            onClick = onPay,
         )
         ZappFab(
             icon = Icons.Default.SwapHoriz,
@@ -277,9 +269,9 @@ private fun BalanceAmount(balanceState: BalanceWidgetState) {
     )
 
     if (fiat != null) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            BasicText(text = fiat.whole, style = wholeStyle)
-            BasicText(text = fiat.fraction, style = fractionStyle)
+        Row {
+            BasicText(text = fiat.whole, style = wholeStyle, modifier = Modifier.alignByBaseline())
+            BasicText(text = fiat.fraction, style = fractionStyle, modifier = Modifier.alignByBaseline())
         }
         Spacer(Modifier.height(2.dp))
         BasicText(
@@ -287,13 +279,9 @@ private fun BalanceAmount(balanceState: BalanceWidgetState) {
             style = ZappTheme.typography.caption.copy(color = c.textMuted),
         )
     } else {
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            BasicText(text = zec, style = wholeStyle)
-            BasicText(
-                text = "ZEC",
-                style = fractionStyle,
-                modifier = Modifier.padding(bottom = 4.dp),
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            BasicText(text = zec, style = wholeStyle, modifier = Modifier.alignByBaseline())
+            BasicText(text = "ZEC", style = fractionStyle, modifier = Modifier.alignByBaseline())
         }
     }
 }

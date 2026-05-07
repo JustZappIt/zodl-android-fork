@@ -67,13 +67,12 @@ fun ChatIdentitySetupView(
 
     LaunchedEffect(identity) {
         if (identity != null && identityJustCreated) {
-            viewModel.exportSeedPhrase { phrase ->
-                if (phrase != null) {
-                    exportedSeedPhrase = phrase
-                    showSeedPhraseDialog = true
-                } else {
-                    onSetupComplete()
-                }
+            val phrase = viewModel.exportSeedPhraseSuspending()
+            if (phrase != null) {
+                exportedSeedPhrase = phrase
+                showSeedPhraseDialog = true
+            } else {
+                onSetupComplete()
             }
         } else if (identity != null && !identityJustCreated) {
             onSetupComplete()

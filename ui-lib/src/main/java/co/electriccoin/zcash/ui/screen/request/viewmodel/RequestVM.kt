@@ -104,6 +104,7 @@ class RequestVM(
                         onAmount = { onAmount(resolveExchangeRateValue(exchangeRateUsd), it) },
                         onSwitch = { onSwitch(resolveExchangeRateValue(exchangeRateUsd), it) },
                         onBack = { onBack() },
+                        onMemo = { onMemo(it) },
                     ) { onNextClick(walletAddress, zip321BuildUriUseCase, exchangeRateUsd) }
                 }
 
@@ -174,23 +175,11 @@ class RequestVM(
         zip321BuildUriUseCase: Zip321BuildUriUseCase,
         exchangeRateUsd: ExchangeRateState
     ) {
-        when (walletAddress) {
-            is WalletAddress.Transparent -> {
-                onAmountAndMemoDone(
-                    walletAddress.address,
-                    zip321BuildUriUseCase,
-                    resolveExchangeRateValue(exchangeRateUsd)
-                )
-            }
-
-            is WalletAddress.Unified, is WalletAddress.Sapling -> {
-                onAmountDone(resolveExchangeRateValue(exchangeRateUsd))
-            }
-
-            else -> {
-                error("Unexpected address type")
-            }
-        }
+        onAmountAndMemoDone(
+            walletAddress.address,
+            zip321BuildUriUseCase,
+            resolveExchangeRateValue(exchangeRateUsd)
+        )
     }
 
     private fun resolveExchangeRateValue(exchangeRateUsd: ExchangeRateState): FiatCurrencyConversion? =
@@ -332,10 +321,7 @@ class RequestVM(
             }
 
             RequestStage.QR_CODE -> {
-                when (ReceiveAddressType.fromOrdinal(addressTypeOrdinal)) {
-                    ReceiveAddressType.Transparent -> stage.update { RequestStage.AMOUNT }
-                    ReceiveAddressType.Unified, ReceiveAddressType.Sapling -> stage.update { RequestStage.MEMO }
-                }
+                stage.update { RequestStage.AMOUNT }
             }
         }
     }
@@ -419,11 +405,11 @@ class RequestVM(
                             createZip321Uri(
                                 address = address,
                                 amount = qrCodeAmount,
-                                memo = DEFAULT_MEMO,
+                                memo = it.memoState.text,
                                 zip321BuildUriUseCase = zip321BuildUriUseCase
                             ),
                         zecAmount = qrCodeAmount,
-                        memo = DEFAULT_MEMO,
+                        memo = it.memoState.text,
                     )
             )
         }

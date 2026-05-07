@@ -19,6 +19,7 @@ import co.electriccoin.zcash.ui.common.repository.BiometricRequest
 import co.electriccoin.zcash.ui.common.repository.BiometricsCancelledException
 import co.electriccoin.zcash.ui.common.repository.BiometricsFailureException
 import co.electriccoin.zcash.ui.common.repository.EnhancedABContact
+import co.electriccoin.zcash.ui.common.security.PinAuthGate
 import co.electriccoin.zcash.ui.common.usecase.CancelProposalFlowUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetExchangeRateUseCase
 import co.electriccoin.zcash.ui.common.usecase.GetWalletAccountsUseCase
@@ -33,7 +34,6 @@ import co.electriccoin.zcash.ui.design.util.Ellipsize
 import co.electriccoin.zcash.ui.design.util.stringRes
 import co.electriccoin.zcash.ui.design.util.stringResByAddress
 import co.electriccoin.zcash.ui.design.util.styleAsAddress
-import co.electriccoin.zcash.ui.preference.EncryptedPreferenceKeys
 import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
 import co.electriccoin.zcash.ui.screen.addressbook.ADDRESS_MAX_LENGTH
 import co.electriccoin.zcash.ui.screen.contact.AddZashiABContactArgs
@@ -74,10 +74,27 @@ class ReviewTransactionVM(
         object Idle : SendAuthState()
         object PinRequired : SendAuthState()
         object PinError : SendAuthState()
+
+        /** Lockout in effect — input must be disabled and a countdown shown. */
+        data class PinLocked(val secondsRemaining: Int) : SendAuthState()
     }
 
     private val _sendAuthState = MutableStateFlow<SendAuthState>(SendAuthState.Idle)
     val sendAuthState: StateFlow<SendAuthState> = _sendAuthState.asStateFlow()
+    private var sendLockoutTickerJob: Job? = null
+
+    private fun startSendLockoutTicker(initialMs: Long) {
+        sendLockoutTickerJob?.cancel()
+        sendLockoutTickerJob = viewModelScope.launch {
+            var remaining = initialMs
+            while (remaining > 0) {
+                _sendAuthState.value = SendAuthState.PinLocked(((remaining + 999) / 1000).toInt())
+                delay(1_000)
+                remaining -= 1_000
+            }
+            _sendAuthState.value = SendAuthState.PinRequired
+        }
+    }
 
     private val isReceiverExpanded = MutableStateFlow(false)
 
@@ -308,18 +325,30 @@ class ReviewTransactionVM(
 
     /**
      * Called by the UI when the user submits a PIN on the send-auth overlay.
-     * Verifies the PIN and, on success, submits the transaction proposal.
+     * Verifies through [PinAuthGate] (shared global lockout) and, on success,
+     * submits the transaction proposal.
      */
     fun onSendPinSubmitted(pin: String) {
         viewModelScope.launch {
-            val stored = EncryptedPreferenceKeys.APP_PIN_HASH.getValue(encryptedPreferenceProvider())
-            if (stored.isNotEmpty() && EncryptedPreferenceKeys.hashPin(pin) == stored) {
-                _sendAuthState.value = SendAuthState.Idle
-                submitProposal()
-            } else {
-                _sendAuthState.value = SendAuthState.PinError
-                delay(1_500)
-                _sendAuthState.value = SendAuthState.PinRequired
+            when (val result = PinAuthGate.tryVerify(
+                pin,
+                encryptedPreferenceProvider,
+                standardPreferenceProvider,
+            )) {
+                PinAuthGate.Result.Success -> {
+                    _sendAuthState.value = SendAuthState.Idle
+                    submitProposal()
+                }
+
+                PinAuthGate.Result.Wrong -> {
+                    _sendAuthState.value = SendAuthState.PinError
+                    delay(1_500)
+                    _sendAuthState.value = SendAuthState.PinRequired
+                }
+
+                is PinAuthGate.Result.Locked -> {
+                    startSendLockoutTicker(result.msUntilUnlock)
+                }
             }
         }
     }

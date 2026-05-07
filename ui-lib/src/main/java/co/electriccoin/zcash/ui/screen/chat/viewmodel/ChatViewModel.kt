@@ -2,9 +2,30 @@ package co.electriccoin.zcash.ui.screen.chat.viewmodel
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import co.electriccoin.zcash.preference.EncryptedPreferenceProvider
+import co.electriccoin.zcash.preference.StandardPreferenceProvider
+import co.electriccoin.zcash.spackle.Twig
+import co.electriccoin.zcash.ui.common.provider.PersistableWalletProvider
+import co.electriccoin.zcash.ui.common.repository.BiometricRepository
+import co.electriccoin.zcash.ui.common.repository.BiometricRequest
+import co.electriccoin.zcash.ui.common.repository.BiometricsCancelledException
+import co.electriccoin.zcash.ui.common.repository.BiometricsFailureException
+import co.electriccoin.zcash.ui.common.security.PinAuthGate
+import co.electriccoin.zcash.ui.common.usecase.GetZashiAccountUseCase
+import co.electriccoin.zcash.ui.common.usecase.NavigateToScanPublicKeyUseCase
+import co.electriccoin.zcash.ui.design.util.stringRes
+import co.electriccoin.zcash.ui.preference.StandardPreferenceKeys
+import co.electriccoin.zcash.ui.screen.chat.media.FileUtils
+import co.electriccoin.zcash.ui.screen.chat.media.ImageProcessor
+import co.electriccoin.zcash.ui.screen.chat.model.ChatContact
+import co.electriccoin.zcash.ui.screen.chat.model.ChatConversation
+import co.electriccoin.zcash.ui.screen.chat.model.ChatIdentity
+import co.electriccoin.zcash.ui.screen.chat.model.ChatMessage
+import co.electriccoin.zcash.ui.screen.chat.model.ConnectionDetailsUi
+import co.electriccoin.zcash.ui.screen.chat.model.ConversationType
+import co.electriccoin.zcash.ui.screen.chat.model.MessageStatus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,17 +36,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import co.electriccoin.zcash.ui.common.provider.PersistableWalletProvider
-import co.electriccoin.zcash.ui.common.usecase.GetZashiAccountUseCase
-import co.electriccoin.zcash.ui.common.usecase.NavigateToScanPublicKeyUseCase
-import co.electriccoin.zcash.ui.screen.chat.media.FileUtils
-import co.electriccoin.zcash.ui.screen.chat.media.ImageProcessor
-import co.electriccoin.zcash.ui.screen.chat.model.ChatContact
-import co.electriccoin.zcash.ui.screen.chat.model.ChatConversation
-import co.electriccoin.zcash.ui.screen.chat.model.ChatIdentity
-import co.electriccoin.zcash.ui.screen.chat.model.ChatMessage
-import co.electriccoin.zcash.ui.screen.chat.model.ConversationType
-import co.electriccoin.zcash.ui.screen.chat.model.MessageStatus
 import org.json.JSONObject
 import xyz.justzappit.zappmessaging.ZappMessagingSDK
 
@@ -38,8 +48,20 @@ class ChatViewModel(
     private val sdk: ZappMessagingSDK,
     private val persistableWalletProvider: PersistableWalletProvider,
     private val navigateToScanPublicKey: NavigateToScanPublicKeyUseCase,
-    private val getZashiAccount: GetZashiAccountUseCase
+    private val getZashiAccount: GetZashiAccountUseCase,
+    private val biometricRepository: BiometricRepository,
+    private val standardPreferenceProvider: StandardPreferenceProvider,
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
 ) : AndroidViewModel(application) {
+
+    sealed class PinVerifyState {
+        object Idle : PinVerifyState()
+        object Required : PinVerifyState()
+        object Error : PinVerifyState()
+
+        /** Lockout in effect — input must be disabled and a countdown shown. */
+        data class Locked(val secondsRemaining: Int) : PinVerifyState()
+    }
 
     // ── Identity State ──────────────────────────────────────────────────
 
@@ -75,6 +97,14 @@ class ChatViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _pinVerifyState = MutableStateFlow<PinVerifyState>(PinVerifyState.Idle)
+    val pinVerifyState: StateFlow<PinVerifyState> = _pinVerifyState.asStateFlow()
+    private var pinLockoutTickerJob: Job? = null
+
+    /** Non-null only while the seed phrase dialog is visible; consumed by the UI. */
+    private val _pendingSeedPhrase = MutableStateFlow<String?>(null)
+    val pendingSeedPhrase: StateFlow<String?> = _pendingSeedPhrase.asStateFlow()
+
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.DISCONNECTED)
     val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
 
@@ -87,8 +117,8 @@ class ChatViewModel(
     private val _conversationPeerOnline = MutableStateFlow<Boolean?>(null)
     val conversationPeerOnline: StateFlow<Boolean?> = _conversationPeerOnline.asStateFlow()
 
-    private val _connectionDetails = MutableStateFlow<ZappMessagingSDK.ConnectionDetails?>(null)
-    val connectionDetails: StateFlow<ZappMessagingSDK.ConnectionDetails?> = _connectionDetails.asStateFlow()
+    private val _connectionDetails = MutableStateFlow<ConnectionDetailsUi?>(null)
+    val connectionDetails: StateFlow<ConnectionDetailsUi?> = _connectionDetails.asStateFlow()
 
     // Scan-result bridge: holds the last public key scanned via the QR scanner
     // destination. Lives in viewModelScope so it survives navigation to/from
@@ -142,11 +172,11 @@ class ChatViewModel(
                 if (sdk.identity.value != null) {
                     _connectionStatus.value = ConnectionStatus.CONNECTED
                 }
-                Log.i(TAG, "Chat system ready via SDK")
+                Twig.info { "Chat system ready via SDK" }
             } catch (e: Exception) {
                 _connectionStatus.value = ConnectionStatus.ERROR
                 _errorMessage.value = "Failed to initialize messaging: ${e.message}"
-                Log.e(TAG, "Init failed", e)
+                Twig.error(e) { "Chat init failed" }
             } finally {
                 _isInitializing.value = false
             }
@@ -311,9 +341,9 @@ class ChatViewModel(
             try {
                 val zmIdentity = sdk.createIdentity(displayName)
                 _identity.value = ChatIdentity.from(zmIdentity)
-                Log.i(TAG, "Identity created: ${zmIdentity.displayName}")
+                Twig.info { "Identity created" }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to create identity: ${e.message}"
+                handleError("create identity", e)
             } finally {
                 _isLoading.value = false
             }
@@ -328,9 +358,9 @@ class ChatViewModel(
                 _identity.value = ChatIdentity.from(zmIdentity)
                 refreshConversations()
                 loadContacts()
-                Log.i(TAG, "Identity restored: ${zmIdentity.displayName}")
+                Twig.info { "Identity restored" }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to restore identity: ${e.message}"
+                handleError("restore identity", e)
             } finally {
                 _isLoading.value = false
             }
@@ -341,13 +371,14 @@ class ChatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val wallet = persistableWalletProvider.persistableWallet.first { it != null }!!
+                val wallet = persistableWalletProvider.persistableWallet.first { it != null }
+                    ?: error("Wallet unavailable")
                 val seedWords = wallet.seedPhrase.joinToString()
                 val zmIdentity = sdk.restoreFromSeedPhrase(seedWords, displayName)
                 _identity.value = ChatIdentity.from(zmIdentity)
-                Log.i(TAG, "Identity initialized from wallet seed: ${zmIdentity.displayName}")
+                Twig.info { "Identity initialized from wallet seed" }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to initialize identity from wallet: ${e.message}"
+                handleError("initialize identity from wallet", e)
             } finally {
                 _isLoading.value = false
             }
@@ -364,13 +395,18 @@ class ChatViewModel(
     fun deleteIdentity(onDeleted: () -> Unit) {
         viewModelScope.launch {
             try {
+                runCatching { sdk.shutdown() }
+                    .onFailure { Twig.warn(it) { "SDK shutdown during identity delete" } }
                 _identity.value = null
                 _conversations.value = emptyList()
                 _messages.value = emptyList()
                 _contacts.value = emptyList()
+                _connectionDetails.value = null
+                _connectionStatus.value = ConnectionStatus.DISCONNECTED
+                _peerCount.value = 0
                 onDeleted()
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to delete identity: ${e.message}"
+                handleError("delete identity", e)
             }
         }
     }
@@ -384,15 +420,87 @@ class ChatViewModel(
     suspend fun exportSeedPhraseSuspending(): String? = try {
         sdk.exportSeedPhrase()
     } catch (e: Exception) {
-        _errorMessage.value = "Failed to export seed phrase: ${e.message}"
+        handleError("export seed phrase", e)
         null
     }
 
-    /** Callback variant for non-coroutine call sites (legacy chat profile/setup screens). */
-    fun exportSeedPhrase(onResult: (String?) -> Unit) {
+    /**
+     * Entry point for the seed phrase row tap. Checks the configured auth method
+     * (biometric / PIN / none) and gates [exportAndEmitSeedPhrase] behind it.
+     */
+    fun onSeedPhraseRequested() {
         viewModelScope.launch {
-            onResult(exportSeedPhraseSuspending())
+            val authMethod = StandardPreferenceKeys.AUTH_METHOD.getValue(standardPreferenceProvider())
+            when (authMethod) {
+                "biometric" -> {
+                    try {
+                        biometricRepository.requestBiometrics(
+                            BiometricRequest(message = stringRes("View your seed phrase"))
+                        )
+                        exportAndEmitSeedPhrase()
+                    } catch (_: BiometricsFailureException) {}
+                    catch (_: BiometricsCancelledException) {}
+                }
+                "pin" -> _pinVerifyState.value = PinVerifyState.Required
+                else -> exportAndEmitSeedPhrase()
+            }
         }
+    }
+
+    /**
+     * Called by the UI PIN overlay on each 6-digit submission. Verifies through
+     * [PinAuthGate] (shared global lockout); on success surfaces the seed phrase.
+     */
+    fun onPinSubmitted(pin: String) {
+        viewModelScope.launch {
+            when (val result = PinAuthGate.tryVerify(
+                pin,
+                encryptedPreferenceProvider,
+                standardPreferenceProvider,
+            )) {
+                PinAuthGate.Result.Success -> {
+                    _pinVerifyState.value = PinVerifyState.Idle
+                    exportAndEmitSeedPhrase()
+                }
+
+                PinAuthGate.Result.Wrong -> {
+                    _pinVerifyState.value = PinVerifyState.Error
+                    delay(1_500)
+                    _pinVerifyState.value = PinVerifyState.Required
+                }
+
+                is PinAuthGate.Result.Locked -> {
+                    startPinLockoutTicker(result.msUntilUnlock)
+                }
+            }
+        }
+    }
+
+    fun onPinEntryDismissed() {
+        _pinVerifyState.value = PinVerifyState.Idle
+    }
+
+    private fun startPinLockoutTicker(initialMs: Long) {
+        pinLockoutTickerJob?.cancel()
+        pinLockoutTickerJob = viewModelScope.launch {
+            var remaining = initialMs
+            while (remaining > 0) {
+                _pinVerifyState.value = PinVerifyState.Locked(((remaining + 999) / 1000).toInt())
+                delay(1_000)
+                remaining -= 1_000
+            }
+            _pinVerifyState.value = PinVerifyState.Required
+        }
+    }
+
+    /** Called by the UI after the seed phrase dialog is dismissed. */
+    fun consumeSeedPhrase() {
+        _pendingSeedPhrase.value = null
+    }
+
+    private suspend fun exportAndEmitSeedPhrase() {
+        val phrase = exportSeedPhraseSuspending()
+        if (phrase != null) _pendingSeedPhrase.value = phrase
     }
 
     // ── Conversation Management ─────────────────────────────────────────
@@ -424,7 +532,7 @@ class ChatViewModel(
                 loadMessages(conversation.id)
                 onCreated(conversation.id)
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to create chat: ${e.message}"
+                handleError("create chat", e)
             } finally {
                 _isLoading.value = false
             }
@@ -448,7 +556,7 @@ class ChatViewModel(
                 _currentConversation.value = conversation
                 loadMessages(conversation.id)
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to create group: ${e.message}"
+                handleError("create group", e)
             } finally {
                 _isLoading.value = false
             }
@@ -465,7 +573,7 @@ class ChatViewModel(
                     _messages.value = emptyList()
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to leave conversation: ${e.message}"
+                handleError("leave conversation", e)
             }
         }
     }
@@ -480,7 +588,7 @@ class ChatViewModel(
                     _messages.value = emptyList()
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to delete conversation: ${e.message}"
+                handleError("delete conversation", e)
             }
         }
     }
@@ -493,7 +601,7 @@ class ChatViewModel(
                     if (it.id == conversationId) it.copy(displayName = name) else it
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to rename group: ${e.message}"
+                handleError("rename group", e)
             }
         }
     }
@@ -512,7 +620,7 @@ class ChatViewModel(
                     ) else it
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to add member: ${e.message}"
+                handleError("add member", e)
             }
         }
     }
@@ -536,7 +644,7 @@ class ChatViewModel(
                 }
             }
         } catch (e: Exception) {
-            _errorMessage.value = "Failed to refresh conversations: ${e.message}"
+            handleError("refresh conversations", e)
         }
     }
 
@@ -572,7 +680,9 @@ class ChatViewModel(
                     try {
                         suspendRefreshConversations()
                         _currentConversation.value = _conversations.value.find { it.id == conversationId }
-                    } catch (_: Exception) { }
+                    } catch (e: Exception) {
+                        Twig.warn(e) { "Refresh during loadMessages failed" }
+                    }
                 }
             }
 
@@ -591,7 +701,7 @@ class ChatViewModel(
                 messagesCache[conversationId] = Pair(System.currentTimeMillis(), msgs)
                 _messages.value = msgs
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to load messages: ${e.message}"
+                handleError("load messages", e)
             } finally {
                 _isLoading.value = false
             }
@@ -628,7 +738,7 @@ class ChatViewModel(
                     ) else it
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to send media: ${e.message}"
+                handleError("send media", e)
             }
         }
     }
@@ -661,7 +771,7 @@ class ChatViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to process media: ${e.message}"
+                handleError("process media", e)
             }
         }
     }
@@ -685,7 +795,7 @@ class ChatViewModel(
                     thumbnailData = thumbnail
                 )
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to process file: ${e.message}"
+                handleError("process file", e)
             }
         }
     }
@@ -704,7 +814,7 @@ class ChatViewModel(
                     thumbnailData = thumbnail
                 )
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to process photo: ${e.message}"
+                handleError("process photo", e)
             }
         }
     }
@@ -735,7 +845,7 @@ class ChatViewModel(
                     ) else it
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to share location: ${e.message}"
+                handleError("share location", e)
             }
         }
     }
@@ -748,7 +858,7 @@ class ChatViewModel(
                 val address = account.unified.address.address
                 shareWalletAddressInternal(conversationId, address)
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to get wallet address: ${e.message}"
+                handleError("get wallet address", e)
             }
         }
     }
@@ -768,7 +878,7 @@ class ChatViewModel(
                 ) else it
             }
         } catch (e: Exception) {
-            _errorMessage.value = "Failed to share wallet address: ${e.message}"
+            handleError("share wallet address", e)
         }
     }
 
@@ -802,7 +912,7 @@ class ChatViewModel(
                     ) else it
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to send message: ${e.message}"
+                handleError("send message", e)
             }
         }
     }
@@ -820,7 +930,7 @@ class ChatViewModel(
                 _contacts.value = zmContacts.map { ChatContact.from(it) }
                 contactsCacheTimestamp = System.currentTimeMillis()
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to load contacts: ${e.message}"
+                handleError("load contacts", e)
             }
         }
     }
@@ -833,7 +943,7 @@ class ChatViewModel(
                 contactsCacheTimestamp = 0L
                 loadContacts()
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to add contact: ${e.message}"
+                handleError("add contact", e)
             }
         }
     }
@@ -845,7 +955,7 @@ class ChatViewModel(
                 contactsCacheTimestamp = 0L
                 loadContacts()
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to update contact: ${e.message}"
+                handleError("update contact", e)
             }
         }
     }
@@ -857,7 +967,7 @@ class ChatViewModel(
                 contactsCacheTimestamp = 0L
                 loadContacts()
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to delete contact: ${e.message}"
+                handleError("delete contact", e)
             }
         }
     }
@@ -868,13 +978,23 @@ class ChatViewModel(
         _errorMessage.value = null
     }
 
+    /**
+     * Logs the failure to Twig and surfaces a localised-friendly error message
+     * to the UI. Used by every catch-Exception block in this view model so
+     * exceptions never disappear silently.
+     */
+    private fun handleError(operation: String, throwable: Throwable) {
+        Twig.error(throwable) { "Chat operation failed: $operation" }
+        _errorMessage.value = "Failed to $operation: ${throwable.message}"
+    }
+
     /** Fetch detailed connection info from the SDK for diagnostics display. */
     fun fetchConnectionDetails() {
         viewModelScope.launch {
             try {
-                _connectionDetails.value = sdk.getConnectionDetails()
+                _connectionDetails.value = ConnectionDetailsUi.from(sdk.getConnectionDetails())
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to fetch connection details: ${e.message}")
+                Twig.warn(e) { "Failed to fetch connection details" }
             }
         }
     }
@@ -906,7 +1026,7 @@ class ChatViewModel(
                 loadContacts()
             } catch (e: Exception) {
                 autoAddedKeys.remove(senderId)
-                Log.w(TAG, "Auto-add contact failed: ${e.message}")
+                Twig.warn(e) { "Auto-add contact failed" }
             }
         }
     }
@@ -918,7 +1038,7 @@ class ChatViewModel(
             try {
                 suspendRefreshConversations()
             } catch (e: Exception) {
-                Log.w(TAG, "Background conversation refresh failed: ${e.message}")
+                Twig.warn(e) { "Background conversation refresh failed" }
             }
         }
     }
@@ -926,6 +1046,7 @@ class ChatViewModel(
     override fun onCleared() {
         super.onCleared()
         conversationReloadJob?.cancel()
+        pinLockoutTickerJob?.cancel()
     }
 
     private fun isValidPublicKey(key: String): Boolean {
@@ -935,7 +1056,6 @@ class ChatViewModel(
     }
 
     companion object {
-        private const val TAG = "ChatViewModel"
         private const val MESSAGE_CACHE_TTL_MS = 60_000L
         private const val CONTACTS_CACHE_TTL_MS = 300_000L
         private const val CONVERSATION_RELOAD_DEBOUNCE_MS = 500L

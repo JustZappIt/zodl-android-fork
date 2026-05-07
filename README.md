@@ -12,6 +12,20 @@ upstream Zcash wallet it adds:
 - Zapp rebrand (`ZappPalette`, app name, version 4.x)
 - Swiss-minimalist UI system (`ZappTheme`) with full design-token migration across all screens
 
+## Quickstart
+
+Prereqs: JDK 17 (`JAVA_HOME` set), Android SDK with NDK `27.0.12077973` and CMake `4.1.2`, an emulator or device with `adb` reachable. The two sibling repos must live next to this one:
+
+```sh
+git clone https://github.com/JustZappIt/zappMessaging.git ../zappMessaging
+git clone --branch v2.0.0 https://github.com/holepunchto/bare-kit.git ../bare-kit
+
+./gradlew :app:installZcashtestnetStoreDebug
+adb shell monkey -p xyz.justzappit.zapp.testnet.debug -c android.intent.category.LAUNCHER 1
+```
+
+This branch pins `ZCASH_NETWORK=testnet` in `gradle.properties`, so only `Zcashtestnet*` Gradle tasks are registered. To build mainnet, override at invocation: `./gradlew -PZCASH_NETWORK=mainnet :app:installZcashmainnetStoreDebug`. Full setup, exact versions, and troubleshooting live in [Build Environment](#build-environment--exact-versions) below; deeper end-to-end steps in [`DEVELOPER_SETUP.md`](DEVELOPER_SETUP.md).
+
 ## peer.xyz Integration
 
 Zapp integrates [peer.xyz](https://peer.xyz) as the primary fiat on/off-ramp, with [justzappit.xyz](https://justzappit.xyz/directory) as a fallback in unsupported regions.
@@ -264,8 +278,10 @@ resource — they can't drift. Testnet builds connect to `testnet.zec.rocks:443`
 A clean build from a fresh checkout should succeed with:
 
 ```sh
-./gradlew :app:assembleZcashmainnetStoreDebug
+./gradlew :app:assembleZcashtestnetStoreDebug
 ```
+
+(this branch pins `ZCASH_NETWORK=testnet`; for mainnet pass `-PZCASH_NETWORK=mainnet` and use `:app:assembleZcashmainnetStoreDebug`).
 
 If this fails, verify in order:
 1. `./gradlew --version` prints `Gradle 8.14.4` and `Launcher JVM: 17.x`.
@@ -292,7 +308,7 @@ If this fails, verify in order:
   rm -rf ~/.gradle/caches/build-cache-1 \
          build-conventions-secant/{build,.gradle,.kotlin} \
          .gradle
-  ./gradlew :app:installZcashmainnetFossDebug --no-build-cache
+  ./gradlew :app:installZcashtestnetFossDebug --no-build-cache
   ```
 
   Long-term, either always pass `--no-build-cache` when switching between this fork and the upstream repo on the same machine, or set a per-project `GRADLE_USER_HOME` (e.g. `export GRADLE_USER_HOME="$PWD/.gradle-home"`) so each repo has its own cache. Android Studio doesn't hit this because its daemon stays warm and re-uses the same build cache entries it just wrote.

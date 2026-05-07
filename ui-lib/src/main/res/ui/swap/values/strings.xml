@@ -15,6 +15,13 @@
     <string name="swap_slippage_low_warning_3">%s%% or higher</string>
     <string name="pay_slippage_info">You may pay up to %s more, in addition to transaction fees.</string>
     <string name="swap_title">Swap</string>
+    <string name="swap_available_to_swap">Available to swap</string>
+    <string name="swap_stats_price">Price</string>
+    <string name="swap_stats_fee">Fee</string>
+    <string name="swap_you_send">You send</string>
+    <string name="swap_you_receive">You receive</string>
+    <string name="swap_receiving_to">Receiving to</string>
+    <string name="swap_change_address">Change</string>
     <string name="swap_from">From</string>
     <string name="swap_insufficient_funds">Insufficient funds</string>
     <string name="swap_max_standalone">Spendable: </string>

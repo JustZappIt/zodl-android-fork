@@ -26,6 +26,8 @@ internal fun AndroidWalletBackup(args: WalletBackup) {
     if (pinVerifyState != WalletBackupViewModel.PinVerifyState.Idle) {
         PinVerifyScreen(
             hasError = pinVerifyState == WalletBackupViewModel.PinVerifyState.Error,
+            lockoutSecondsRemaining =
+                (pinVerifyState as? WalletBackupViewModel.PinVerifyState.Locked)?.secondsRemaining ?: 0,
             onPinSubmit = { pin -> viewModel.onPinSubmitted(pin) },
             onCancel = { viewModel.onPinEntryDismissed() }
         )

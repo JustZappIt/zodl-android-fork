@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.electriccoin.zcash.ui.common.compose.SecureScreen
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import kotlinx.coroutines.delay
 
@@ -222,20 +223,25 @@ fun BioScanScreen(
 fun PinVerifyScreen(
     hasError: Boolean,
     showBack: Boolean = true,
+    lockoutSecondsRemaining: Int = 0,
     onPinSubmit: (String) -> Unit,
     onCancel: () -> Unit = {},
 ) {
+    SecureScreen()
+
     val c = ZappTheme.colors
     var currentInput by rememberSaveable { mutableStateOf("") }
+    val isLocked = lockoutSecondsRemaining > 0
 
-    // Clear input whenever an error is signalled so the user starts fresh.
-    LaunchedEffect(hasError) {
-        if (hasError) currentInput = ""
+    // Clear input whenever an error or lockout is signalled so the user starts fresh.
+    LaunchedEffect(hasError, isLocked) {
+        if (hasError || isLocked) currentInput = ""
     }
 
-    // Auto-submit when 6 digits are entered.
+    // Auto-submit when 6 digits are entered. Skipped while locked so the keypad
+    // is effectively disabled.
     LaunchedEffect(currentInput) {
-        if (currentInput.length == 6) {
+        if (!isLocked && currentInput.length == 6) {
             val pin = currentInput
             currentInput = ""
             onPinSubmit(pin)
@@ -258,17 +264,30 @@ fun PinVerifyScreen(
                 Spacer(Modifier.height(14.dp))
                 OnbHero(text = "Enter\nyour PIN")
                 Spacer(Modifier.height(14.dp))
-                if (hasError) {
-                    BasicText(
-                        text = "Incorrect PIN. Please try again.",
-                        style = ZappTheme.typography.body.copy(
-                            color = c.danger,
-                            fontSize = 13.sp,
-                            lineHeight = 20.sp,
-                        ),
-                    )
-                } else {
-                    OnbSub(text = "Enter your 6-digit PIN to continue.")
+                when {
+                    isLocked -> {
+                        BasicText(
+                            text = "Too many attempts. Try again in ${lockoutSecondsRemaining}s.",
+                            style = ZappTheme.typography.body.copy(
+                                color = c.danger,
+                                fontSize = 13.sp,
+                                lineHeight = 20.sp,
+                            ),
+                        )
+                    }
+                    hasError -> {
+                        BasicText(
+                            text = "Incorrect PIN. Please try again.",
+                            style = ZappTheme.typography.body.copy(
+                                color = c.danger,
+                                fontSize = 13.sp,
+                                lineHeight = 20.sp,
+                            ),
+                        )
+                    }
+                    else -> {
+                        OnbSub(text = "Enter your 6-digit PIN to continue.")
+                    }
                 }
             }
             Column(
@@ -279,11 +298,12 @@ fun PinVerifyScreen(
                     .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                PinDotRow(filledCount = currentInput.length, hasError = hasError)
+                PinDotRow(filledCount = currentInput.length, hasError = hasError || isLocked)
                 Spacer(Modifier.height(28.dp))
                 PinKeypad(
                     modifier = Modifier.fillMaxWidth(),
                     onKey = { key ->
+                        if (isLocked) return@PinKeypad
                         when {
                             key == "⌫" -> if (currentInput.isNotEmpty()) currentInput = currentInput.dropLast(1)
                             currentInput.length < 6 -> currentInput += key
@@ -321,6 +341,8 @@ fun PinSetupScreen(
     onBack: () -> Unit,
     onPinConfirmed: (String) -> Unit,
 ) {
+    SecureScreen()
+
     val c = ZappTheme.colors
 
     var isConfirmPhase by rememberSaveable { mutableStateOf(false) }

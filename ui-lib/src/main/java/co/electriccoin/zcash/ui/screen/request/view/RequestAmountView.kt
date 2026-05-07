@@ -1,8 +1,11 @@
 package co.electriccoin.zcash.ui.screen.request.view
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,19 +14,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,24 +42,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cash.z.ecc.android.sdk.ext.convertZatoshiToZec
-import cash.z.ecc.android.sdk.model.Zatoshi
-import cash.z.ecc.android.sdk.model.fromZecString
 import co.electriccoin.zcash.ui.R
 import co.electriccoin.zcash.ui.common.wallet.ExchangeRateState
 import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
-import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
-import co.electriccoin.zcash.ui.design.theme.typography.ZashiTypography
-import co.electriccoin.zcash.ui.design.util.getValue
 import co.electriccoin.zcash.ui.design.util.rememberDesiredFormatLocale
-import co.electriccoin.zcash.ui.design.util.stringResByNumber
+import co.electriccoin.zcash.ui.util.CURRENCY_TICKER
 import co.electriccoin.zcash.ui.screen.request.model.AmountState
+import co.electriccoin.zcash.ui.screen.request.model.MemoState
 import co.electriccoin.zcash.ui.screen.request.model.OnAmount
 import co.electriccoin.zcash.ui.screen.request.model.RequestCurrency
 import co.electriccoin.zcash.ui.screen.request.model.RequestState
-import java.math.BigDecimal
-import java.math.MathContext
 import java.text.DecimalFormatSymbols
 
 @Composable
@@ -59,6 +60,8 @@ internal fun RequestAmountView(
     state: RequestState.Amount,
     modifier: Modifier = Modifier
 ) {
+    var noteFieldFocused by remember { mutableStateOf(false) }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
@@ -99,11 +102,20 @@ internal fun RequestAmountView(
 
         Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingDefault))
 
+        RequestAmountNoteField(
+            state = state,
+            onFocusChanged = { noteFieldFocused = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = ZcashTheme.dimens.screenHorizontalSpacingRegular),
+        )
+
         Spacer(modifier = Modifier.weight(1f))
 
-        RequestAmountKeyboardView(state = state)
-
-        Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingLarge))
+        if (!noteFieldFocused) {
+            RequestAmountKeyboardView(state = state)
+            Spacer(modifier = Modifier.height(ZcashTheme.dimens.spacingLarge))
+        }
     }
 }
 
@@ -113,8 +125,8 @@ private fun RequestAmountWithMainFiatView(
     onFiatPreferenceSwitch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val c = ZappTheme.colors
     val context = LocalContext.current
-    val locale = rememberDesiredFormatLocale()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -123,11 +135,11 @@ private fun RequestAmountWithMainFiatView(
         state.exchangeRateState as ExchangeRateState.Data
         val fiatText =
             buildAnnotatedString {
-                withStyle(style = SpanStyle(color = ZashiColors.Text.textQuaternary)) {
+                withStyle(style = SpanStyle(color = c.textMuted)) {
                     append(state.exchangeRateState.fiatCurrency.symbol)
                 }
-                append("\u2009") // Add an extra thin space between the texts
-                withStyle(style = SpanStyle(color = ZashiColors.Text.textPrimary)) {
+                append("\u2009")
+                withStyle(style = SpanStyle(color = c.text)) {
                     append(
                         if (state.exchangeRateState.currencyConversion != null) {
                             state.request.amountState.amount
@@ -150,12 +162,10 @@ private fun RequestAmountWithMainFiatView(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             val zecText =
                 buildAnnotatedString {
-                    withStyle(style = SpanStyle(color = ZashiColors.Text.textPrimary)) {
+                    withStyle(style = SpanStyle(color = c.text)) {
                         append(
                             if (state.exchangeRateState.currencyConversion != null) {
                                 state.request.amountState.toZecString(
@@ -167,17 +177,17 @@ private fun RequestAmountWithMainFiatView(
                             }
                         )
                     }
-                    append(" ") // Add an extra space between the texts
-                    withStyle(style = SpanStyle(color = ZashiColors.Text.textQuaternary)) {
-                        append(state.zcashCurrency.localizedName(LocalContext.current))
+                    append(" ")
+                    withStyle(style = SpanStyle(color = c.textMuted)) {
+                        append(CURRENCY_TICKER)
                     }
                 }
 
-            Text(
+            BasicText(
                 text = zecText,
-                style = ZashiTypography.textLg,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1
+                style = ZappTheme.typography.body.copy(fontWeight = FontWeight.Medium),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
 
             Spacer(modifier = Modifier.width(10.dp))
@@ -197,7 +207,9 @@ private fun RequestAmountWithMainZecView(
     onFiatPreferenceSwitch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val locale = rememberDesiredFormatLocale()
+    val c = ZappTheme.colors
+    val context = LocalContext.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -205,12 +217,12 @@ private fun RequestAmountWithMainZecView(
         state.exchangeRateState as ExchangeRateState.Data
         val zecText =
             buildAnnotatedString {
-                withStyle(style = SpanStyle(color = ZashiColors.Text.textPrimary)) {
+                withStyle(style = SpanStyle(color = c.text)) {
                     append(state.request.amountState.amount)
                 }
-                append("\u2009") // Add an extra thin space between the texts
-                withStyle(style = SpanStyle(color = ZashiColors.Text.textQuaternary)) {
-                    append(state.zcashCurrency.localizedName(LocalContext.current))
+                append("\u2009")
+                withStyle(style = SpanStyle(color = c.textMuted)) {
+                    append(CURRENCY_TICKER)
                 }
             }
 
@@ -226,20 +238,18 @@ private fun RequestAmountWithMainZecView(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             val fiatText =
                 buildAnnotatedString {
-                    withStyle(style = SpanStyle(color = ZashiColors.Text.textQuaternary)) {
+                    withStyle(style = SpanStyle(color = c.textMuted)) {
                         append(state.exchangeRateState.fiatCurrency.symbol)
                     }
-                    append(" ") // Add an extra space between the texts
-                    withStyle(style = SpanStyle(color = ZashiColors.Text.textPrimary)) {
+                    append(" ")
+                    withStyle(style = SpanStyle(color = c.text)) {
                         append(
                             if (state.exchangeRateState.currencyConversion != null) {
                                 state.request.amountState.toFiatString(
-                                    LocalContext.current,
+                                    context,
                                     state.exchangeRateState.currencyConversion
                                 )
                             } else {
@@ -249,11 +259,11 @@ private fun RequestAmountWithMainZecView(
                     }
                 }
 
-            Text(
+            BasicText(
                 text = fiatText,
-                style = ZashiTypography.textLg,
-                fontWeight = FontWeight.Medium,
+                style = ZappTheme.typography.body.copy(fontWeight = FontWeight.Medium),
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
 
             Spacer(modifier = Modifier.width(10.dp))
@@ -272,23 +282,26 @@ private fun RequestAmountNoFiatView(
     state: RequestState.Amount,
     modifier: Modifier = Modifier,
 ) {
+    val c = ZappTheme.colors
+    val context = LocalContext.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
-        val fiatText =
+        val text =
             buildAnnotatedString {
-                withStyle(style = SpanStyle(color = ZashiColors.Text.textPrimary)) {
+                withStyle(style = SpanStyle(color = c.text)) {
                     append(state.request.amountState.amount)
                 }
-                append("\u2009") // Add an extra thin space between the texts
-                withStyle(style = SpanStyle(color = ZashiColors.Text.textQuaternary)) {
-                    append(state.zcashCurrency.localizedName(LocalContext.current))
+                append("\u2009")
+                withStyle(style = SpanStyle(color = c.textMuted)) {
+                    append(CURRENCY_TICKER)
                 }
             }
 
         AutoSizingText(
-            text = fiatText,
+            text = text,
             style = ZappTheme.typography.display.copy(
                 fontSize = 44.sp,
                 lineHeight = 48.sp,
@@ -299,134 +312,103 @@ private fun RequestAmountNoFiatView(
     }
 }
 
-private const val KEYBOARD_ZERO = 0
-private const val KEYBOARD_ONE = 1
-private const val KEYBOARD_TWO = 2
-private const val KEYBOARD_THREE = 3
-private const val KEYBOARD_FOUR = 4
-private const val KEYBOARD_FIVE = 5
-private const val KEYBOARD_SIX = 6
-private const val KEYBOARD_SEVEN = 7
-private const val KEYBOARD_EIGHT = 8
-private const val KEYBOARD_NINE = 9
+@Composable
+private fun RequestAmountNoteField(
+    state: RequestState.Amount,
+    onFocusChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val c = ZappTheme.colors
+    val memoText = state.request.memoState.text
+    Row(
+        modifier = modifier
+            .border(BorderStroke(1.dp, c.border), RectangleShape)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = null,
+            tint = c.textSubtle,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        BasicTextField(
+            value = memoText,
+            onValueChange = { state.onMemo(MemoState.new(it, state.request.memoState.zecAmount)) },
+            singleLine = true,
+            textStyle = ZappTheme.typography.body.copy(color = c.text),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { onFocusChanged(it.isFocused) },
+            decorationBox = { innerTextField ->
+                if (memoText.isEmpty()) {
+                    BasicText(
+                        text = "Add a note (optional)",
+                        style = ZappTheme.typography.body.copy(color = c.textSubtle),
+                    )
+                }
+                innerTextField()
+            },
+        )
+    }
+}
+
+private val KEYBOARD_ROWS = listOf(
+    listOf("1", "2", "3"),
+    listOf("4", "5", "6"),
+    listOf("7", "8", "9"),
+    listOf(null, "0", "⌫"),
+)
 
 @Composable
 private fun RequestAmountKeyboardView(
     state: RequestState.Amount,
     modifier: Modifier = Modifier
 ) {
+    val c = ZappTheme.colors
     val locale = rememberDesiredFormatLocale()
-    Row(
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier =
-            modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+    val decimalSep = DecimalFormatSymbols(locale).decimalSeparator.toString()
+
+    // Replace the null slot with the locale decimal separator
+    val rows = KEYBOARD_ROWS.map { row ->
+        row.map { key -> if (key == null) decimalSep else key }
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_one),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_ONE)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_four),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_FOUR)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_seven),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_SEVEN)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = DecimalFormatSymbols(locale).decimalSeparator.toString(),
-                onClick = {
-                    state.onAmount(OnAmount.Separator(DecimalFormatSymbols(locale).decimalSeparator.toString()))
+        rows.forEach { row ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                row.forEach { key ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(60.dp)
+                            .border(1.dp, c.border, RectangleShape)
+                            .clickable {
+                                when (key) {
+                                    "⌫" -> state.onAmount(OnAmount.Delete)
+                                    decimalSep -> state.onAmount(OnAmount.Separator(decimalSep))
+                                    else -> state.onAmount(OnAmount.Number(key.toInt()))
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        BasicText(
+                            text = key,
+                            style = ZappTheme.typography.button.copy(
+                                color = c.text,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Black,
+                            ),
+                        )
+                    }
                 }
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_two),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_TWO)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_five),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_FIVE)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_eight),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_EIGHT)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_zero),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_ZERO)) }
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_three),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_THREE)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_six),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_SIX)) }
-            )
-            RequestAmountKeyboardTextButton(
-                text = stringResource(id = R.string.request_amount_keyboard_nine),
-                onClick = { state.onAmount(OnAmount.Number(KEYBOARD_NINE)) }
-            )
-            RequestAmountKeyboardIconButton(
-                painter = painterResource(id = R.drawable.ic_delete),
-                contentDescription = stringResource(id = R.string.request_amount_keyboard_delete),
-                onClick = { state.onAmount(OnAmount.Delete) }
-            )
+            }
         }
     }
-}
-
-@Composable
-private fun RequestAmountKeyboardTextButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = text,
-        style = ZashiTypography.header4,
-        fontWeight = FontWeight.SemiBold,
-        color = ZashiColors.Text.textPrimary,
-        modifier =
-            modifier
-                .wrapContentHeight()
-                .clip(RoundedCornerShape(ZcashTheme.dimens.regularRippleEffectCorner))
-                .clickable { onClick() }
-                .padding(horizontal = 42.dp, vertical = 10.dp)
-    )
-}
-
-@Composable
-private fun RequestAmountKeyboardIconButton(
-    painter: Painter,
-    contentDescription: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Image(
-        painter = painter,
-        contentDescription = contentDescription,
-        colorFilter = ColorFilter.tint(ZashiColors.Btns.Ghost.btnGhostFg),
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(ZcashTheme.dimens.regularRippleEffectCorner))
-                .clickable { onClick() }
-                .padding(horizontal = 32.dp, vertical = 10.dp)
-    )
 }
 
 @Composable
@@ -434,12 +416,13 @@ private fun InvalidAmountView(
     amountState: AmountState,
     modifier: Modifier = Modifier
 ) {
+    val c = ZappTheme.colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .requiredHeight(48.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .requiredHeight(48.dp)
+            .padding(horizontal = ZcashTheme.dimens.screenHorizontalSpacingRegular),
     ) {
         if (amountState.isValid == false) {
             Image(
@@ -449,13 +432,14 @@ private fun InvalidAmountView(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Text(
+            BasicText(
                 text = stringResource(id = R.string.request_amount_invalid),
-                color = ZashiColors.Utility.WarningYellow.utilityOrange700,
-                style = ZashiTypography.textSm,
-                fontWeight = FontWeight.Medium,
+                style = ZappTheme.typography.caption.copy(
+                    color = c.accent,
+                    fontWeight = FontWeight.Medium,
+                ),
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.wrapContentWidth()
+                maxLines = 1,
             )
         }
     }

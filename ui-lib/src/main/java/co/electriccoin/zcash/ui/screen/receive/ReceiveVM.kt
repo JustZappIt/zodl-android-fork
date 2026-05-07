@@ -136,7 +136,9 @@ class ReceiveVM(
                     }
                 },
                 onClick = { onAddressInfoClick(type) }
-            )
+            ),
+        qrData = address,
+        addressRaw = address,
     )
 
     private fun onRequestClick(addressType: ReceiveAddressType) =

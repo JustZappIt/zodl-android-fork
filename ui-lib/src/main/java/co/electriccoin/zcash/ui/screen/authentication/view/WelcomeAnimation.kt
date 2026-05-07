@@ -172,13 +172,18 @@ private fun WelcomeContent(
             )
 
             AnimatedVisibility(visible = showAuthLogo) {
+                // Auto-retry as soon as the lock UI becomes visible — no tap required.
+                LaunchedEffect(Unit) {
+                    onRetry()
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 40.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    // Sharp-edged tap-target instead of the rounded auth-key icon.
+                    // Sharp-edged tap-target — kept as a manual fallback.
                     val unlockDesc = stringResource(
                         id = R.string.authentication_failed_welcome_icon_cont_desc,
                         stringResource(R.string.app_name),

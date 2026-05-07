@@ -2,12 +2,15 @@ package co.electriccoin.zcash.ui.screen.swap.picker
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,6 +53,7 @@ import co.electriccoin.zcash.ui.design.component.ZashiTopAppBarCloseNavigation
 import co.electriccoin.zcash.ui.design.component.listitem.ListItemState
 import co.electriccoin.zcash.ui.design.component.listitem.ZashiListItem
 import co.electriccoin.zcash.ui.design.newcomponent.PreviewScreens
+import co.electriccoin.zcash.ui.design.theme.ZappTheme
 import co.electriccoin.zcash.ui.design.theme.ZcashTheme
 import co.electriccoin.zcash.ui.design.theme.colors.ZashiColors
 import co.electriccoin.zcash.ui.design.util.ImageResource
@@ -73,6 +77,9 @@ fun SwapAssetPickerView(state: SwapAssetPickerState?) {
                 modifier = Modifier.fillMaxSize(),
                 topBar = {
                     TopAppBar(innerState, windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
+                },
+                bottomBar = {
+                    BottomSearchBar(innerState)
                 }
             ) { padding ->
                 val kbController = LocalSoftwareKeyboardController.current
@@ -107,14 +114,6 @@ fun SwapAssetPickerView(state: SwapAssetPickerState?) {
                                 end = 0.dp,
                             )
                 ) {
-                    SearchTextField(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp),
-                        innerState = innerState
-                    )
-
                     when (innerState.data) {
                         is SwapAssetPickerDataState.Error -> {
                             CommonErrorScreen(
@@ -163,7 +162,7 @@ private fun Success(
     LazyColumn(
         modifier = modifier,
         state = lazyListState,
-        contentPadding = PaddingValues(top = 20.dp, bottom = contentPadding.calculateBottomPadding()),
+        contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
     ) {
         itemsIndexed(
             items = state.items,
@@ -223,22 +222,35 @@ private fun Item(item: ListItemState) {
 }
 
 @Composable
-private fun SearchTextField(innerState: SwapAssetPickerState, modifier: Modifier = Modifier) {
-    ZashiTextField(
-        state = innerState.search,
-        modifier = modifier,
-        leadingIcon = {
-            Image(
-                painter = painterResource(R.drawable.ic_transaction_search),
-                contentDescription = null
-            )
-        },
-        placeholder = {
-            Text(stringResource(R.string.swap_search_hint))
-        },
-        singleLine = true,
-        maxLines = 1
-    )
+private fun BottomSearchBar(innerState: SwapAssetPickerState) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(ZashiColors.Surfaces.bgPrimary)
+            .navigationBarsPadding()
+            .padding(end = 24.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ZashiTopAppBarCloseNavigation(
+            onBack = innerState.onBack,
+            modifier = Modifier.testTag(ZashiTopAppBarTags.BACK)
+        )
+        ZashiTextField(
+            state = innerState.search,
+            modifier = Modifier.weight(1f),
+            leadingIcon = {
+                Image(
+                    painter = painterResource(R.drawable.ic_transaction_search),
+                    contentDescription = null
+                )
+            },
+            placeholder = {
+                Text(stringResource(R.string.swap_search_hint))
+            },
+            singleLine = true,
+            maxLines = 1
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -248,11 +260,11 @@ private fun TopAppBar(
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
 ) {
     ZashiSmallTopAppBar(
-        title = innerState.title.getValue(),
-        navigationAction = {
-            ZashiTopAppBarCloseNavigation(
-                onBack = innerState.onBack,
-                modifier = Modifier.testTag(ZashiTopAppBarTags.BACK)
+        content = {
+            Text(
+                text = innerState.title.getValue(),
+                style = ZappTheme.typography.screenTitle,
+                color = ZashiColors.Text.textPrimary
             )
         },
         colors =

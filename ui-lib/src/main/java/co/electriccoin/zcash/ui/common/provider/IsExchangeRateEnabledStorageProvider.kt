@@ -17,7 +17,7 @@ class IsExchangeRateEnabledStorageProviderImpl(
 
     override suspend fun get(): Boolean? {
         legacyProvider.clear()
-        return newProvider.get()
+        return newProvider.get() ?: true
     }
 
     override suspend fun store(amount: Boolean) {
@@ -28,7 +28,7 @@ class IsExchangeRateEnabledStorageProviderImpl(
     override fun observe(): Flow<Boolean?> =
         channelFlow {
             launch {
-                newProvider.observe().collect { send(it) }
+                newProvider.observe().collect { send(it ?: true) }
             }
 
             launch {

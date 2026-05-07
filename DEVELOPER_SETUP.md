@@ -117,17 +117,26 @@ then fail until upstream publishes a new SDK release with the missing symbols.
 cd zodl-android
 
 # First build (downloads dependencies, compiles native code - ~15 min)
-./gradlew :app:assembleZcashmainnetStoreDebug
+./gradlew :app:assembleZcashtestnetStoreDebug
 
 # Install on connected device/emulator
-./gradlew :app:installZcashmainnetStoreDebug
+./gradlew :app:installZcashtestnetStoreDebug
+```
+
+`gradle.properties` defaults `ZCASH_NETWORK=testnet`, so only the
+`Zcashtestnet*` Gradle tasks are registered. To target mainnet temporarily,
+override at invocation:
+
+```bash
+./gradlew -PZCASH_NETWORK=mainnet :app:installZcashmainnetStoreDebug
 ```
 
 ### 5. Build Variant
 
 In Android Studio, use this build variant:
 - **Module:** app
-- **Build Variant:** `zcashmainnetStoreDebug`
+- **Build Variant:** `zcashtestnetStoreDebug` (mainnet variants are disabled
+  unless `ZCASH_NETWORK=mainnet` is set in `gradle.properties` or via `-P`).
 
 Set via: **Build > Select Build Variant** (or the Build Variants panel on the left sidebar).
 

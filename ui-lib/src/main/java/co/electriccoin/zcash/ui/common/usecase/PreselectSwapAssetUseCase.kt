@@ -1,7 +1,6 @@
 package co.electriccoin.zcash.ui.common.usecase
 
 import co.electriccoin.zcash.ui.common.model.SimpleSwapAsset
-import co.electriccoin.zcash.ui.common.model.ZecSimpleSwapAsset
 import co.electriccoin.zcash.ui.common.provider.SimpleSwapAssetProvider
 import co.electriccoin.zcash.ui.common.repository.MetadataRepository
 import co.electriccoin.zcash.ui.common.repository.SwapRepository
@@ -40,6 +39,10 @@ class PreselectSwapAssetUseCase(
                                         it.tokenTicker.equals(assetToSelect.tokenTicker, ignoreCase = true) &&
                                             it.chainTicker.equals(assetToSelect.chainTicker, ignoreCase = true)
                                     }
+                                    ?: data.zecAsset?.takeIf {
+                                        it.tokenTicker.equals(assetToSelect.tokenTicker, ignoreCase = true) &&
+                                            it.chainTicker.equals(assetToSelect.chainTicker, ignoreCase = true)
+                                    }
 
                             if (foundAssetToSelect != null) {
                                 swapRepository.select(foundAssetToSelect)
@@ -53,7 +56,7 @@ class PreselectSwapAssetUseCase(
 
     private fun getHardCodedAsset(): SimpleSwapAsset =
         simpleSwapAssetProvider
-            .get(tokenTicker = "btc", chainTicker = "btc")
+            .get(tokenTicker = "zec", chainTicker = "zec")
 
     private suspend fun getAssetFromHistory(): SimpleSwapAsset? =
         metadataRepository
@@ -61,5 +64,4 @@ class PreselectSwapAssetUseCase(
             .filterNotNull()
             .first()
             .firstOrNull()
-            ?.takeIf { it !is ZecSimpleSwapAsset }
 }
