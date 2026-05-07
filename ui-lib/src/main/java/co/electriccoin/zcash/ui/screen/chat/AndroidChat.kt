@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import co.electriccoin.zcash.ui.NavigationRouter
+import co.electriccoin.zcash.ui.common.usecase.ObserveSelectedWalletAccountUseCase
 import co.electriccoin.zcash.ui.screen.chat.view.ChatContactsView
 import co.electriccoin.zcash.ui.screen.chat.view.ChatIdentitySetupView
 import co.electriccoin.zcash.ui.screen.chat.view.ChatListView
@@ -152,12 +153,15 @@ fun AndroidChatProfile(
     onIdentityDeleted: () -> Unit
 ) {
     val viewModel: ChatViewModel = koinViewModel()
+    val observeWalletAccount: ObserveSelectedWalletAccountUseCase = koinInject()
+    val walletAccount by observeWalletAccount().collectAsState(initial = null)
 
     ChatProfileView(
         onNavigateBack = onNavigateBack,
         onNavigateToContacts = onNavigateToContacts,
         onIdentityDeleted = onIdentityDeleted,
-        viewModel = viewModel
+        walletAccount = walletAccount,
+        viewModel = viewModel,
     )
 }
 

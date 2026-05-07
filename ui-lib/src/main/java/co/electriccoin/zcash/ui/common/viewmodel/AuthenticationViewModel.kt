@@ -183,6 +183,7 @@ class AuthenticationViewModel(
     private fun resetEntireAuthenticationState() {
         appAccessAuthentication.value = AuthenticationUIState.Initial
         showWelcomeAnimation.value = true
+        authFailed.value = false
     }
 
     fun runAuthenticationRequiredCheck() =
@@ -233,6 +234,7 @@ class AuthenticationViewModel(
         initialAuthSystemWindowDelay: Duration = DEFAULT_INITIAL_DELAY.milliseconds,
         useCase: AuthenticationUseCase
     ) {
+        authFailed.value = false
         val biometricsSupportResult = getBiometricAuthenticationSupport(allowedAuthenticators)
         Twig.debug { "Authentication getBiometricAuthenticationSupport: $biometricsSupportResult" }
 

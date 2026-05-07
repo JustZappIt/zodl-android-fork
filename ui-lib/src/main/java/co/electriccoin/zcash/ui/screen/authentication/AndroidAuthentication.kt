@@ -217,6 +217,19 @@ private fun WrapAppAccessAuth(
     val welcomeAnimVisibility = authenticationViewModel.showWelcomeAnimation.collectAsStateWithLifecycle().value
     val authFailed = authenticationViewModel.authFailed.collectAsStateWithLifecycle().value
 
+    // Auto-retry authentication when a previous attempt failed or was cancelled,
+    // so the user never has to tap the lock icon manually.
+    LaunchedEffect(authFailed) {
+        if (authFailed) {
+            authenticationViewModel.resetAuthenticationResult()
+            authenticationViewModel.authenticate(
+                activity = activity,
+                initialAuthSystemWindowDelay = RETRY_TRIGGER_DELAY.milliseconds,
+                useCase = AuthenticationUseCase.AppAccess
+            )
+        }
+    }
+
     AppAccessAuthentication(
         onRetry = {
             authenticationViewModel.resetAuthenticationResult()
